@@ -12,8 +12,13 @@ function CanvasInit() {
   canvas.width = canvas_bb.width; // Resolution
   canvas.height = canvas_bb.height; // Resolution
 
-  return canvas.getContext("webgl")
+  return canvas.getContext("webgl2")
 }
+
+// Execution will block until shader src is fetched.
+// Vertex and fragment shader programs.
+const gVertexShader = await (await fetch("vertex.glsl")).text()
+const gFragmentShader = await (await fetch("fragment.glsl")).text()
 
 function RoomMain() {
   const gl = CanvasInit()
@@ -27,38 +32,11 @@ function RoomMain() {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   // Enable back-face culling
-  gl.enable(gl.CULL_FACE);
-  gl.cullFace(gl.FRONT); // Cull front-facing faces to show the interior
-
-  // Vertex shader program.
-  const vsSource = `
-        attribute vec4 aVertexPosition;
-        attribute vec2 aTextureCoord;
-
-        uniform mat4 uModelViewMatrix;
-        uniform mat4 uProjectionMatrix;
-
-        varying highp vec2 vTextureCoord;
-
-        void main(void) {
-            gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-            vTextureCoord = aTextureCoord;
-        }
-    `;
-
-  // Fragment shader program.
-  const fsSource = `
-        varying highp vec2 vTextureCoord;
-
-        uniform sampler2D uSampler;
-
-        void main(void) {
-            gl_FragColor = texture2D(uSampler, vTextureCoord);
-        }
-    `;
+  // gl.enable(gl.CULL_FACE);
+  // gl.cullFace(gl.BACK); // Cull front-facing faces to show the interior
 
   // Build shader.
-  const shaderProgram = initShaderProgram(gl, vsSource, fsSource)
+  const shaderProgram = initShaderProgram(gl, gVertexShader, gFragmentShader)
 
   // Collect all the info needed to use the shader program.
   // Look up which attributes our shader program is using
@@ -83,12 +61,12 @@ function RoomMain() {
 
   // Load texture
   const textures = [
-    loadTexture(gl, "room/assets/frontwall.webp"), // Front
-    loadTexture(gl, "room/assets/backwall.webp"), // Back
-    loadTexture(gl, "room/assets/ceiling.webp"), // Top
-    loadTexture(gl, "room/assets/blankerfloor.webp"), // Bottom
-    loadTexture(gl, "room/assets/leftwall.webp"), // Right // NOTE: right-left swapped to show interior perspective.
-    loadTexture(gl, "room/assets/rightwall.webp"), // Left // NOTE: right-left swapped to show interior perspective.
+    loadTexture(gl, "funny.webp"), // Front
+    loadTexture(gl, "funny.webp"), // Back
+    loadTexture(gl, "funny.webp"), // Top
+    loadTexture(gl, "funny.webp"), // Bottom
+    loadTexture(gl, "funny.webp"), // Right // NOTE: right-left swapped to show interior perspective.
+    loadTexture(gl, "funny.webp"), // Left // NOTE: right-left swapped to show interior perspective.
   ]
   // Hard code some modifications to the texture orientations.
   // Flip the textures vertically for left, right, back, and front walls.
