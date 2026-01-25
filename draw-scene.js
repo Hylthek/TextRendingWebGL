@@ -41,7 +41,7 @@ function drawScene(gl, programInfo, buffers, textures, cubeRotation) {
   mat4.rotate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
-    0.7 * cubeRotation * (sin(cubeRotation * 0.1) + 1.5), // amount to rotate in radians
+    6.282 * sin(cubeRotation), // amount to rotate in radians
     [sin(cubeRotation * 0.3 + 4), sin(cubeRotation * 0.8 + 8), sin(cubeRotation + 2)],
   );
 
