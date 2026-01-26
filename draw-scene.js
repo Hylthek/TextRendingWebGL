@@ -18,14 +18,14 @@ function drawScene(gl, programInfo, buffers, textures, cubeRotation) {
   const fieldOfView = (60 * Math.PI) / 180; // in radians
   const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
   const zNear = 0.1;
-  const zFar = 100.0;
+  const zFar = 20.0;
   const projectionMatrix = mat4.create();
 
   // note: glMatrix always has the first argument as the destination to receive the result.
-  // mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-  const foo = 5
-  const bar = foo / aspect
-  mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, -foo, foo) // Projection matrix that takes the specified box to the unit cube.
+  mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+  // const foo = 5
+  // const bar = foo / aspect
+  // mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, zNear, zFar) // Projection matrix that takes the specified box to the unit cube.
 
   // Set the drawing position to the "identity" point, which is the center of the scene.
   const modelViewMatrix = mat4.create();
@@ -34,15 +34,15 @@ function drawScene(gl, programInfo, buffers, textures, cubeRotation) {
   mat4.translate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to translate
-    [0, 0, 0],
+    [0, 0, -5],
   ); // amount to translate
 
   const sin = Math.sin // Alias.
   mat4.rotate(
     modelViewMatrix, // destination matrix
     modelViewMatrix, // matrix to rotate
-    6.282 * sin(cubeRotation), // amount to rotate in radians
-    [sin(cubeRotation * 0.3 + 4), sin(cubeRotation * 0.8 + 8), sin(cubeRotation + 2)],
+    cubeRotation, // amount to rotate in radians
+    [sin(cubeRotation + 4), sin(cubeRotation * 2.4 + 8), sin(cubeRotation * 3 + 2)],
   );
 
   // Tell WebGL how to pull out the positions from the position buffer into the vertexPosition attribute.
