@@ -7,13 +7,24 @@ let deltaTime = 0;
 /** Returns WebGL context. */
 function CanvasInit() {
   const canvas = document.getElementById("cal-vas")
-  const canvas_bb = canvas.getBoundingClientRect()
-
-  canvas.width = canvas_bb.width; // Resolution
-  canvas.height = canvas_bb.height; // Resolution
-
+  canvas.width = canvas.clientWidth; // Resolution
+  canvas.height = canvas.clientHeight; // Resolution
   return canvas.getContext("webgl2")
 }
+
+function DebugCanvasInit() {
+  const canvas = document.getElementById("debug-canvas")
+  const resolution_factor = 3
+  canvas.width = canvas.clientWidth * resolution_factor; // Resolution * res_factor
+  canvas.height = canvas.clientHeight * resolution_factor; // Resolution * res_factor
+  return canvas.getContext("2d")
+}
+
+// Get debug 2d canvas debug visualization.
+const debug_ctx = DebugCanvasInit()
+debug_ctx.beginPath()
+debug_ctx.fillColor = "black"
+debug_ctx.fillRect(0, 0, debug_ctx.canvas.width, debug_ctx.canvas.height)
 
 // Execution will block until shader src is fetched.
 // Vertex and fragment shader programs.
@@ -22,17 +33,37 @@ const gFragmentShader = await (await fetch("fragment.glsl")).text()
 
 // Get the ttfs and use opentype to parse.
 const jetbrains_mono_url = 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf';
-let jetbrains_mono_opentype = 0
+let jetbrains_mono_opentype = null
 opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
+// Wait until jetbrains_mono_opentype is loaded
+while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
+// Get path and iterate through commands.
+const hhh = jetbrains_mono_opentype.charToGlyph('H')
+const h_path = hhh.getPath()
+h_path.commands.forEach((command) => {
+  switch (command.type) {
+    case 'M':
+      console.log(`Move to: (${command.x}, ${command.y})`)
+      break;
+    case 'L':
+      console.log(`Line to: (${command.x}, ${command.y})`)
+      break;
+    case 'Q':
+      console.log(`Quadratic Bézier curve: { start: { x: ${command.x1}, y: ${command.y1} }, control: { x: ${command.x}, y: ${command.y} }, end: { x: undefined, y: undefined } }`)
+      break;
+    case 'C':
+      console.log(`Cubic Bézier curve: { start: { x: ${command.x1}, y: ${command.y1} }, control1: { x: ${command.x2}, y: ${command.y2} }, control2: { x: ${command.x}, y: ${command.y} }, end: { x: undefined, y: undefined } }`)
+      break;
+    default:
+  }
+})
 
 function RoomMain() {
   const gl = CanvasInit()
-
   if (!gl) {
     console.error("WebGL not supported")
     return
   }
-
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
 
