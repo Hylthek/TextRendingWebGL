@@ -20,6 +20,11 @@ function CanvasInit() {
 const gVertexShader = await (await fetch("vertex.glsl")).text()
 const gFragmentShader = await (await fetch("fragment.glsl")).text()
 
+// Get the ttfs and use opentype to parse.
+const jetbrains_mono_url = 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf';
+let jetbrains_mono_opentype = 0
+opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
+
 function RoomMain() {
   const gl = CanvasInit()
 
