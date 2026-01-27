@@ -22,6 +22,7 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
     // mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, zNear, zFar) // Projection matrix that takes the specified box to the unit cube.
   }
 
+  // Create the modelViewMatrix which is only named that because we only have one 3D solid.
   const modelViewMatrix = mat4.create(); // Set the drawing position to the "identity" point, which is the center of the scene.
   {
     // Now move the drawing position a bit to where we want to start drawing the square.
@@ -51,9 +52,9 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
 
   //
   for (let currFace = 0; currFace < textures.length; currFace++) {
-    // Tell WebGL we want to affect texture unit 0
+    // Tell WebGL we want to affect texture unit 0. Nothing special about 0, currently only need one texture.
     gl.activeTexture(gl.TEXTURE0);
-    // Bind the texture to texture unit 0
+    // Bind the texture to texture unit 0.
     gl.bindTexture(gl.TEXTURE_2D, textures[currFace]);
     // Tell the shader we bound the texture to texture unit 0
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
