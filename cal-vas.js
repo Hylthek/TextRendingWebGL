@@ -20,11 +20,7 @@ function DebugCanvasInit() {
   return canvas.getContext("2d")
 }
 
-// Get debug 2d canvas debug visualization.
-const debug_ctx = DebugCanvasInit()
-debug_ctx.beginPath()
-debug_ctx.fillColor = "black"
-debug_ctx.fillRect(0, 0, debug_ctx.canvas.width, debug_ctx.canvas.height)
+
 
 // Execution will block until shader src is fetched.
 // Vertex and fragment shader programs.
@@ -38,25 +34,54 @@ opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = fon
 // Wait until jetbrains_mono_opentype is loaded
 while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
 // Get path and iterate through commands.
-const hhh = jetbrains_mono_opentype.charToGlyph('H')
+const hhh = jetbrains_mono_opentype.charToGlyph('G')
 const h_path = hhh.getPath()
-h_path.commands.forEach((command) => {
-  switch (command.type) {
-    case 'M':
-      console.log(`Move to: (${command.x}, ${command.y})`)
-      break;
-    case 'L':
-      console.log(`Line to: (${command.x}, ${command.y})`)
-      break;
-    case 'Q':
-      console.log(`Quadratic Bézier curve: { start: { x: ${command.x1}, y: ${command.y1} }, control: { x: ${command.x}, y: ${command.y} }, end: { x: undefined, y: undefined } }`)
-      break;
-    case 'C':
-      console.log(`Cubic Bézier curve: { start: { x: ${command.x1}, y: ${command.y1} }, control1: { x: ${command.x2}, y: ${command.y2} }, control2: { x: ${command.x}, y: ${command.y} }, end: { x: undefined, y: undefined } }`)
-      break;
-    default:
+
+// OpenType proof of concept below.
+{
+  // Get debug 2d canvas debug visualization.
+  const debug_ctx = DebugCanvasInit()
+  // Set transform to normalize and center the glyph
+  {
+    const glyph_bb = h_path.getBoundingBox()
+    const x1 = glyph_bb.x1
+    const y1 = glyph_bb.y1
+    const x2 = glyph_bb.x2
+    const y2 = glyph_bb.y2
+    const canvas = debug_ctx.canvas;
+    const scale = Math.min(canvas.width / (x2 - x1), canvas.height / (y2 - y1));
+    const translateX = (canvas.width - (x2 - x1) * scale) / 2 - x1 * scale;
+    const translateY = (canvas.height - (y2 - y1) * scale) / 2 - y1 * scale;
+    debug_ctx.setTransform(scale, 0, 0, scale, translateX, translateY);
   }
-})
+  // Draw path manually to 2d canvas.
+  debug_ctx.beginPath()
+  h_path.commands.forEach((command) => {
+    switch (command.type) {
+      case 'M':
+        debug_ctx.moveTo(command.x, command.y)
+        break;
+      case 'L':
+        debug_ctx.lineTo(command.x, command.y)
+        break;
+      case 'Q':
+        debug_ctx.lineTo(command.x1, command.y1)
+        debug_ctx.lineTo(command.x, command.y)
+        break;
+      case 'C':
+        debug_ctx.lineTo(command.x1, command.y1)
+        debug_ctx.lineTo(command.x2, command.y2)
+        debug_ctx.lineTo(command.x, command.y)
+        break;
+      case 'Z':
+        debug_ctx.stroke()
+        break;
+      default:
+        console.error("Unhandled opentype command: " + command.type)
+    }
+  })
+  // End of proof of concept.
+}
 
 function RoomMain() {
   const gl = CanvasInit()
