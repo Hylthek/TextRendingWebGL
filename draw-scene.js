@@ -1,5 +1,5 @@
 function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
-  
+
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -40,26 +40,16 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
     );
   }
 
-  // Tell WebGL how to pull out the positions from the position buffer into the vertexPosition attribute.
-  // Tell WebGL how to pull out the colors from the color buffer into the vertexColors attribute.
+  // Set the shader program.
+  gl.useProgram(programInfo.program);
+  // Set the shader attributes.
   SetPositionAttribute(gl, buffers, programInfo);
   SetTextureAttribute(gl, buffers, programInfo);
-
-  // Tell WebGL to use our program when drawing
-  gl.useProgram(programInfo.program);
-
   // Set the shader uniforms
-  gl.uniformMatrix4fv(
-    programInfo.uniformLocations.projectionMatrix,
-    false,
-    projectionMatrix,
-  );
-  gl.uniformMatrix4fv(
-    programInfo.uniformLocations.modelViewMatrix,
-    false,
-    modelViewMatrix,
-  );
+  gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
+  gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
+  //
   for (let currFace = 0; currFace < textures.length; currFace++) {
     // Tell WebGL we want to affect texture unit 0
     gl.activeTexture(gl.TEXTURE0);
@@ -83,7 +73,7 @@ function SetPositionAttribute(gl, buffers, programInfo) {
   const normalize = false; // don't normalize
   const stride = 0; // how many bytes to get from one set of values to the next. 0 = use type and numComponents above
   const offset = 0; // how many bytes inside the buffer to start from
-  
+
   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
   gl.vertexAttribPointer(
     programInfo.attribLocations.vertexPosition,
