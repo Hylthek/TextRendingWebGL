@@ -16,8 +16,7 @@ function InitPositionBuffer(gl) {
   // Create a buffer for the square's positions.
   const positionBuffer = gl.createBuffer();
 
-  // Select the positionBuffer as the one to apply buffer
-  // operations to from here out.
+  // Select the positionBuffer as the one to apply buffer operations to from here out.
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
   const base_2 = 1
