@@ -31,7 +31,6 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
       modelViewMatrix, // matrix to translate
       [0, 0, -5],
     ); // amount to translate
-
     const sin = Math.sin // Alias.
     mat4.rotate(
       modelViewMatrix, // destination matrix
@@ -57,12 +56,13 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
     // Bind the texture to texture unit 0.
     gl.bindTexture(gl.TEXTURE_2D, textures[currFace]);
     // Tell the shader we bound the texture to texture unit 0
-    gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+    gl.uniform1i(programInfo.uniformLocations.uSampler, 0); // Just declares a glsl_int = 0.
 
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.
     const offset = currFace * 12 // each face contains 12 bytes of data.
-    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset)
+    
+    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
   }
 }
 
