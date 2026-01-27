@@ -1,4 +1,4 @@
-function drawScene(gl, programInfo, buffers, textures, cubeRotation) {
+function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
   gl.clearColor(0.0, 0.0, 0.0, 0.0);
   gl.clearDepth(1.0); // Clear everything
   gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -143,4 +143,4 @@ function setTextureAttribute(gl, buffers, programInfo) {
   gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
 }
 
-export { drawScene };
+export { DrawScene };

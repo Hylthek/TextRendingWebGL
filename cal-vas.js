@@ -1,5 +1,5 @@
-import { initBuffers } from "./init-buffers.js";
-import { drawScene } from "./draw-scene.js";
+import { InitBuffers } from "./init-buffers.js";
+import { DrawScene } from "./draw-scene.js";
 
 let cubeRotation = 0.0;
 let deltaTime = 0;
@@ -12,6 +12,7 @@ function CanvasInit() {
   return canvas.getContext("webgl2")
 }
 
+/** Returns 2D context. */
 function DebugCanvasInit() {
   const canvas = document.getElementById("debug-canvas")
   const resolution_factor = 3
@@ -20,25 +21,17 @@ function DebugCanvasInit() {
   return canvas.getContext("2d")
 }
 
-
-
-// Execution will block until shader src is fetched.
-// Vertex and fragment shader programs.
-const gVertexShader = await (await fetch("vertex.glsl")).text()
-const gFragmentShader = await (await fetch("fragment.glsl")).text()
-
-// Get the ttfs and use opentype to parse.
-const jetbrains_mono_url = 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf';
-let jetbrains_mono_opentype = null
-opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
-// Wait until jetbrains_mono_opentype is loaded
-while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
-// Get path and iterate through commands.
-const hhh = jetbrains_mono_opentype.charToGlyph('G')
-const h_path = hhh.getPath()
-
 // OpenType proof of concept below.
 {
+  // Get the ttfs and use opentype to parse.
+  const jetbrains_mono_url = 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf';
+  let jetbrains_mono_opentype = null
+  opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
+  // Wait until jetbrains_mono_opentype is loaded
+  while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
+  // Get path and iterate through commands.
+  const hhh = jetbrains_mono_opentype.charToGlyph('G')
+  const h_path = hhh.getPath()
   // Get debug 2d canvas debug visualization.
   const debug_ctx = DebugCanvasInit()
   // Set transform to normalize and center the glyph
@@ -83,7 +76,7 @@ const h_path = hhh.getPath()
   // End of proof of concept.
 }
 
-function RoomMain() {
+async function RoomMain() {
   const gl = CanvasInit()
   if (!gl) {
     console.error("WebGL not supported")
@@ -92,17 +85,14 @@ function RoomMain() {
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  // Enable back-face culling
-  // gl.enable(gl.CULL_FACE);
-  // gl.cullFace(gl.BACK); // Cull front-facing faces to show the interior
-
   // Build shader.
-  const shaderProgram = initShaderProgram(gl, gVertexShader, gFragmentShader)
+  const vertex_shader_src = await (await fetch("vertex.glsl")).text()
+  const fragment_shader_src = await (await fetch("fragment.glsl")).text()
+  const shaderProgram = initShaderProgram(gl, vertex_shader_src, fragment_shader_src)
 
   // Collect all the info needed to use the shader program.
-  // Look up which attributes our shader program is using
-  // for aVertexPosition, aTextureCoord and also
-  // look up uniform locations.
+  // Look up which attributes our shader program is using for aVertexPosition, aTextureCoord and also look up uniform locations.
+  // IE configure inputs into glsl script.
   const programInfo = {
     program: shaderProgram,
     attribLocations: {
@@ -118,39 +108,31 @@ function RoomMain() {
 
   // Here's where we call the routine that builds all the
   // objects we'll be drawing.
-  const buffers = initBuffers(gl);
+  const buffers = InitBuffers(gl);
 
   // Load texture
   const textures = [
-    loadTexture(gl, "funny.webp"), // Front
-    loadTexture(gl, "funny.webp"), // Back
-    loadTexture(gl, "funny.webp"), // Top
-    loadTexture(gl, "funny.webp"), // Bottom
-    loadTexture(gl, "funny.webp"), // Right // NOTE: right-left swapped to show interior perspective.
-    loadTexture(gl, "funny.webp"), // Left // NOTE: right-left swapped to show interior perspective.
+    LoadTexture(gl, "funny.webp"), // Front.
+    LoadTexture(gl, "funny.webp"), // Back.
+    LoadTexture(gl, "funny.webp"), // Top.
+    LoadTexture(gl, "funny.webp"), // Bottom.
+    LoadTexture(gl, "funny.webp"), // Right.
+    LoadTexture(gl, "funny.webp"), // Left.
   ]
-  // Hard code some modifications to the texture orientations.
-  // Flip the textures vertically for left, right, back, and front walls.
-  textures.forEach((texture, index) => {
-    if (index === 0 || index === 1 || index === 4 || index === 5) {
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      // gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    }
-  });
 
   // Draw the scene repeatedly
   let then = 0;
-  function render(now) {
+  function RenderScene(now) {
     now *= 0.001; // convert to seconds
     deltaTime = now - then;
     then = now;
 
-    drawScene(gl, programInfo, buffers, textures, cubeRotation);
+    DrawScene(gl, programInfo, buffers, textures, cubeRotation);
     cubeRotation += deltaTime;
 
-    requestAnimationFrame(render);
+    requestAnimationFrame(RenderScene);
   }
-  requestAnimationFrame(render);
+  requestAnimationFrame(RenderScene);
 }
 
 // Initial call.
@@ -173,11 +155,7 @@ function initShaderProgram(gl, vsSource, fsSource) {
   // If creating the shader program failed, alert
 
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-    alert(
-      `Unable to initialize the shader program: ${gl.getProgramInfoLog(
-        shaderProgram,
-      )}`,
-    );
+    alert(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`);
     return null;
   }
 
@@ -216,15 +194,13 @@ function loadShader(gl, type, source) {
 // Initialize a texture and load an image.
 // When the image finished loading copy it into the texture.
 //
-function loadTexture(gl, url) {
-  const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+function LoadTexture(gl, url) {
+  const texture = gl.createTexture(); // Empty texture.
+  gl.bindTexture(gl.TEXTURE_2D, texture); // Bind empty texture to gl context's current texture.
 
-  // Because images have to be downloaded over the internet
-  // they might take a moment until they are ready.
-  // Until then put a single pixel in the texture so we can
-  // use it immediately. When the image has finished downloading
-  // we'll update the texture with the contents of the image.
+  // Because images have to be downloaded over the internet they might take a moment until they are ready.
+  // Until then put a single pixel in the texture so we can use it immediately.
+  // When the image has finished downloading we'll update the texture with the contents of the image.
   const level = 0;
   const internalFormat = gl.RGBA;
   const width = 1;
@@ -233,7 +209,7 @@ function loadTexture(gl, url) {
   const srcFormat = gl.RGBA;
   const srcType = gl.UNSIGNED_BYTE;
   const pixel = new Uint8Array([0, 0, 0, 0]); // Transparent black.
-  gl.texImage2D(
+  gl.texImage2D( // This function is a setter.
     gl.TEXTURE_2D,
     level,
     internalFormat,

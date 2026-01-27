@@ -1,9 +1,9 @@
-function initBuffers(gl) {
-  const positionBuffer = initPositionBuffer(gl);
+function InitBuffers(gl) {
+  const positionBuffer = InitPositionBuffer(gl);
 
-  const textureCoordBuffer = initTextureBuffer(gl);
+  const textureCoordBuffer = InitTextureBuffer(gl);
 
-  const indexBuffer = initIndexBuffer(gl);
+  const indexBuffer = InitIndexBuffer(gl);
 
   return {
     position: positionBuffer,
@@ -12,7 +12,7 @@ function initBuffers(gl) {
   };
 }
 
-function initPositionBuffer(gl) {
+function InitPositionBuffer(gl) {
   // Create a buffer for the square's positions.
   const positionBuffer = gl.createBuffer();
 
@@ -82,7 +82,7 @@ function initColorBuffer(gl) {
   return colorBuffer;
 }
 
-function initIndexBuffer(gl) {
+function InitIndexBuffer(gl) {
   const indexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
@@ -111,7 +111,7 @@ function initIndexBuffer(gl) {
   return indexBuffer;
 }
 
-function initTextureBuffer(gl) {
+function InitTextureBuffer(gl) {
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
@@ -139,4 +139,4 @@ function initTextureBuffer(gl) {
   return textureCoordBuffer;
 }
 
-export { initBuffers };
+export { InitBuffers };
