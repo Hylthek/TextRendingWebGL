@@ -11,50 +11,55 @@ import { LoadTexture } from "./load-texture.js";
   opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
   // Wait until jetbrains_mono_opentype is loaded
   while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
-  // Get path and iterate through commands.
-  const hhh = jetbrains_mono_opentype.charToGlyph('G')
-  const h_path = hhh.getPath()
   // Get debug 2d canvas debug visualization.
+  /**@type {CanvasRenderingContext2D} */
   const debug_ctx = DebugCanvasInit()
-  // Set transform to normalize and center the glyph
-  {
-    const glyph_bb = h_path.getBoundingBox()
-    const x1 = glyph_bb.x1
-    const y1 = glyph_bb.y1
-    const x2 = glyph_bb.x2
-    const y2 = glyph_bb.y2
-    const canvas = debug_ctx.canvas;
-    const scale = Math.min(canvas.width / (x2 - x1), canvas.height / (y2 - y1));
-    const translateX = (canvas.width - (x2 - x1) * scale) / 2 - x1 * scale;
-    const translateY = (canvas.height - (y2 - y1) * scale) / 2 - y1 * scale;
-    debug_ctx.setTransform(scale, 0, 0, scale, translateX, translateY);
+
+  function render(now) {
+    debug_ctx.reset()
+    debug_ctx.clearRect(0, 0, debug_ctx.canvas.width, debug_ctx.canvas.height);
+    // Get path and iterate through commands.
+    const my_char = String.fromCharCode(now / 200 % (127 - 32) + 32)
+    // const my_char = String.fromCharCode(0x2588)
+    const glyph = jetbrains_mono_opentype.charToGlyph(my_char)
+    // console.log(my_char, my_char.charCodeAt(0))
+    const glyph_path = glyph.path // Gets raw, unscaled path object.
+    // Set transform to arbitrarily center the glyph.
+    const scale = 0.25
+    const translateX = 230
+    const translateY = 270
+    debug_ctx.setTransform(scale, 0, 0, -scale, translateX, translateY); // Flip vertically.
+    debug_ctx.lineWidth = 2 / scale
+    // Draw path manually to 2d canvas.
+    debug_ctx.beginPath()
+    glyph_path.commands.forEach((command) => {
+      switch (command.type) {
+        case 'M':
+          debug_ctx.moveTo(command.x, command.y)
+          break;
+        case 'L':
+          debug_ctx.lineTo(command.x, command.y)
+          break;
+        case 'Q': // We forgo bezier curves for this proof of concept.
+          debug_ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
+          break;
+        case 'C': // We forgo bezier curves for this proof of concept.
+          debug_ctx.bezierCurveTo(command.x1, command.y1, command.x2, command.y2, command.x, command.y)
+          break;
+        case 'Z':
+          debug_ctx.stroke()
+          break;
+        default:
+          console.error("Unhandled opentype command: " + command.type)
+      }
+    })
+    // Draw BB.
+    const bbox = glyph.getBoundingBox();
+    debug_ctx.strokeStyle = "red";
+    debug_ctx.strokeRect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1);
+    requestAnimationFrame(render)
   }
-  // Draw path manually to 2d canvas.
-  debug_ctx.beginPath()
-  h_path.commands.forEach((command) => {
-    switch (command.type) {
-      case 'M':
-        debug_ctx.moveTo(command.x, command.y)
-        break;
-      case 'L':
-        debug_ctx.lineTo(command.x, command.y)
-        break;
-      case 'Q': // We forgo bezier curves for this proof of concept.
-        debug_ctx.lineTo(command.x1, command.y1)
-        debug_ctx.lineTo(command.x, command.y)
-        break;
-      case 'C': // We forgo bezier curves for this proof of concept.
-        debug_ctx.lineTo(command.x1, command.y1)
-        debug_ctx.lineTo(command.x2, command.y2)
-        debug_ctx.lineTo(command.x, command.y)
-        break;
-      case 'Z':
-        debug_ctx.fill()
-        break;
-      default:
-        console.error("Unhandled opentype command: " + command.type)
-    }
-  })
+  requestAnimationFrame(render)
   // End of proof of concept.
 }
 
