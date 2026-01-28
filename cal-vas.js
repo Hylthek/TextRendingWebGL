@@ -7,10 +7,14 @@ import { LoadTexture } from "./load-texture.js";
 {
   // Get the ttfs and use opentype to parse.
   const jetbrains_mono_url = 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf';
+  const inter_url = 'inter_ttf/Inter_18pt-Regular.ttf';
   let jetbrains_mono_opentype = null
+  let inter_opentype = null
   opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
-  // Wait until jetbrains_mono_opentype is loaded
+  opentype.load(inter_url, (err, font) => { inter_opentype = font });
+  // Wait until opentype fonts are loaded
   while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
+  while (inter_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
   // Get debug 2d canvas debug visualization.
   /**@type {CanvasRenderingContext2D} */
   const debug_ctx = DebugCanvasInit()
@@ -19,13 +23,14 @@ import { LoadTexture } from "./load-texture.js";
     debug_ctx.reset()
     debug_ctx.clearRect(0, 0, debug_ctx.canvas.width, debug_ctx.canvas.height);
     // Get path and iterate through commands.
-    const my_char = String.fromCharCode(now / 200 % (127 - 32) + 32)
+    const my_char = String.fromCharCode(now / 100 % (2 ** 16))
+    // const my_char = String.fromCharCode(now / 200 % (127 - 32) + 32)
     // const my_char = String.fromCharCode(0x2588)
-    const glyph = jetbrains_mono_opentype.charToGlyph(my_char)
+    const glyph = inter_opentype.charToGlyph(my_char)
     // console.log(my_char, my_char.charCodeAt(0))
     const glyph_path = glyph.path // Gets raw, unscaled path object.
     // Set transform to arbitrarily center the glyph.
-    const scale = 0.25
+    const scale = 0.1
     const translateX = 230
     const translateY = 270
     debug_ctx.setTransform(scale, 0, 0, -scale, translateX, translateY); // Flip vertically.
@@ -45,6 +50,7 @@ import { LoadTexture } from "./load-texture.js";
           break;
         case 'C': // We forgo bezier curves for this proof of concept.
           debug_ctx.bezierCurveTo(command.x1, command.y1, command.x2, command.y2, command.x, command.y)
+          console.warn("Using cubic Bezier curve.")
           break;
         case 'Z':
           debug_ctx.stroke()
