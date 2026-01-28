@@ -18,21 +18,20 @@ import { LoadTexture } from "./load-texture.js";
   // Get debug 2d canvas debug visualization.
   /**@type {CanvasRenderingContext2D} */
   const debug_ctx = DebugCanvasInit()
-
   function render(now) {
     debug_ctx.reset()
     debug_ctx.clearRect(0, 0, debug_ctx.canvas.width, debug_ctx.canvas.height);
     // Get path and iterate through commands.
-    const my_char = String.fromCharCode(now / 100 % (2 ** 16))
-    // const my_char = String.fromCharCode(now / 200 % (127 - 32) + 32)
+    // const my_char = String.fromCharCode(now / 100 % (2 ** 16))
+    const my_char = String.fromCharCode(now / 200 % (127 - 32) + 32)
     // const my_char = String.fromCharCode(0x2588)
     const glyph = inter_opentype.charToGlyph(my_char)
     // console.log(my_char, my_char.charCodeAt(0))
     const glyph_path = glyph.path // Gets raw, unscaled path object.
-    // Set transform to arbitrarily center the glyph.
-    const scale = 0.1
-    const translateX = 230
-    const translateY = 270
+    // Set transform to center and normalize the char with id 0x2588.
+    const scale = 200 / inter_opentype.unitsPerEm
+    const translateX = debug_ctx.canvas.width / 2 - (glyph_path.getBoundingBox().x1 + glyph_path.getBoundingBox().x2) / 2 * scale
+    const translateY = debug_ctx.canvas.height / 2 + (glyph_path.getBoundingBox().y1 + glyph_path.getBoundingBox().y2) / 2 * scale
     debug_ctx.setTransform(scale, 0, 0, -scale, translateX, translateY); // Flip vertically.
     debug_ctx.lineWidth = 2 / scale
     // Draw path manually to 2d canvas.
