@@ -41,7 +41,6 @@ async function OpenTypeDemo(ctx) {
       ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
     })
     ctx.stroke()
-    console.log('asdf')
   // Draw BB.
   const bbox = glyph.getBoundingBox();
   ctx.strokeStyle = "red";
