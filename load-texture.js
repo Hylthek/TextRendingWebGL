@@ -1,4 +1,7 @@
 /** Initialize a texture and load an image. When the image finished loading copy it into the texture. */
+/**
+ * @param {WebGL2RenderingContext} gl
+ */
 function LoadTexture(gl, url) {
   const texture = gl.createTexture(); // Empty texture.
   gl.bindTexture(gl.TEXTURE_2D, texture); // Bind empty texture to gl context's current texture.
@@ -61,12 +64,13 @@ function isPowerOf2(value) {
   return (value & (value - 1)) === 0;
 }
 
-
 /**
  * Loads a WebGL texture that contains quadratic curve data.
  * @param {WebGL2RenderingContext} gl
- * @param {Array<Array<uint8>>} quad_2d_array
- * A 2D array where rows are quadratic curve data and columns are faces.
+ * @param {Array<Array<Float32>>} quad_2d_array
+ * A 2D array where idx = (quad, face).
+ * @returns {WebGLTexture}
+ * A WebGL texture where the u-axis selects quad and the v-axis selects face. Workaround for no SSBOs.
  */
 function LoadQuadTexture(gl, quad_2d_array) {
   const texture = gl.createTexture()
@@ -74,15 +78,17 @@ function LoadQuadTexture(gl, quad_2d_array) {
 
   // Fill texture with quad_2d_array.
   const level = 0;
-  const internalFormat = gl.LUMINANCE;
-  const width = quad_2d_array.width; // Moving along width changes to a different quadratic bezier curve on the same face.
-  const height = 2;
-  const border = 0;
-  const format = gl.LUMINANCE;
-  const type = gl.UNSIGNED_BYTE;
-  const data = new Uint8Array(quad_2d_array.flat());
+  const internalFormat = gl.RGBA32F;
+  const width = quad_2d_array.length; // Moving along width changes to a different face. First idx.
+  const height = quad_2d_array[0].length; // Moving along height changes to a different quad curve. Second idx.
+  const border = 0; // Must be 0.
+  const format = gl.RGBA;
+  const type = gl.FLOAT;
+  const data = new Float32Array(quad_2d_array.flat());
   gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border,
-    format, type, data);
+    format, type, data); // This function populates data by ascending the u axis before ascending the v-axis.
+
+  return texture;
 }
 
 export { LoadTexture }
