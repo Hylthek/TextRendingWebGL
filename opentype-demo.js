@@ -21,7 +21,7 @@ async function OpenTypeDemo(ctx) {
     // const my_char = String.fromCharCode(now / 100 % (2 ** 16))
     const my_char = String.fromCharCode(now / 300 % (127 - 32) + 32)
     // const my_char = String.fromCharCode(0x2588)
-    // const my_char = '4'
+    // const my_char = 'O'
     const glyph = inter_opentype.charToGlyph(my_char)
     const glyph_path = glyph.path // Gets raw, unscaled path object.
     // Set transform to center and normalize the char with id 0x2588.
@@ -33,26 +33,23 @@ async function OpenTypeDemo(ctx) {
     // Draw path manually to 2d canvas. Turn everything into quad curves and manually save previous locations.
     const desequentialized_commands = DesequentializeCommands(glyph_path.commands)
     const scrambled_commands = shuffle(desequentialized_commands)
+    ctx.beginPath()
     scrambled_commands.forEach((command) => {
-      switch (command.type) {
-        case 'Q':
-          ctx.beginPath()
-          ctx.moveTo(command.x0, command.y0)
-          ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
-          ctx.stroke()
-          break;
-        default:
-          console.error("Command isn't a quadratic curve: " + command.type)
-      }
+      if (command.type != 'Q')
+        console.error("Command isn't a quadratic curve: " + command.type)
+      ctx.moveTo(command.x0, command.y0)
+      ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
     })
-    // Draw BB.
-    const bbox = glyph.getBoundingBox();
-    ctx.strokeStyle = "red";
-    ctx.strokeRect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1);
+    ctx.stroke()
+    console.log('asdf')
+  // Draw BB.
+  const bbox = glyph.getBoundingBox();
+  ctx.strokeStyle = "red";
+  ctx.strokeRect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1);
 
-    requestAnimationFrame(render)
-  }
   requestAnimationFrame(render)
+}
+requestAnimationFrame(render)
   // End of proof of concept.
 }
 
