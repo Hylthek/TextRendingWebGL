@@ -1,3 +1,6 @@
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ */
 async function OpenTypeDemo(ctx) {
   // Get the ttfs and use opentype to parse.
   const jetbrains_mono_url = 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf';
@@ -16,49 +19,131 @@ async function OpenTypeDemo(ctx) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     // Get path and iterate through commands.
     // const my_char = String.fromCharCode(now / 100 % (2 ** 16))
-    const my_char = String.fromCharCode(now / 200 % (127 - 32) + 32)
+    const my_char = String.fromCharCode(now / 300 % (127 - 32) + 32)
     // const my_char = String.fromCharCode(0x2588)
+    // const my_char = '4'
     const glyph = inter_opentype.charToGlyph(my_char)
-    // console.log(my_char, my_char.charCodeAt(0))
     const glyph_path = glyph.path // Gets raw, unscaled path object.
     // Set transform to center and normalize the char with id 0x2588.
     const scale = 200 / inter_opentype.unitsPerEm
-    const translateX = ctx.canvas.width / 2 - (glyph_path.getBoundingBox().x1 + glyph_path.getBoundingBox().x2) / 2 * scale
-    const translateY = ctx.canvas.height / 2 + (glyph_path.getBoundingBox().y1 + glyph_path.getBoundingBox().y2) / 2 * scale
+    const translateX = ctx.canvas.width * 0.25
+    const translateY = ctx.canvas.height * 0.75
     ctx.setTransform(scale, 0, 0, -scale, translateX, translateY); // Flip vertically.
     ctx.lineWidth = 2 / scale
-    // Draw path manually to 2d canvas.
-    ctx.beginPath()
-    glyph_path.commands.forEach((command) => {
+    // Draw path manually to 2d canvas. Turn everything into quad curves and manually save previous locations.
+    const desequentialized_commands = DesequentializeCommands(glyph_path.commands)
+    const scrambled_commands = shuffle(desequentialized_commands)
+    scrambled_commands.forEach((command) => {
       switch (command.type) {
-        case 'M':
-          ctx.moveTo(command.x, command.y)
-          break;
-        case 'L':
-          ctx.lineTo(command.x, command.y)
-          break;
-        case 'Q': // We forgo bezier curves for this proof of concept.
+        case 'Q':
+          ctx.beginPath()
+          ctx.moveTo(command.x0, command.y0)
           ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
-          break;
-        case 'C': // We forgo bezier curves for this proof of concept.
-          ctx.bezierCurveTo(command.x1, command.y1, command.x2, command.y2, command.x, command.y)
-          console.warn("Using cubic Bezier curve.")
-          break;
-        case 'Z':
           ctx.stroke()
           break;
         default:
-          console.error("Unhandled opentype command: " + command.type)
+          console.error("Command isn't a quadratic curve: " + command.type)
       }
     })
     // Draw BB.
     const bbox = glyph.getBoundingBox();
     ctx.strokeStyle = "red";
     ctx.strokeRect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1);
+
     requestAnimationFrame(render)
   }
   requestAnimationFrame(render)
   // End of proof of concept.
+}
+
+function shuffle(array) {
+  let array_out = array.slice() // Copy array.
+
+  let currentIndex = array_out.length;
+
+  // While there remain elements to shuffle...
+  while (currentIndex != 0) {
+
+    // Pick a remaining element...
+    let randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex--;
+
+    // And swap it with the current element.
+    [array_out[currentIndex], array_out[randomIndex]] = [array_out[randomIndex], array_out[currentIndex]];
+  }
+
+  return array_out
+}
+
+/**
+ * Turns an array of OpenType path commands to a version that can be accessed randomly.
+ * @param {Array<GlyphPathCommand>} commands
+ */
+function DesequentializeCommands(commands) {
+  let commands_out = commands.slice() // Copy array.
+  let prev_point = { x: null, y: null }
+  let idx_to_remove = []
+  commands_out.forEach((command, index) => {
+    switch (command.type) {
+      case 'M':
+        prev_point.x = command.x
+        prev_point.y = command.y
+        idx_to_remove.push(index)
+        break;
+      case 'L':
+        command.x0 = prev_point.x
+        command.y0 = prev_point.y
+        const midpoint_x = (prev_point.x + command.x) / 2
+        const midpoint_y = (prev_point.y + command.y) / 2
+        command.x1 = midpoint_x
+        command.y1 = midpoint_y
+        command.type = 'Q'
+        prev_point.x = command.x
+        prev_point.y = command.y
+        break;
+      case 'Q':
+        command.x0 = prev_point.x
+        command.y0 = prev_point.y
+        prev_point.x = command.x
+        prev_point.y = command.y
+        break;
+      case 'C':
+        command.x0 = prev_point.x
+        command.y0 = prev_point.y
+        const q_cp = QuadApproxCP(command)
+        command.x1 = q_cp.x
+        command.y1 = q_cp.y
+        command.x2 = undefined
+        command.y2 = undefined
+        command.type = 'Q'
+        prev_point.x = command.x
+        prev_point.y = command.y
+        break;
+      case 'Z':
+        prev_point = { x: null, y: null }
+        idx_to_remove.push(index)
+        break;
+    }
+  })
+  // Remove M and Z commands.
+  idx_to_remove.reverse()
+  idx_to_remove.forEach((idx) => {
+    commands_out.splice(idx, 1)
+  })
+
+  return commands_out
+}
+
+/**
+ * Approximate a cubic bezier with a quadratic bezier
+ * @param cubic objects with x0,x1,x2,x & y0,y1,y2,y defined. 
+ * @returns The quadratic curve's control point as an object with x and y.
+ */
+function QuadApproxCP(cubic) {
+  return {
+    x: -0.25 * (cubic.x0 + cubic.x) + 0.75 * (cubic.x1 + cubic.x2),
+    y: -0.25 * (cubic.y0 + cubic.y) + 0.75 * (cubic.y1 + cubic.y2),
+  }
 }
 
 export { OpenTypeDemo }
