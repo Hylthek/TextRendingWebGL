@@ -1,5 +1,4 @@
-function DrawScene(gl, programInfo, buffers, textures, cubeRotation, quad_data_texture) {
-
+function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_data_texture) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -42,7 +41,7 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation, quad_data_t
 
   // Set the shader program.
   gl.useProgram(programInfo.program);
-  // Set the shader attributes.
+  // Set the shader attribute buffers.
   SetPositionAttribute(gl, buffers, programInfo);
   SetTextureAttribute(gl, buffers, programInfo);
   SetFaceIndexAttribute(gl, buffers, programInfo);
@@ -50,12 +49,12 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation, quad_data_t
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
-  //
-  for (let currFace = 0; currFace < textures.length; currFace++) {
+  // Draw elements, using a different texture per 2 elements (ie 1 cube face).
+  for (let currFace = 0; currFace < image_textures.length; currFace++) {
     // Tell WebGL we want to affect texture unit 0. Nothing special about 0, currently only need one texture.
     gl.activeTexture(gl.TEXTURE0);
     // Bind the texture to texture unit 0.
-    gl.bindTexture(gl.TEXTURE_2D, textures[currFace]);
+    gl.bindTexture(gl.TEXTURE_2D, image_textures[currFace]);
     // Tell the shader we bound the texture to texture unit 0
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0); // Just declares a glsl_int = 0.
     // And the quad data texture on unit 1.
@@ -64,6 +63,7 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation, quad_data_t
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.
     const offset = currFace * 12 // each face contains 12 bytes of data.
+    // Note, buffers dont get used up, they persist and an offset picks new data.
 
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
   }
