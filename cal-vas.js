@@ -1,7 +1,7 @@
 import { InitBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { InitShaderProgram } from "./init-shader-program.js";
-import { LoadTexture } from "./load-texture.js";
+import { LoadImageTexture } from "./load-texture.js";
 import { OpenTypeDemo } from './opentype-demo.js'
 
 // OpenType proof of concept via 2d canvas.
@@ -43,12 +43,12 @@ async function RoomMain() {
 
   // Load texture
   const textures = [
-    LoadTexture(gl, "funny.webp"), // Front.
-    LoadTexture(gl, "funny.webp"), // Back.
-    LoadTexture(gl, "funny.webp"), // Top.
-    LoadTexture(gl, "funny.webp"), // Bottom.
-    LoadTexture(gl, "funny.webp"), // Right.
-    LoadTexture(gl, "funny.webp"), // Left.
+    LoadImageTexture(gl, "funny.webp"), // Front.
+    LoadImageTexture(gl, "funny.webp"), // Back.
+    LoadImageTexture(gl, "funny.webp"), // Top.
+    LoadImageTexture(gl, "funny.webp"), // Bottom.
+    LoadImageTexture(gl, "funny.webp"), // Right.
+    LoadImageTexture(gl, "funny.webp"), // Left.
   ]
 
   // Draw the scene repeatedly

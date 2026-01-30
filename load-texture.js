@@ -2,7 +2,7 @@
 /**
  * @param {WebGL2RenderingContext} gl
  */
-function LoadTexture(gl, url) {
+function LoadImageTexture(gl, url) {
   const texture = gl.createTexture(); // Empty texture.
   gl.bindTexture(gl.TEXTURE_2D, texture); // Bind empty texture to gl context's current texture.
 
@@ -55,7 +55,7 @@ function LoadTexture(gl, url) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     }
   };
-  image.src = url;
+  image.src = url; // Starts the image loading.
 
   return texture;
 }
@@ -91,4 +91,4 @@ function LoadQuadTexture(gl, quad_2d_array) {
   return texture;
 }
 
-export { LoadTexture }
+export { LoadImageTexture }
