@@ -3,12 +3,12 @@ function InitBuffers(gl) {
 
   const textureCoordBuffer = InitTextureBuffer(gl);
 
-  const indexBuffer = InitIndexBuffer(gl);
+  const elementIndicesBuffer = InitIndexBuffer(gl); // Unreferenced.
 
   return {
     position: positionBuffer,
     textureCoord: textureCoordBuffer,
-    indices: indexBuffer,
+    elementIndices: elementIndicesBuffer, // Unreferenced.
   };
 }
 
@@ -114,19 +114,19 @@ function InitTextureBuffer(gl) {
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
-  const textureCoordinates = [ // Rotated to hardcode correct texture rotation.
+  const textureCoordinates = [ // Two floats per vertex.
     // Front
-    1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, // 180deg
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Back
-    0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, // 90deg CCW
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Top
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0, // None
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Bottom
-    1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, // 90deg CW
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Right
-    0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, // 90deg CCW
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Left
-    1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, // 180deg
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
   ];
 
   gl.bufferData(

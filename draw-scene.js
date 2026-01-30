@@ -108,7 +108,10 @@ function SetColorAttribute(gl, buffers, programInfo) {
   gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
 }
 
-// tell webgl how to pull out the texture coordinates from buffer
+/**
+ * Tell webgl how to pull out the texture coordinates from buffer
+ * @param {WebGL2RenderingContext} gl 
+ */
 function SetTextureAttribute(gl, buffers, programInfo) {
   const num = 2; // every coordinate composed of 2 values
   const type = gl.FLOAT; // the data in the buffer is 32-bit float
