@@ -1,7 +1,7 @@
 import { InitBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { InitShaderProgram } from "./init-shader-program.js";
-import { LoadImageTexture } from "./load-texture.js";
+import { LoadImageTexture, LoadQuadTexture } from "./load-texture.js";
 import { OpenTypeDemo } from './opentype-demo.js'
 
 // OpenType proof of concept via 2d canvas.
@@ -42,7 +42,7 @@ async function RoomMain() {
   const buffers = InitBuffers(gl);
 
   // Load texture
-  const textures = [
+  const image_textures = [
     LoadImageTexture(gl, "funny.webp"), // Front.
     LoadImageTexture(gl, "funny.webp"), // Back.
     LoadImageTexture(gl, "funny.webp"), // Top.
@@ -51,10 +51,26 @@ async function RoomMain() {
     LoadImageTexture(gl, "funny.webp"), // Left.
   ]
 
+  // Turn sample text into arrays of OpenType path commands.
+  const demo_paths_face1 = [
+    { x0: Math.random(), y0: Math.random(), x1: Math.random(), y1: Math.random(), x: Math.random(), y: Math.random(), },
+    { x0: Math.random(), y0: Math.random(), x1: Math.random(), y1: Math.random(), x: Math.random(), y: Math.random(), },
+  ]
+  const demo_paths_face2 = [
+    { x0: Math.random(), y0: Math.random(), x1: Math.random(), y1: Math.random(), x: Math.random(), y: Math.random(), },
+  ]
+
+  // Turn quad commands into quad arrays
+  const demo_quads_face1 = CommandsToQuadArray(demo_paths_face1)
+  const demo_quads_face2 = CommandsToQuadArray(demo_paths_face2)
+
+  // Load quad data texture.
+  const quad_data_texture = LoadQuadTexture(gl, [demo_quads_face1, demo_quads_face2])
+
   // Draw the scene repeatedly
   function RenderScene(now) {
     const cube_rotation = now / 1000;
-    DrawScene(gl, programInfo, buffers, textures, cube_rotation);
+    DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture);
 
     requestAnimationFrame(RenderScene);
   }
@@ -79,4 +95,19 @@ function DebugCanvasInit() {
   canvas.width = canvas.clientWidth * resolution_factor; // Resolution * res_factor
   canvas.height = canvas.clientHeight * resolution_factor; // Resolution * res_factor
   return canvas.getContext("2d")
+}
+
+/**
+ * Turns an array of QuadCurve objects into a buffer of FLOATs.
+ * @param {Array<QuadCurve>} commands
+ * @returns {Array<Number>} An array whose length is a multiple of 4.
+ */
+function CommandsToQuadArray(commands, metadata1 = 0, metadata2 = 0) {
+  const output = commands.map(command => {
+    return [
+      command.x0, command.y0, command.x1, command.y1,
+      command.x, command.y, metadata1, metadata2,
+    ]
+  })
+  return output.flat()
 }

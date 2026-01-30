@@ -1,4 +1,4 @@
-function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
+function DrawScene(gl, programInfo, buffers, textures, cubeRotation, quad_data_texture) {
 
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
