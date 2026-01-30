@@ -69,7 +69,7 @@ function isPowerOf2(value) {
  * @param {WebGL2RenderingContext} gl
  * @param {Array<Array<Float32>>} quad_jagged_array
  * A jagged array where idx = (face, quad).  
- * Each quad contains 3 2Dpoints and 2 metadata numbers, ie 8 FLOATs.  
+ * Each quad contains 3 2D-points and 2 metadata numbers, ie 8 FLOATs.  
  * This data will be split among two rgba pixels.  
  * Every sub-array in the parameter must have a length%4==0 or an error is thrown.
  * @returns {WebGLTexture}
