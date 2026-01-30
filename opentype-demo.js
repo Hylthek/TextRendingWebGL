@@ -9,27 +9,30 @@ async function OpenTypeDemo(ctx) {
   let inter_opentype = null
   opentype.load(jetbrains_mono_url, (err, font) => { jetbrains_mono_opentype = font });
   opentype.load(inter_url, (err, font) => { inter_opentype = font });
+
   // Wait until opentype fonts are loaded
   while (jetbrains_mono_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
   while (inter_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
-  // Get debug 2d canvas debug visualization.
-  /**@type {CanvasRenderingContext2D} */
+
   function render(now) {
     ctx.reset()
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    // Get path and iterate through commands.
+
+    // Get path.
     // const my_char = String.fromCharCode(now / 100 % (2 ** 16))
     const my_char = String.fromCharCode(now / 300 % (127 - 32) + 32)
     // const my_char = String.fromCharCode(0x2588)
     // const my_char = 'O'
     const glyph = inter_opentype.charToGlyph(my_char)
     const glyph_path = glyph.path // Gets raw, unscaled path object.
-    // Set transform to center and normalize the char with id 0x2588.
+
+    // Set transform to center.
     const scale = 200 / inter_opentype.unitsPerEm
     const translateX = ctx.canvas.width * 0.25
     const translateY = ctx.canvas.height * 0.75
     ctx.setTransform(scale, 0, 0, -scale, translateX, translateY); // Flip vertically.
     ctx.lineWidth = 2 / scale
+
     // Draw path manually to 2d canvas. Turn everything into quad curves and manually save previous locations.
     const desequentialized_commands = DesequentializeCommands(glyph_path.commands)
     const scrambled_commands = shuffle(desequentialized_commands)
@@ -41,14 +44,14 @@ async function OpenTypeDemo(ctx) {
       ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
     })
     ctx.stroke()
-  // Draw BB.
-  const bbox = glyph.getBoundingBox();
-  ctx.strokeStyle = "red";
-  ctx.strokeRect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1);
+    // Draw BB.
+    const bbox = glyph.getBoundingBox();
+    ctx.strokeStyle = "red";
+    ctx.strokeRect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1, bbox.y2 - bbox.y1);
 
+    requestAnimationFrame(render)
+  }
   requestAnimationFrame(render)
-}
-requestAnimationFrame(render)
   // End of proof of concept.
 }
 
