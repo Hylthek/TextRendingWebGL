@@ -58,6 +58,8 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
     gl.bindTexture(gl.TEXTURE_2D, textures[currFace]);
     // Tell the shader we bound the texture to texture unit 0
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0); // Just declares a glsl_int = 0.
+    // And the quad data texture on unit 1.
+    gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
 
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.
