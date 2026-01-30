@@ -61,7 +61,9 @@ async function RoomMain() {
 }
 RoomMain()
 
-/** Returns WebGL context. */
+/** 
+ * @returns {WebGL2RenderingContext} WebGL context.
+ */
 function CanvasInit() {
   const canvas = document.getElementById("cal-vas")
   canvas.width = canvas.clientWidth; // Resolution
