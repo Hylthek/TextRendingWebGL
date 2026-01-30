@@ -32,7 +32,7 @@ async function RoomMain() {
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
-      uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
+      uSampler: gl.getUniformLocation(shaderProgram, "uImageTexture"),
     },
   };
 
