@@ -10,7 +10,7 @@ uniform sampler2D uImageTexture;
 uniform sampler2D uQuadTexture; // A 2D texture for storing quad curve data (face, quad).
 
 // Consts
-const int kQuadTexturePxWidth = 100; // How many pixels in QuadTexture horizontally. MUST BE EVEN.
+int kQuadTexturePxWidth = 100; // How many pixels in QuadTexture horizontally. MUST BE EVEN.
 const int kQuadTexturePxHeight = 100; // Vise versa.
 
 // Builtin outputs.
@@ -30,5 +30,27 @@ void main(void) {
     float quad_u_val_l = (float(i + 1) + 0.5f) / float(kQuadTexturePxWidth);
     vec4 quad_rgba_h = texture(uQuadTexture, vec2(quad_u_val_h, face_v_val));
     vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, face_v_val));
+  }
+
+  // Color by face.
+  switch(fFaceIndex) {
+    case 0:
+      fragColor.r = 1.0;
+      break;
+    case 1:
+      fragColor.r = 0.0;
+      break;
+    case 2:
+      fragColor.g = 1.0;
+      break;
+    case 3:
+      fragColor.g = 0.0;
+      break;
+    case 4:
+      fragColor.b = 1.0;
+      break;
+    case 5:
+      fragColor.b = 0.0;
+      break;
   }
 }

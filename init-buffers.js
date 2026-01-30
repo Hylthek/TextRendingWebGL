@@ -164,6 +164,12 @@ function InitFaceIndexBuffer(gl) {
     5, 5, 5, 5,
   ];
 
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Int32Array(face_indices),
+    gl.STATIC_DRAW,
+  );
+
   return face_index_buffer;
 }
 
