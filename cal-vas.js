@@ -27,6 +27,7 @@ async function RoomMain() {
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
       textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
+      faceIndex: gl.getAttribLocation(shaderProgram, "aFaceIndex"),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),

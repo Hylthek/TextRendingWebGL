@@ -1,14 +1,18 @@
 function InitBuffers(gl) {
+  // Buffers are per-vertex, unless they are element buffers, like elementIndicesBuffer.
   const positionBuffer = InitPositionBuffer(gl);
 
   const textureCoordBuffer = InitTextureBuffer(gl);
 
   const elementIndicesBuffer = InitIndexBuffer(gl); // Unreferenced.
 
+  const faceIndexBuffer = InitFaceIndexBuffer(gl);
+
   return {
     position: positionBuffer,
     textureCoord: textureCoordBuffer,
     elementIndices: elementIndicesBuffer, // Unreferenced.
+    faceIndex: faceIndexBuffer,
   };
 }
 
@@ -136,6 +140,31 @@ function InitTextureBuffer(gl) {
   );
 
   return textureCoordBuffer;
+}
+
+/**
+ * @param {WebGL2RenderingContext} gl
+ */
+function InitFaceIndexBuffer(gl) {
+  const face_index_buffer = gl.createBuffer()
+  gl.bindBuffer(gl.ARRAY_BUFFER, face_index_buffer)
+
+  const face_indices = [ // One int per vertex.
+    // Front
+    0, 0, 0, 0,
+    // Back
+    1, 1, 1, 1,
+    // Top
+    2, 2, 2, 2,
+    // Bottom
+    3, 3, 3, 3,
+    // Right
+    4, 4, 4, 4,
+    // Left
+    5, 5, 5, 5,
+  ];
+
+  return face_index_buffer;
 }
 
 export { InitBuffers };

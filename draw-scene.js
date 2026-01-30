@@ -45,6 +45,7 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
   // Set the shader attributes.
   SetPositionAttribute(gl, buffers, programInfo);
   SetTextureAttribute(gl, buffers, programInfo);
+  SetFaceIndexAttribute(gl, buffers, programInfo);
   // Set the shader uniforms
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
@@ -61,7 +62,7 @@ function DrawScene(gl, programInfo, buffers, textures, cubeRotation) {
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.
     const offset = currFace * 12 // each face contains 12 bytes of data.
-    
+
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
   }
 }
@@ -129,6 +130,26 @@ function SetTextureAttribute(gl, buffers, programInfo) {
     offset,
   );
   gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+}
+
+/**
+ * @param {WebGL2RenderingContext} gl 
+ */
+function SetFaceIndexAttribute(gl, buffers, programInfo) {
+  const num = 1; // one uint32 per vertex. glsl only works in multiples of 32bits?
+  const type = gl.INT;
+  const stride = 0; // 0 means tightly packed, not interleaved.
+  const offset = 0;
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.faceIndex)
+  gl.vertexAttribIPointer( // This ridiculous function name has a random I in it to declare integer attributes.
+    programInfo.attribLocations.faceIndex,
+    num,
+    type,
+    stride,
+    offset,
+  );
+  gl.enableVertexAttribArray(programInfo.attribLocations.faceIndex);
 }
 
 export { DrawScene };

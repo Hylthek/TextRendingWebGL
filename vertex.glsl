@@ -1,13 +1,20 @@
-attribute vec4 aVertexPosition; // Position in 3D space of vertex.
-attribute vec2 aTextureCoord; // 
+#version 300 es
+precision highp float;
+
+in vec4 aVertexPosition; // Position in 3D space of vertex.
+in vec2 aTextureCoord;
+in int aFaceIndex; // Face index (per vertex). Last vertex in triangle is provoking.
 
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 
-varying highp vec2 _vTextureCoord; // This variable is private to the shaders and is passed directly to the frag shader.
-// Called "varying" because the fragment shader will interpolate the value between vertices.
+// These variables are private to the shaders and are passed directly to the frag shader.
+out highp vec2 vImageTextureCoord; // Default = varying = linear face interpolation.
+flat out int fFaceIndex; // Flat = no face interpolation.
 
 void main(void) {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-  _vTextureCoord = aTextureCoord;
+
+  vImageTextureCoord = aTextureCoord;
+  fFaceIndex = aFaceIndex;
 }
