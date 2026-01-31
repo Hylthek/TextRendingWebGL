@@ -42,7 +42,7 @@ void main(void) {
   // Sample image texture.
   fragColor = texture(uImageTexture, vImageTextureCoord); // texture2D() is deprecated in 300 ES.
 
-  ivec2 quad_texture_size = textureSize(uImageTexture, 0);
+  ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
   int kQuadTexturePxWidth = quad_texture_size.x;
   int kQuadTexturePxHeight = quad_texture_size.y;
 
@@ -86,6 +86,7 @@ void main(void) {
   }
 
   // Debug data output.
-  // print_val = 123456789;
-  PrintDebugOutput();
+  print_val = kQuadTexturePxWidth;
+  // print_val = kQuadTexturePxHeight;
+  PrintDebugOutput(); // Uses print_val.
 }

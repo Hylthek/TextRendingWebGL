@@ -1,3 +1,12 @@
+/**
+ * 
+ * @param {WebGL2RenderingContext} gl 
+ * @param {*} programInfo 
+ * @param {*} buffers 
+ * @param {*} image_textures 
+ * @param {*} cubeRotation 
+ * @param {*} quad_data_texture 
+ */
 function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_data_texture) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
@@ -50,17 +59,21 @@ function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
   // Bind simple uniforms.
-  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
-  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
   gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
   gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
 
+  // Bind textures.
+  // Tex0
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, image_textures[0]);
+  // Tex1
+  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
+
   // Draw elements, using a different texture per 2 elements (ie 1 cube face).
   for (let currFace = 0; currFace < image_textures.length; currFace++) {
-    // Tell WebGL we want to affect texture unit 0. Nothing special about 0, currently only need one texture.
-    gl.activeTexture(gl.TEXTURE0);
-    // Bind the texture to texture unit 0.
-    gl.bindTexture(gl.TEXTURE_2D, image_textures[currFace]);
 
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.

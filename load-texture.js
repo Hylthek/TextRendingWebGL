@@ -87,6 +87,11 @@ function LoadQuadTexture(gl, quad_jagged_array) {
   const texture = gl.createTexture()
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
+  // Set texture parameters.
+  // MinFilter and MagFilter must be changed from default since texture isn't a Po2.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
   // Fill empty spots of jagged array with zeroes.
   const quad_rect_array = JaggedToRectArray(quad_jagged_array, 0);
 
