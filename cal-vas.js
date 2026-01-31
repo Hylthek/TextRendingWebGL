@@ -131,5 +131,5 @@ function PrintCenterPixelInt32(gl) {
   for (let i = 0; i < debug_array_length; i++)
     pixel_int32[i] = ((pixel[4*i] << 24 >>> 0) + (pixel[4*i + 1] << 16) + (pixel[4*i + 2] << 8) + (pixel[4*i + 3] << 0)) >> 0;
   // Print.
-  console.log(...pixel_int32);
+  console.log(...pixel_int32.slice(0,10));
 }

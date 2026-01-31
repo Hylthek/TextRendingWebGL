@@ -87,9 +87,7 @@ void main(void) {
   }
 
   // Debug data output.
-  print_arr[1] = 69;
-  print_arr[7] = 420;
-  print_arr[99] = 123456789;
-  // print_val = kQuadTexturePxHeight;
+  print_arr[0] = kQuadTexturePxWidth;
+  print_arr[1] = kQuadTexturePxHeight;
   PrintDebugOutput(); // Uses print_val.
 }
