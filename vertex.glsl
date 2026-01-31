@@ -11,7 +11,6 @@ uniform mat4 uProjectionMatrix;
 // These variables are private to the shaders and are passed directly to the frag shader.
 out highp vec2 vImageTextureCoord; // Default = varying = linear face interpolation.
 flat out int fFaceIndex; // Flat = no face interpolation.
-out vec2 vBackgroundPositions[4];
 
 // Consts from JS.
 uniform int uScreenWidthPx;
@@ -22,6 +21,4 @@ void main(void) {
 
   vImageTextureCoord = aTextureCoord;
   fFaceIndex = aFaceIndex;
-
-  vBackgroundPositions = vec2[](vec2(0, 0), vec2(0, 1), vec2(1, 0), vec2(1, 0));
 }
