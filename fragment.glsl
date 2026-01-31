@@ -28,11 +28,9 @@ void PrintDebugOutput() {
   nums.a = print_val & 0xFF;
 
   // Draw a small square at the center of the screen.
-  float w_2 = float(uScreenWidthPx) / 2.0f;
-  float h_2 = float(uScreenHeightPx) / 2.0f;
-  const float radius = 5.0f;
-  if(gl_FragCoord.x < w_2 + radius && gl_FragCoord.y < h_2 + radius &&
-    gl_FragCoord.x > w_2 - radius && gl_FragCoord.y > h_2 - radius) {
+  float w_2 = float(uScreenWidthPx / 2) + 0.5f;
+  float h_2 = float(uScreenHeightPx / 2) + 0.5f;
+  if(gl_FragCoord.x == w_2 && gl_FragCoord.y == h_2) {
     vec4 nums_f = vec4(float(nums.r) / 255.0f, float(nums.g) / 255.0f, float(nums.b) / 255.0f, float(nums.a) / 255.0f);
     fragColor = nums_f;
   }

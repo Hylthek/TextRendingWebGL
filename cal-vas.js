@@ -115,10 +115,16 @@ function CommandsToQuadArray(commands, metadata1 = 0, metadata2 = 0) {
   return output.flat()
 }
 
+/**
+ * 
+ * @param {WebGL2RenderingContext} gl 
+ */
 function PrintCenterPixelInt32(gl) {
   // Get shader debug info.
   const pixel = new Uint8Array(4);
-  gl.readPixels(gl.canvas.width / 2, gl.canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+  const gl_w_2_i = Math.floor(gl.canvas.width / 2);
+  const gl_h_2_i = Math.floor(gl.canvas.height / 2);
+  gl.readPixels(gl_w_2_i, gl_h_2_i, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
   // Convert pixel to int32.
   let pixel_int32 = ((pixel[0] << 24 >>> 0) + (pixel[1] << 16) + (pixel[2] << 8) + (pixel[3] << 0)) >> 0;
   // Print.
