@@ -54,26 +54,38 @@ async function RoomMain() {
   ]
 
   // Turn sample text into arrays of OpenType path commands.
-  const demo_paths_face1 = [
-    { x0: Math.random(), y0: Math.random(), x1: Math.random(), y1: Math.random(), x: Math.random(), y: Math.random(), },
-    { x0: Math.random(), y0: Math.random(), x1: Math.random(), y1: Math.random(), x: Math.random(), y: Math.random(), },
-  ]
-  const demo_paths_face2 = [
-    { x0: Math.random(), y0: Math.random(), x1: Math.random(), y1: Math.random(), x: Math.random(), y: Math.random(), },
-  ]
+  const demo_paths = [
+  [
+    { x0: 1.01, y0: 1.02, x1: 1.03, y1: 1.04, x: 1.05, y: 1.06, },
+    { x0: 1.11, y0: 1.12, x1: 1.13, y1: 1.14, x: 1.15, y: 1.16, },
+  ],
+  [
+    { x0: 2.01, y0: 2.02, x1: 2.03, y1: 2.04, x: 2.05, y: 2.06, },
+    { x0: 2.11, y0: 2.12, x1: 2.13, y1: 2.14, x: 2.15, y: 2.16, },
+  ],
+  [
+    { x0: 3.01, y0: 3.02, x1: 3.03, y1: 3.04, x: 3.05, y: 3.06, },
+    { x0: 3.11, y0: 3.12, x1: 3.13, y1: 3.14, x: 3.15, y: 3.16, },
+  ],
+  [
+    { x0: 4.01, y0: 4.02, x1: 4.03, y1: 4.04, x: 4.05, y: 4.06, },
+    { x0: 4.11, y0: 4.12, x1: 4.13, y1: 4.14, x: 4.15, y: 4.16, },
+  ],
+  [
+    { x0: 5.01, y0: 5.02, x1: 5.03, y1: 5.04, x: 5.05, y: 5.06, },
+    { x0: 5.11, y0: 5.12, x1: 5.13, y1: 5.14, x: 5.15, y: 5.16, },
+  ],
+  [
+    { x0: 6.01, y0: 6.02, x1: 6.03, y1: 6.04, x: 6.05, y: 6.06, },
+    { x0: 6.11, y0: 6.12, x1: 6.13, y1: 6.14, x: 6.15, y: 6.16, },
+  ],
+]
 
   // Turn quad commands into quad arrays
-  const demo_quads_face1 = CommandsToQuadArray(demo_paths_face1)
-  const demo_quads_face2 = CommandsToQuadArray(demo_paths_face2)
+  const demo_quads = demo_paths.map(path => {return CommandsToQuadArray(path);})
 
   // Load quad data texture.
-  console.log(
-    ...demo_quads_face1.map(foo => { return Math.floor(foo * 1000) })
-  );
-  console.log(
-    ...demo_quads_face2.map(foo => { return Math.floor(foo * 1000) }),
-  );
-  const quad_data_texture = LoadQuadTexture(gl, [demo_quads_face1, demo_quads_face2])
+  const quad_data_texture = LoadQuadTexture(gl, demo_quads)
 
   // Draw the scene repeatedly
   function RenderScene(now) {
