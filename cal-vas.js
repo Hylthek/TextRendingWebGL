@@ -73,15 +73,7 @@ async function RoomMain() {
   function RenderScene(now) {
     const cube_rotation = now / 1000;
     DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture);
-
-    // Get shader debug info.
-    const pixels = new Uint8Array(4);
-    gl.readPixels(gl.canvas.width / 2, gl.canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    // Convert pixel to int32.
-    let pixel_int32 = ((pixels[0] << 24 >>> 0) + (pixels[1] << 16) + (pixels[2] << 8) + (pixels[3] << 0)) >> 0;
-    // Print.
-    console.log(pixel_int32);
-
+    PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
 
@@ -121,4 +113,14 @@ function CommandsToQuadArray(commands, metadata1 = 0, metadata2 = 0) {
     ]
   })
   return output.flat()
+}
+
+function PrintCenterPixelInt32(gl) {
+  // Get shader debug info.
+  const pixel = new Uint8Array(4);
+  gl.readPixels(gl.canvas.width / 2, gl.canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+  // Convert pixel to int32.
+  let pixel_int32 = ((pixel[0] << 24 >>> 0) + (pixel[1] << 16) + (pixel[2] << 8) + (pixel[3] << 0)) >> 0;
+  // Print.
+  console.log(pixel_int32);
 }
