@@ -33,7 +33,9 @@ async function RoomMain() {
       projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
       modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
       uSampler: gl.getUniformLocation(shaderProgram, "uImageTexture"),
-      uQuadTexture: gl.getUniformLocation(shaderProgram, "uQuadTexture")
+      uQuadTexture: gl.getUniformLocation(shaderProgram, "uQuadTexture"),
+      uScreenWidthPx: gl.getUniformLocation(shaderProgram, "uScreenWidthPx"),
+      uScreenHeightPx: gl.getUniformLocation(shaderProgram, "uScreenHeightPx"),
     },
   };
 
@@ -72,8 +74,17 @@ async function RoomMain() {
     const cube_rotation = now / 1000;
     DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture);
 
+    // Get shader debug info.
+    const pixels = new Uint8Array(4);
+    gl.readPixels(gl.canvas.width / 2, gl.canvas.height / 2, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+    // Convert pixel to int32.
+    let pixel_int32 = ((pixels[0] << 24 >>> 0) + (pixels[1] << 16) + (pixels[2] << 8) + (pixels[3] << 0)) >> 0;
+    // Print.
+    console.log(pixel_int32);
+
     requestAnimationFrame(RenderScene);
   }
+
   requestAnimationFrame(RenderScene);
 }
 RoomMain()

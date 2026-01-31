@@ -49,16 +49,18 @@ function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
+  // Bind simple uniforms.
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
+  gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
+  gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
+
   // Draw elements, using a different texture per 2 elements (ie 1 cube face).
   for (let currFace = 0; currFace < image_textures.length; currFace++) {
     // Tell WebGL we want to affect texture unit 0. Nothing special about 0, currently only need one texture.
     gl.activeTexture(gl.TEXTURE0);
     // Bind the texture to texture unit 0.
     gl.bindTexture(gl.TEXTURE_2D, image_textures[currFace]);
-    // Tell the shader we bound the texture to texture unit 0
-    gl.uniform1i(programInfo.uniformLocations.uSampler, 0); // Just declares a glsl_int = 0.
-    // And the quad data texture on unit 1.
-    gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
 
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.
