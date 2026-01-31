@@ -18,19 +18,22 @@ uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
 // For debugging. Called at end of main().
-highp int print_val;
+const int debug_array_length = 100;
+highp int print_arr[debug_array_length];
 void PrintDebugOutput() {
-  // Convert print_val:short to vec4.
-  ivec4 nums;
-  nums.r = (print_val >> 24) & 0xFF;
-  nums.g = (print_val >> 16) & 0xFF;
-  nums.b = (print_val >> 8) & 0xFF;
-  nums.a = print_val & 0xFF;
-
-  // Draw a small square at the center of the screen.
-  float w_2 = float(uScreenWidthPx / 2) + 0.5f;
+  // Draw a data-rich line at the center of the screen, extending right.
+  float w_2 = float(uScreenWidthPx / 2) + 0.5f; // Pixel must have coords ending in .5
   float h_2 = float(uScreenHeightPx / 2) + 0.5f;
-  if(gl_FragCoord.x == w_2 && gl_FragCoord.y == h_2) {
+  if(gl_FragCoord.x >= w_2 && gl_FragCoord.x < w_2 + float(debug_array_length) && gl_FragCoord.y == h_2) {
+    // Get current pixel in line.
+    int curr_pixel = int(gl_FragCoord.x - w_2);
+    // Convert print_val:short to vec4.
+    ivec4 nums;
+    nums.r = (print_arr[curr_pixel] >> 24) & 0xFF;
+    nums.g = (print_arr[curr_pixel] >> 16) & 0xFF;
+    nums.b = (print_arr[curr_pixel] >> 8) & 0xFF;
+    nums.a = print_arr[curr_pixel] & 0xFF;
+    // Then to floats.
     vec4 nums_f = vec4(float(nums.r) / 255.0f, float(nums.g) / 255.0f, float(nums.b) / 255.0f, float(nums.a) / 255.0f);
     fragColor = nums_f;
   }
@@ -84,7 +87,9 @@ void main(void) {
   }
 
   // Debug data output.
-  print_val = kQuadTexturePxWidth;
+  print_arr[1] = 69;
+  print_arr[7] = 420;
+  print_arr[99] = 123456789;
   // print_val = kQuadTexturePxHeight;
   PrintDebugOutput(); // Uses print_val.
 }

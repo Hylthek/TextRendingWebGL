@@ -37,7 +37,7 @@ function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      [0, 0, -5],
+      [0, 0, -3],
     ); // amount to translate
     const sin = Math.sin // Alias.
     mat4.rotate(
