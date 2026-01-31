@@ -67,6 +67,12 @@ async function RoomMain() {
   const demo_quads_face2 = CommandsToQuadArray(demo_paths_face2)
 
   // Load quad data texture.
+  console.log(
+    ...demo_quads_face1.map(foo => { return Math.floor(foo * 1000) })
+  );
+  console.log(
+    ...demo_quads_face2.map(foo => { return Math.floor(foo * 1000) }),
+  );
   const quad_data_texture = LoadQuadTexture(gl, [demo_quads_face1, demo_quads_face2])
 
   // Draw the scene repeatedly
@@ -129,7 +135,7 @@ function PrintCenterPixelInt32(gl) {
   // Convert pixel to int32.
   let pixel_int32 = new Int32Array(debug_array_length);
   for (let i = 0; i < debug_array_length; i++)
-    pixel_int32[i] = ((pixel[4*i] << 24 >>> 0) + (pixel[4*i + 1] << 16) + (pixel[4*i + 2] << 8) + (pixel[4*i + 3] << 0)) >> 0;
+    pixel_int32[i] = ((pixel[4 * i] << 24 >>> 0) + (pixel[4 * i + 1] << 16) + (pixel[4 * i + 2] << 8) + (pixel[4 * i + 3] << 0)) >> 0;
   // Print.
-  console.log(...pixel_int32.slice(0,10));
+  console.log(...pixel_int32.slice(0, 16));
 }

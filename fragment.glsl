@@ -1,6 +1,5 @@
 #version 300 es
 precision highp float;
-#define INFINITE_LOOP_MAX_ITERATIONS 10
 
 // Shader externs.
 in highp vec2 vImageTextureCoord; // This variable is private to the shaders and is grabbed directly from the vert shader.
@@ -43,25 +42,43 @@ void main(void) {
   // Sample image texture.
   fragColor = texture(uImageTexture, vImageTextureCoord); // texture2D() is deprecated in 300 ES.
 
+  // Get the dimensions of uQuadTexture.
   ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
   int kQuadTexturePxWidth = quad_texture_size.x;
   int kQuadTexturePxHeight = quad_texture_size.y;
 
-  // The current face as a texture v value.
-  float face_v_val = (float(fFaceIndex) + 0.5f) / float(kQuadTexturePxHeight);
+  // Use faceIndex for vertical accessing of uQuadTexture.
+  float quad_texture_v = (float(fFaceIndex) + 0.5f) / float(kQuadTexturePxHeight);
+  // Dynamic-sized for-loop.
+  const int INFINITE_LOOP_MAX_ITERATIONS = 100;
+  for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
+    int curr_px = curr_quad * 2;
 
-  for(int i = 0; i < INFINITE_LOOP_MAX_ITERATIONS; i += 2) { // Uniforms init to 0.
-    // The current quad (high and low data) as texture u values.
-    float quad_u_val_h = (float(i + 0) + 0.5f) / float(kQuadTexturePxWidth);
-    float quad_u_val_l = (float(i + 1) + 0.5f) / float(kQuadTexturePxWidth);
-
-    // quad_rgba_h has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
-    // quad_rgba_l has rbgaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
-    vec4 quad_rgba_h = texture(uQuadTexture, vec2(quad_u_val_h, face_v_val));
-    vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, face_v_val));
-
-    if(i >= quad_texture_size.x)
+    // Validate infinite loop hasn't run out.
+    if(curr_quad == INFINITE_LOOP_MAX_ITERATIONS) {
+      fragColor = vec4(1, 0, 0, 1); // Error color.
+      return;
+    }
+    // Break condition.
+    if(curr_px == quad_texture_size.x)
       break;
+
+    // The current quad (left and right pixels) as texture u values.
+    float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
+    float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
+    // quad_rgba_l has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
+    // quad_rgba_r has rbgaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
+    vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
+    vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
+
+    print_arr[8 * curr_quad + 0] = int(quad_rgba_l.r * 1000.0f);
+    print_arr[8 * curr_quad + 1] = int(quad_rgba_l.g * 1000.0f);
+    print_arr[8 * curr_quad + 2] = int(quad_rgba_l.b * 1000.0f);
+    print_arr[8 * curr_quad + 3] = int(quad_rgba_l.a * 1000.0f);
+    print_arr[8 * curr_quad + 4] = int(quad_rgba_r.r * 1000.0f);
+    print_arr[8 * curr_quad + 5] = int(quad_rgba_r.g * 1000.0f);
+    print_arr[8 * curr_quad + 6] = int(quad_rgba_r.b * 1000.0f);
+    print_arr[8 * curr_quad + 7] = int(quad_rgba_r.a * 1000.0f);
   }
 
   // Color by face.
@@ -87,7 +104,5 @@ void main(void) {
   }
 
   // Debug data output.
-  print_arr[0] = kQuadTexturePxWidth;
-  print_arr[1] = kQuadTexturePxHeight;
   PrintDebugOutput(); // Uses print_val.
 }
