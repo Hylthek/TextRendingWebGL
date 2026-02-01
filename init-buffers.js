@@ -119,17 +119,17 @@ function InitTextureBuffer(gl) {
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
   const textureCoordinates = [ // Two floats per vertex.
-    // Front
+    // Front idx 0
     0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Back
+    // Back idx 1
+    1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+    // Top idx 2
     0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Top
+    // Bottom idx 3
     0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Bottom
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Right
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Left
+    // Right idx 4
+    1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
+    // Left idx 5
     0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
   ];
 

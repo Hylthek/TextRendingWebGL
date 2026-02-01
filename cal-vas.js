@@ -54,35 +54,15 @@ async function RoomMain() {
   ]
 
   // Turn sample text into arrays of OpenType path commands.
-  const demo_paths = [
-  [
-    { x0: 1.01, y0: 1.02, x1: 1.03, y1: 1.04, x: 1.05, y: 1.06, },
-    { x0: 1.11, y0: 1.12, x1: 1.13, y1: 1.14, x: 1.15, y: 1.16, },
-  ],
-  [
-    { x0: 2.01, y0: 2.02, x1: 2.03, y1: 2.04, x: 2.05, y: 2.06, },
-    { x0: 2.11, y0: 2.12, x1: 2.13, y1: 2.14, x: 2.15, y: 2.16, },
-  ],
-  [
-    { x0: 3.01, y0: 3.02, x1: 3.03, y1: 3.04, x: 3.05, y: 3.06, },
-    { x0: 3.11, y0: 3.12, x1: 3.13, y1: 3.14, x: 3.15, y: 3.16, },
-  ],
-  [
-    { x0: 4.01, y0: 4.02, x1: 4.03, y1: 4.04, x: 4.05, y: 4.06, },
-    { x0: 4.11, y0: 4.12, x1: 4.13, y1: 4.14, x: 4.15, y: 4.16, },
-  ],
-  [
-    { x0: 5.01, y0: 5.02, x1: 5.03, y1: 5.04, x: 5.05, y: 5.06, },
-    { x0: 5.11, y0: 5.12, x1: 5.13, y1: 5.14, x: 5.15, y: 5.16, },
-  ],
-  [
-    { x0: 6.01, y0: 6.02, x1: 6.03, y1: 6.04, x: 6.05, y: 6.06, },
-    { x0: 6.11, y0: 6.12, x1: 6.13, y1: 6.14, x: 6.15, y: 6.16, },
-  ],
-]
+  const demo_paths = Array(6).fill(
+    [
+      { x0: 0.5, y0: 0.1, x1: 0.1, y1: 0.5, x: 0.5, y: 0.9, }, // Starts at bottom, curves CW to top.
+      { x0: 0.5, y0: 0.9, x1: 0.9, y1: 0.5, x: 0.5, y: 0.1, }, // Starts at top, curves CW to bottom.
+    ]
+  )
 
   // Turn quad commands into quad arrays
-  const demo_quads = demo_paths.map(path => {return CommandsToQuadArray(path);})
+  const demo_quads = demo_paths.map(path => { return CommandsToQuadArray(path); })
 
   // Load quad data texture.
   const quad_data_texture = LoadQuadTexture(gl, demo_quads)
@@ -90,7 +70,7 @@ async function RoomMain() {
   // Draw the scene repeatedly
   function RenderScene(now) {
     const cube_rotation = now / 1000;
-    DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture);
+    DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture, gMovementSpeed);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
@@ -149,5 +129,35 @@ function PrintCenterPixelInt32(gl) {
   for (let i = 0; i < debug_array_length; i++)
     pixel_int32[i] = ((pixel[4 * i] << 24 >>> 0) + (pixel[4 * i + 1] << 16) + (pixel[4 * i + 2] << 8) + (pixel[4 * i + 3] << 0)) >> 0;
   // Print.
-  console.log(...pixel_int32.slice(0, 16));
+  const strings = Array.from(pixel_int32).map(num => num.toString().padStart(4, " "));
+  console.log(...strings.slice(0, 16));
+  // console.log(...strings.slice(0, 16));
 }
+
+let gMovementSpeed = {
+  x: 0,
+  y: 0
+}
+// Add event listener for arrow keys
+document.addEventListener("keydown", (event) => {
+  switch (event.key) {
+    case "ArrowUp":
+      gMovementSpeed.y++
+      break;
+    case "ArrowDown":
+      gMovementSpeed.y--
+      break;
+    case "ArrowLeft":
+      gMovementSpeed.x--
+      break;
+    case "ArrowRight":
+      gMovementSpeed.x++
+      break;
+    case " ":
+      gMovementSpeed.x = 0;
+      gMovementSpeed.y = 0;
+      break;
+    default:
+      break;
+  }
+});

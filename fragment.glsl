@@ -38,9 +38,29 @@ void PrintDebugOutput() {
   }
 }
 
+int QuadraticNumSols(float a, float b, float c) {
+  float discriminant = b * b - 4.0f * a * c;
+  if(discriminant < 0.0f)
+    return 0;
+  if(discriminant == 0.0f || (abs(a) < 0.01f && abs(b) > 0.01f))
+    return 1;
+  return 2;
+}
+
+float SolveQuadratic(float a, float b, float c, bool lesser_sol) {
+  if(lesser_sol)
+    return (-b - sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
+  return (-b + sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
+}
+
+vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
+  float u = 1.0f - t;
+  return u * u * p0 + 2.0f * u * t * p1 + t * t * p2;
+}
+
 void main(void) {
   // Sample image texture.
-  fragColor = texture(uImageTexture, vImageTextureCoord); // texture2D() is deprecated in 300 ES.
+  // fragColor = texture(uImageTexture, vImageTextureCoord); // texture2D() is deprecated in 300 ES.
 
   // Get the dimensions of uQuadTexture.
   ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
@@ -49,59 +69,178 @@ void main(void) {
 
   // Use faceIndex for vertical accessing of uQuadTexture.
   float quad_texture_v = (float(fFaceIndex) + 0.5f) / float(kQuadTexturePxHeight);
-  // Dynamic-sized for-loop.
+
+  // Signed running count that increments upon exiting a quad and decrements upon entering a quad.
+  int intersection_count = 0;
+  // Loop through all quads for this face.
   const int INFINITE_LOOP_MAX_ITERATIONS = 100;
   for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
-    int curr_px = curr_quad * 2;
 
     // Validate infinite loop hasn't run out.
     if(curr_quad == INFINITE_LOOP_MAX_ITERATIONS) {
-      fragColor = vec4(1, 0, 0, 1); // Error color.
+      fragColor = vec4(0.93f, 0.0f, 1.0f, 1.0f); // Error color.
       return;
     }
     // Break condition.
-    if(curr_px == quad_texture_size.x)
+    int curr_px = curr_quad * 2;
+    if(curr_px == kQuadTexturePxWidth)
       break;
 
     // The current quad (left and right pixels) as texture u values.
     float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
     float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
     // quad_rgba_l has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
-    // quad_rgba_r has rbgaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
+    // quad_rgba_r has rgbaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
     vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
     vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
+    // No-more-quads break condition.
+    if(quad_rgba_l.r == 0.0f && quad_rgba_l.g == 0.0f && quad_rgba_l.b == 0.0f && quad_rgba_l.a == 0.0f)
+      break;
 
-    print_arr[8 * curr_quad + 0] = int(quad_rgba_l.r * 1000.0f);
-    print_arr[8 * curr_quad + 1] = int(quad_rgba_l.g * 1000.0f);
-    print_arr[8 * curr_quad + 2] = int(quad_rgba_l.b * 1000.0f);
-    print_arr[8 * curr_quad + 3] = int(quad_rgba_l.a * 1000.0f);
-    print_arr[8 * curr_quad + 4] = int(quad_rgba_r.r * 1000.0f);
-    print_arr[8 * curr_quad + 5] = int(quad_rgba_r.g * 1000.0f);
-    print_arr[8 * curr_quad + 6] = int(quad_rgba_r.b * 1000.0f);
-    print_arr[8 * curr_quad + 7] = int(quad_rgba_r.a * 1000.0f);
+    // Quad curve control points in reference frame where current fragment is the origin.
+    vec2 origin = vImageTextureCoord; // We use this for now.
+    vec2 p0 = quad_rgba_l.rg - origin;
+    vec2 p1 = quad_rgba_l.ba - origin;
+    vec2 p2 = quad_rgba_r.rg - origin;
+
+    // Parse out a b & c for the quadratic equation for quad intersections (where the curve has y=0).
+    float a = p0.y - 2.0f * p1.y + p2.y;
+    float b = -2.0f * (p0.y - p1.y);
+    float c = p0.y;
+
+    // print_arr[1] = int(a * 1000.0f);
+    // print_arr[2] = int(b * 1000.0f);
+    // print_arr[3] = int(c * 1000.0f);
+
+    // if(curr_quad == 0) {
+    //   print_arr[0] = int(p0.x * 1000.0f);
+    //   print_arr[1] = int(p0.y * 1000.0f);
+    //   print_arr[2] = int(p1.x * 1000.0f);
+    //   print_arr[3] = int(p1.y * 1000.0f);
+    //   print_arr[4] = int(p2.x * 1000.0f);
+    //   print_arr[5] = int(p2.y * 1000.0f);
+    // }
+    // if(curr_quad == 1) {
+    //   print_arr[6] = int(p0.y * 1000.0f);
+    //   print_arr[7] = int(p1.x * 1000.0f);
+    //   print_arr[8] = int(p1.y * 1000.0f);
+    //   print_arr[9] = int(p2.x * 1000.0f);
+    //   print_arr[10] = int(p2.y * 1000.0f);
+    // }
+
+    // Branch based on number of intersections.
+    switch(QuadraticNumSols(a, b, c)) {
+      case 0:
+        break;
+      case 1:
+        // fragColor = vec4(0, 0, 0, 1);
+        // return;
+
+        // If a isn't 0, this quadratic is tangent with the x-axis raycast.
+        // If b is 0, line is horizontal and doesn't intersect raycast.
+        if(abs(a) > 0.01f || abs(b) < 0.01f)
+          break;
+        // Calculate t-value of intersection with quad curve.
+        float t = -c / b;
+        bool is_entry = b > 0.0f;
+
+        if(t < 0.0f || t >= 1.0f || EvalQuad(p0, p1, p2, t).x < 0.0f)
+          break;
+        if(is_entry) {
+          print_arr[0]++;
+          intersection_count--;
+        } else {
+          print_arr[1]++;
+          intersection_count++;
+        }
+        break;
+      case 2:
+        // Process the lesser and then the greater quadratic formula solutions.
+        for(int i = 0; i < 2; i++) {
+          // Calculate t-values of intersections with quad curves.
+          float t = SolveQuadratic(a, b, c, i == 0);
+          // print_arr[0] = int(t * 1000.0f);
+          // Check if t is within the curve.
+          // Check if intersection isn't left of rightward raycast.
+          if(t < 0.0f || t >= 1.0f || EvalQuad(p0, p1, p2, t).x < 0.0f)
+            continue;
+          // Determine if it is an entry point or an exit point.
+          // It's an entry if the solution is the greater one.
+          bool is_entry = (i == 1);
+          if(is_entry) {
+            print_arr[2]++;
+            intersection_count--;
+          } else {
+            print_arr[3]++;
+            if (i == 0)
+              print_arr[3] *= 7;
+            if (i == 1)
+              print_arr[3] *= 11;
+            intersection_count++;
+          }
+        }
+        break;
+      default:
+        fragColor = vec4(0.0f, 0.27f, 1.0f, 1.0f);
+        return;
+    }
+
+    if(curr_quad == 0) {
+      print_arr[4] = int(a * 1000.0f);
+      print_arr[5] = int(b * 1000.0f);
+      print_arr[6] = int(c * 1000.0f);
+    } else {
+      print_arr[7] = int(a * 1000.0f);
+      print_arr[8] = int(b * 1000.0f);
+      print_arr[9] = int(c * 1000.0f);
+    }
+
+    // Print debug info.
+    // print_arr[6 * curr_quad + 0] = int(p0.x * 1000.0f);
+    // print_arr[6 * curr_quad + 1] = int(p0.y * 1000.0f);
+    // print_arr[6 * curr_quad + 2] = int(p1.x * 1000.0f);
+    // print_arr[6 * curr_quad + 3] = int(p1.y * 1000.0f);
+    // print_arr[6 * curr_quad + 4] = int(p2.x * 1000.0f);
+    // print_arr[6 * curr_quad + 5] = int(p2.y * 1000.0f);
+  }
+
+  // Use intersection_count to color fragment.
+  switch(intersection_count) {
+    default:
+      fragColor = vec4(1, 1, 0, 1);
+      break;
+    case -1:
+      fragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);
+      break;
+    case 0:
+      fragColor = vec4(1, 1, 1, 1);
+      break;
+    case 1:
+      fragColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
+      break;
   }
 
   // Color by face.
-  switch(fFaceIndex) {
-    case 0:
-      fragColor.r = 1.0f;
-      break;
-    case 1:
-      fragColor.r = 0.0f;
-      break;
-    case 2:
-      fragColor.g = 1.0f;
-      break;
-    case 3:
-      fragColor.g = 0.0f;
-      break;
-    case 4:
-      fragColor.b = 1.0f;
-      break;
-    case 5:
-      fragColor.b = 0.0f;
-      break;
-  }
+  // switch(fFaceIndex) {
+  //   case 0:
+  //     fragColor.r = 1.0f;
+  //     break;
+  //   case 1:
+  //     fragColor.r = 0.0f;
+  //     break;
+  //   case 2:
+  //     fragColor.g = 1.0f;
+  //     break;
+  //   case 3:
+  //     fragColor.g = 0.0f;
+  //     break;
+  //   case 4:
+  //     fragColor.b = 1.0f;
+  //     break;
+  //   case 5:
+  //     fragColor.b = 0.0f;
+  //     break;
+  // }
 
   // Debug data output.
   PrintDebugOutput(); // Uses print_val.
