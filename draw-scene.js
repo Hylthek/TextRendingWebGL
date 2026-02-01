@@ -29,10 +29,10 @@ function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
     const zFar = 20.0;
-    // mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-    const foo = 2
-    const bar = foo / aspect
-    mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, zNear, zFar) // Projection matrix that takes the specified box to the unit cube.
+    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+    // const foo = 2
+    // const bar = foo / aspect
+    // mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, zNear, zFar) // Projection matrix that takes the specified box to the unit cube.
   }
 
   // Create the modelViewMatrix which is only named that because we only have one 3D solid.
@@ -42,21 +42,21 @@ function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      [gCurrPos.x, gCurrPos.y, -3],
+      [gCurrPos.x, gCurrPos.y, -5],
     ); // amount to translate
     const sin = Math.sin // Alias.
-    // mat4.rotate(
-    //   modelViewMatrix, // destination matrix
-    //   modelViewMatrix, // matrix to rotate
-    //   -0.1, // amount to rotate in radians
-    //   [1, 0, 0],
-    // );
-    // mat4.rotate(
-    //   modelViewMatrix, // destination matrix
-    //   modelViewMatrix, // matrix to rotate
-    //   cubeRotation / 4, // amount to rotate in radians
-    //   [0, 1, 0],
-    // );
+    mat4.rotate(
+      modelViewMatrix, // destination matrix
+      modelViewMatrix, // matrix to rotate
+      0.5, // amount to rotate in radians
+      [1, 0, 0],
+    );
+    mat4.rotate(
+      modelViewMatrix, // destination matrix
+      modelViewMatrix, // matrix to rotate
+      cubeRotation / 4, // amount to rotate in radians
+      [0, 1, 0],
+    );
 
     // Update movement speed.
     gCurrPos.x += movement_speed.x * 0.001;
