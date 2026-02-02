@@ -57,18 +57,18 @@ async function CalvasMain() {
   // Turn sample text into arrays of OpenType path commands.
   const commands_per_face = [
     await StringToCommands(
-      'Hello\nJetBrains Mono!',
+      'Hello\nJetBrains\nMono!',
       'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
       0,
-      50,
+      100,
       18
     ),
     await StringToCommands(
       'Hello\nInter!',
       'inter_ttf/Inter_24pt-Regular.ttf',
       0,
-      50,
-      18
+      100,
+      28
     )
   ]
 

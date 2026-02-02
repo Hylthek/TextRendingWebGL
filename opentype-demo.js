@@ -67,8 +67,11 @@ class MyQuadCommand {
 }
 
 /**
- * @param {String} string_in 
- * @param {String} font_url 
+ * Creates an array of MyQuadCommands that draws the text provided.  
+ * @param {String} string_in String to draw.
+ * @param {String} font_url Url of the ttf file.
+ * @param {number} x x of the top-left of the string block.
+ * @param {number} y y of the top-left of the string block.
  * @returns {Array<MyQuadCommand>}
  */
 async function StringToCommands(string_in, font_url, x = 0, y = 0, font_size = 72) {
@@ -79,9 +82,12 @@ async function StringToCommands(string_in, font_url, x = 0, y = 0, font_size = 7
 
   // Split string into separate lines.
   const lines = string_in.split('\n');
-  // Get path for each line. This function works on canvas (x, y) conventions.
+  // Get path for each line.
+  // This function works on canvas (x, y) conventions,
+  // whereas the current function works on standard (x, y) convention.
+  // Negate y parameter and shift down by one line.
   const line_paths = lines.map(
-    (line, idx) => font_opentype.getPath(line, x, -y + idx * font_size, font_size)
+    (line, idx) => font_opentype.getPath(line, x, -(y - (idx + 1) * font_size), font_size)
   )
   // Get combined commands array.
   const string_commands = line_paths.map(path => path.commands).flat();
