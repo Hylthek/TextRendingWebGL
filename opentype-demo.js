@@ -71,24 +71,28 @@ class MyQuadCommand {
  * @param {String} font_url 
  * @returns {Array<MyQuadCommand>}
  */
-async function StringToCommands(string_in, font_url) {
+async function StringToCommands(string_in, font_url, x = 0, y = 0, font_size = 72) {
   // Get the ttf and wait until opentype font is loaded.
   let font_opentype = null
   opentype.load(font_url, (err, font) => { font_opentype = font });
   while (font_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
 
-  // Get path.
-  const string_path = font_opentype.getPath(string_in, 0, -100, 72);
-  // Flip it vertically.
-  const string_commands_flipped = string_path.commands.map(command => {
+  // Split string into separate lines.
+  const lines = string_in.split('\n');
+  // Get path for each line. This function works on canvas (x, y) conventions.
+  const line_paths = lines.map(
+    (line, idx) => font_opentype.getPath(line, x, -y + idx * font_size, font_size)
+  )
+  // Get combined commands array.
+  const string_commands = line_paths.map(path => path.commands).flat();
+  // font.getPath() flips text vertically, flip it back.
+  const string_commands_flipped = string_commands.map(command => {
     const output = structuredClone(command)
     output.y = -command.y;
     output.y1 = -command.y1;
     output.y2 = -command.y0;
     return output
   })
-
-  console.log(string_commands_flipped[0], string_path.commands[0])
 
   // Desequentialize the commands.
   const desequentialized_string_path = DesequentializeCommands(string_commands_flipped);

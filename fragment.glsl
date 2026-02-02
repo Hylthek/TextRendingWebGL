@@ -210,34 +210,35 @@ void main(void) {
     return;
   } else if(intersection_count == 0) {
     fragColor = vec4(1, 1, 1, 1);
-    return;
   } else {
     fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    return;
   }
 
   // Color by face.
-  // switch(fFaceIndex) {
-  //   case 0:
-  //     fragColor.r = 1.0f;
-  //     break;
-  //   case 1:
-  //     fragColor.r = 0.0f;
-  //     break;
-  //   case 2:
-  //     fragColor.g = 1.0f;
-  //     break;
-  //   case 3:
-  //     fragColor.g = 0.0f;
-  //     break;
-  //   case 4:
-  //     fragColor.b = 1.0f;
-  //     break;
-  //   case 5:
-  //     fragColor.b = 0.0f;
-  //     break;
-  // }
+  switch(fFaceIndex) {
+    case 0:
+      fragColor.r /= 2.0f;
+      break;
+    case 1:
+      fragColor.gb /= 2.0f;
+      break;
+    case 2:
+      fragColor.g /= 2.0f;
+      break;
+    case 3:
+      fragColor.rb /= 2.0f;
+      break;
+    case 4:
+      fragColor.b /= 2.0f;
+      break;
+    case 5:
+      fragColor.rg /= 2.0f;
+      break;
+  }
+
+  // Inject some texture.
+  fragColor += 1.0f * texture(uImageTexture, vImageTextureCoord);
 
   // Debug data output.
-  PrintDebugOutput(); // Uses print_val.
+  // PrintDebugOutput(); // Uses print_arr.
 }

@@ -118,7 +118,7 @@ function InitTextureBuffer(gl) {
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
-  const size = 300;
+  const size = 100;
 
   const textureCoordinates = [ // Two floats per vertex.
     // Front idx 0

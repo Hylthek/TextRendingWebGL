@@ -54,19 +54,33 @@ async function CalvasMain() {
   ]
 
   // Turn sample text into arrays of OpenType path commands.
-  const demo_paths = Array(6).fill(
-    await StringToCommands("Hello!", 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
-  )
-  // Turn quad commands into quad arrays.
-  const demo_quads = demo_paths.map(face => CommandsToQuadArray(face))
+  const commands_per_face = [
+    await StringToCommands(
+      'Hello\nJetBrains Mono!',
+      'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
+      0,
+      50,
+      18
+    ),
+    await StringToCommands(
+      'Hello\nInter!',
+      'inter_ttf/Inter_24pt-Regular.ttf',
+      0,
+      50,
+      18
+    )
+  ]
+
+  // Turn quad commands into quad jagged-arrays. Array[face][quad]
+  const quad_jagged_array = commands_per_face.map(face => CommandsToQuadArray(face))
 
   // Load quad data texture.
-  const quad_data_texture = LoadQuadTexture(gl, demo_quads)
+  const quad_data_texture = LoadQuadTexture(gl, quad_jagged_array);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
     const cube_rotation = now / 1000;
-    DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture, gMovementSpeed);
+    DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, gSphereCoords);
     // PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
@@ -130,28 +144,25 @@ function PrintCenterPixelInt32(gl) {
   // console.log(...strings.slice(0, 16));
 }
 
-let gMovementSpeed = {
-  x: 0,
-  y: 0
+let gSphereCoords = {
+  theta_deg: 0,
+  phi_deg: 0
 }
 // Add event listener for arrow keys
 document.addEventListener("keydown", (event) => {
+  const rot_speed = 3
   switch (event.key) {
     case "ArrowUp":
-      gMovementSpeed.y++
+      gSphereCoords.phi_deg -= rot_speed;
       break;
     case "ArrowDown":
-      gMovementSpeed.y--
+      gSphereCoords.phi_deg += rot_speed;
       break;
     case "ArrowLeft":
-      gMovementSpeed.x--
+      gSphereCoords.theta_deg -= rot_speed;
       break;
     case "ArrowRight":
-      gMovementSpeed.x++
-      break;
-    case " ":
-      gMovementSpeed.x = 0;
-      gMovementSpeed.y = 0;
+      gSphereCoords.theta_deg += rot_speed;
       break;
     default:
       break;

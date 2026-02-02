@@ -1,18 +1,12 @@
-let gCurrPos = {
-  x: 0,
-  y: 0
-}
-
 /**
  * 
  * @param {WebGL2RenderingContext} gl 
  * @param {*} programInfo 
  * @param {*} buffers 
  * @param {*} image_textures 
- * @param {*} cubeRotation 
  * @param {*} quad_data_texture 
  */
-function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_data_texture, movement_speed) {
+function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, sphere_coords) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -42,25 +36,20 @@ function DrawScene(gl, programInfo, buffers, image_textures, cubeRotation, quad_
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      [gCurrPos.x, gCurrPos.y, -5],
+      [0, 0, -5],
     ); // amount to translate
-    const sin = Math.sin // Alias.
     mat4.rotate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate
-      0.5, // amount to rotate in radians
+      sphere_coords.phi_deg * Math.PI / 180, // amount to rotate in radians
       [1, 0, 0],
     );
     mat4.rotate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate
-      cubeRotation / 4, // amount to rotate in radians
+      sphere_coords.theta_deg * Math.PI / 180, // amount to rotate in radians
       [0, 1, 0],
     );
-
-    // Update movement speed.
-    gCurrPos.x += movement_speed.x * 0.001;
-    gCurrPos.y += movement_speed.y * 0.001;
   }
 
   // Set the shader program.
