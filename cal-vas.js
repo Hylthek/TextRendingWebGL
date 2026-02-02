@@ -28,6 +28,7 @@ async function CalvasMain() {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
       textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
       faceIndex: gl.getAttribLocation(shaderProgram, "aFaceIndex"),
+      canvasCoord: gl.getAttribLocation(shaderProgram, "aCanvasCoord"),
     },
     uniformLocations: {
       projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),

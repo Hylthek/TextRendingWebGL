@@ -2,7 +2,9 @@ function InitBuffers(gl) {
   // Buffers are per-vertex, unless they are element buffers, like elementIndicesBuffer.
   const positionBuffer = InitPositionBuffer(gl);
 
-  const textureCoordBuffer = InitTextureBuffer(gl);
+  const textureCoordBuffer = InitTextureCoordBuffer(gl);
+
+  const canvas_coords_buffer = InitTextCanvasBuffer(gl);
 
   const elementIndicesBuffer = InitIndexBuffer(gl); // Unreferenced.
 
@@ -11,6 +13,7 @@ function InitBuffers(gl) {
   return {
     position: positionBuffer,
     textureCoord: textureCoordBuffer,
+    canvasCoord: canvas_coords_buffer,
     elementIndices: elementIndicesBuffer, // Unreferenced.
     faceIndex: faceIndexBuffer,
   };
@@ -114,34 +117,62 @@ function InitIndexBuffer(gl) {
   return indexBuffer;
 }
 
-function InitTextureBuffer(gl) {
-  const textureCoordBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+function InitTextureCoordBuffer(gl) {
+  const texture_coords_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texture_coords_buffer);
 
-  const size = 100;
-
-  const textureCoordinates = [ // Two floats per vertex.
+  const texture_coords = [ // Two floats per vertex.
     // Front idx 0
-    0.0, 0.0, size, 0.0, size, size, 0.0, size,
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Back idx 1
-    size, 0.0, size, size, 0.0, size, 0.0, 0.0,
+    1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
     // Top idx 2
-    0.0, 0.0, size, 0.0, size, size, 0.0, size,
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Bottom idx 3
-    0.0, 0.0, size, 0.0, size, size, 0.0, size,
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
     // Right idx 4
-    size, 0.0, size, size, 0.0, size, 0.0, 0.0,
+    1.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0,
     // Left idx 5
-    0.0, 0.0, size, 0.0, size, size, 0.0, size,
+    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
   ];
 
   gl.bufferData(
     gl.ARRAY_BUFFER,
-    new Float32Array(textureCoordinates),
+    new Float32Array(texture_coords),
     gl.STATIC_DRAW,
   );
 
-  return textureCoordBuffer;
+  return texture_coords_buffer;
+}
+
+function InitTextCanvasBuffer(gl) {
+  const canvas_coords_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, canvas_coords_buffer);
+
+  const c_sz = 100; // canvas_size, width and height.
+
+  const canvas_coords = [ // Two floats per vertex.
+    // Front idx 0
+    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    // Back idx 1
+    c_sz, 0.0, c_sz, c_sz, 0.0, c_sz, 0.0, 0.0,
+    // Top idx 2
+    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    // Bottom idx 3
+    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    // Right idx 4
+    c_sz, 0.0, c_sz, c_sz, 0.0, c_sz, 0.0, 0.0,
+    // Left idx 5
+    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+  ];
+
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array(canvas_coords),
+    gl.STATIC_DRAW,
+  );
+
+  return canvas_coords_buffer;
 }
 
 /**

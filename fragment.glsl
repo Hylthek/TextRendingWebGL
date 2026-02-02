@@ -3,6 +3,7 @@ precision highp float;
 
 // Shader externs.
 in highp vec2 vImageTextureCoord; // This variable is private to the shaders and is grabbed directly from the vert shader.
+in highp vec2 vCanvasCoord;
 flat in int fFaceIndex; // WebGL default states that the last vertex of a triangle is the provoking vertex, passing its aFaceIndex to the entire face.
 
 // Sampler means the current texture to use. WebGL supports multiple loaded at once (8+).
@@ -98,7 +99,7 @@ void main(void) {
       break;
 
     // Quad curve control points in reference frame where current fragment is the origin.
-    vec2 origin = vImageTextureCoord; // We use this for now.
+    vec2 origin = vCanvasCoord; // We use this for now.
     vec2 p0 = quad_rgba_l.rg - origin;
     vec2 p1 = quad_rgba_l.ba - origin;
     vec2 p2 = quad_rgba_r.rg - origin;
@@ -107,26 +108,6 @@ void main(void) {
     float a = p0.y - 2.0f * p1.y + p2.y;
     float b = -2.0f * (p0.y - p1.y);
     float c = p0.y;
-
-    // print_arr[1] = int(a * 1000.0f);
-    // print_arr[2] = int(b * 1000.0f);
-    // print_arr[3] = int(c * 1000.0f);
-
-    // if(curr_quad == 0) {
-    //   print_arr[0] = int(p0.x * 1000.0f);
-    //   print_arr[1] = int(p0.y * 1000.0f);
-    //   print_arr[2] = int(p1.x * 1000.0f);
-    //   print_arr[3] = int(p1.y * 1000.0f);
-    //   print_arr[4] = int(p2.x * 1000.0f);
-    //   print_arr[5] = int(p2.y * 1000.0f);
-    // }
-    // if(curr_quad == 1) {
-    //   print_arr[6] = int(p0.y * 1000.0f);
-    //   print_arr[7] = int(p1.x * 1000.0f);
-    //   print_arr[8] = int(p1.y * 1000.0f);
-    //   print_arr[9] = int(p2.x * 1000.0f);
-    //   print_arr[10] = int(p2.y * 1000.0f);
-    // }
 
     // Branch based on number of intersections.
     switch(QuadraticNumSols(a, b, c)) {

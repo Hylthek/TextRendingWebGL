@@ -57,6 +57,7 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
   // Set the shader attribute buffers.
   SetPositionAttribute(gl, buffers, programInfo);
   SetTextureAttribute(gl, buffers, programInfo);
+  SetCanvasAttribute(gl, buffers, programInfo);
   SetFaceIndexAttribute(gl, buffers, programInfo);
   // Set the shader uniforms
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
@@ -151,6 +152,24 @@ function SetTextureAttribute(gl, buffers, programInfo) {
     offset,
   );
   gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+}
+function SetCanvasAttribute(gl, buffers, programInfo) {
+  const num = 2; // every coordinate composed of 2 values
+  const type = gl.FLOAT; // the data in the buffer is 32-bit float
+  const normalize = false; // don't normalize
+  const stride = 0; // how many bytes to get from one set to the next
+  const offset = 0; // how many bytes inside the buffer to start from
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.canvasCoord);
+  gl.vertexAttribPointer(
+    programInfo.attribLocations.canvasCoord,
+    num,
+    type,
+    normalize,
+    stride,
+    offset,
+  );
+  gl.enableVertexAttribArray(programInfo.attribLocations.canvasCoord);
 }
 
 /**
