@@ -146,8 +146,8 @@ function PrintCenterPixelInt32(gl) {
 }
 
 let gSphereCoords = {
-  theta_deg: 0,
-  phi_deg: 0
+  theta_deg: 45,
+  phi_deg: 30
 }
 // Add event listener for arrow keys
 document.addEventListener("keydown", (event) => {

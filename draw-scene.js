@@ -38,6 +38,14 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
       modelViewMatrix, // matrix to translate
       [0, 0, -5],
     ); // amount to translate
+    const precession = 0.1;
+    const now_s = performance.now() / 1000;
+    mat4.rotate(
+      modelViewMatrix, // destination matrix
+      modelViewMatrix, // matrix to rotate
+      precession, // amount to rotate in radians
+      [Math.cos(now_s), Math.sin(now_s), 0],
+    );
     mat4.rotate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate
