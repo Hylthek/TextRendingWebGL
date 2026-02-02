@@ -73,12 +73,12 @@ void main(void) {
   // Signed running count that increments upon exiting a quad and decrements upon entering a quad.
   int intersection_count = 0;
   // Loop through all quads for this face.
-  const int INFINITE_LOOP_MAX_ITERATIONS = 100;
+  const int INFINITE_LOOP_MAX_ITERATIONS = 1000;
   for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
 
     // Validate infinite loop hasn't run out.
     if(curr_quad == INFINITE_LOOP_MAX_ITERATIONS) {
-      fragColor = vec4(0.93f, 0.0f, 1.0f, 1.0f); // Error color.
+      fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); // Error color.
       return;
     }
     // Break condition.
@@ -172,9 +172,9 @@ void main(void) {
             intersection_count--;
           } else {
             print_arr[3]++;
-            if (i == 0)
+            if(i == 0)
               print_arr[3] *= 7;
-            if (i == 1)
+            if(i == 1)
               print_arr[3] *= 11;
             intersection_count++;
           }
@@ -205,19 +205,15 @@ void main(void) {
   }
 
   // Use intersection_count to color fragment.
-  switch(intersection_count) {
-    default:
-      fragColor = vec4(1, 1, 0, 1);
-      break;
-    case -1:
-      fragColor = vec4(1.0f, 0.0f, 1.0f, 1.0f);
-      break;
-    case 0:
-      fragColor = vec4(1, 1, 1, 1);
-      break;
-    case 1:
-      fragColor = vec4(0.5f, 0.5f, 0.5f, 1.0f);
-      break;
+  if(intersection_count < 0) {
+    fragColor = vec4(1, 0, 0, 1);
+    return;
+  } else if(intersection_count == 0) {
+    fragColor = vec4(1, 1, 1, 1);
+    return;
+  } else {
+    fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    return;
   }
 
   // Color by face.

@@ -2,13 +2,13 @@ import { InitBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { InitShaderProgram } from "./init-shader-program.js";
 import { LoadImageTexture, LoadQuadTexture } from "./load-texture.js";
-import { OpenTypeDemo } from './opentype-demo.js'
+import { MyQuadCommand, OpenTypeDemo, StringToCommands } from './opentype-demo.js'
 
 // OpenType proof of concept via 2d canvas.
 const debug_ctx = DebugCanvasInit()
 await OpenTypeDemo(debug_ctx)
 
-async function RoomMain() {
+async function CalvasMain() {
   const gl = CanvasInit()
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
@@ -55,14 +55,10 @@ async function RoomMain() {
 
   // Turn sample text into arrays of OpenType path commands.
   const demo_paths = Array(6).fill(
-    [
-      { x0: 0.5, y0: 0.1, x1: 0.1, y1: 0.5, x: 0.5, y: 0.9, }, // Starts at bottom, curves CW to top.
-      { x0: 0.5, y0: 0.9, x1: 0.9, y1: 0.5, x: 0.5, y: 0.1, }, // Starts at top, curves CW to bottom.
-    ]
+    await StringToCommands("Hello!", 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   )
-
-  // Turn quad commands into quad arrays
-  const demo_quads = demo_paths.map(path => { return CommandsToQuadArray(path); })
+  // Turn quad commands into quad arrays.
+  const demo_quads = demo_paths.map(face => CommandsToQuadArray(face))
 
   // Load quad data texture.
   const quad_data_texture = LoadQuadTexture(gl, demo_quads)
@@ -71,13 +67,13 @@ async function RoomMain() {
   function RenderScene(now) {
     const cube_rotation = now / 1000;
     DrawScene(gl, programInfo, buffers, image_textures, cube_rotation, quad_data_texture, gMovementSpeed);
-    PrintCenterPixelInt32(gl);
+    // PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
 
   requestAnimationFrame(RenderScene);
 }
-RoomMain()
+CalvasMain()
 
 /** 
  * @returns {WebGL2RenderingContext} WebGL context.
@@ -100,16 +96,16 @@ function DebugCanvasInit() {
 
 /**
  * Turns an array of QuadCurve objects into a buffer of FLOATs.
- * @param {Array<QuadCurve>} commands
+ * @param {Array<MyQuadCommand>} commands
  * @returns {Array<Number>} An array whose length is a multiple of 4.
  */
 function CommandsToQuadArray(commands, metadata1 = 0, metadata2 = 0) {
-  const output = commands.map(command => {
-    return [
+  const output = commands.map(command =>
+    [
       command.x0, command.y0, command.x1, command.y1,
       command.x, command.y, metadata1, metadata2,
     ]
-  })
+  )
   return output.flat()
 }
 

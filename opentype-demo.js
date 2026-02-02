@@ -38,8 +38,6 @@ async function OpenTypeDemo(ctx) {
     const scrambled_commands = shuffle(desequentialized_commands)
     ctx.beginPath()
     scrambled_commands.forEach((command) => {
-      if (command.type != 'Q')
-        console.error("Command isn't a quadratic curve: " + command.type)
       ctx.moveTo(command.x0, command.y0)
       ctx.quadraticCurveTo(command.x1, command.y1, command.x, command.y)
     })
@@ -53,6 +51,49 @@ async function OpenTypeDemo(ctx) {
   }
   requestAnimationFrame(render)
   // End of proof of concept.
+}
+
+class MyQuadCommand {
+  constructor(quad_command) {
+    this.x0 = quad_command.x0;
+    this.y0 = quad_command.y0;
+    this.x1 = quad_command.x1;
+    this.y1 = quad_command.y1;
+    this.x = quad_command.x;
+    this.y = quad_command.y;
+    if (this.x0 === undefined || this.y0 === undefined || this.x1 === undefined || this.y1 === undefined || this.x === undefined || this.y === undefined)
+      console.error("Constructor failed.", this);
+  }
+}
+
+/**
+ * @param {String} string_in 
+ * @param {String} font_url 
+ * @returns {Array<MyQuadCommand>}
+ */
+async function StringToCommands(string_in, font_url) {
+  // Get the ttf and wait until opentype font is loaded.
+  let font_opentype = null
+  opentype.load(font_url, (err, font) => { font_opentype = font });
+  while (font_opentype === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
+
+  // Get path.
+  const string_path = font_opentype.getPath(string_in, 0, -100, 72);
+  // Flip it vertically.
+  const string_commands_flipped = string_path.commands.map(command => {
+    const output = structuredClone(command)
+    output.y = -command.y;
+    output.y1 = -command.y1;
+    output.y2 = -command.y0;
+    return output
+  })
+
+  console.log(string_commands_flipped[0], string_path.commands[0])
+
+  // Desequentialize the commands.
+  const desequentialized_string_path = DesequentializeCommands(string_commands_flipped);
+
+  return desequentialized_string_path;
 }
 
 function shuffle(array) {
@@ -77,6 +118,7 @@ function shuffle(array) {
 /**
  * Turns an array of OpenType path commands to a version that can be accessed randomly.
  * @param {Array<GlyphPathCommand>} commands
+ * @returns {Array<MyQuadCommand>}
  */
 function DesequentializeCommands(commands) {
   let commands_out = commands.slice() // Copy array.
@@ -130,7 +172,7 @@ function DesequentializeCommands(commands) {
     commands_out.splice(idx, 1)
   })
 
-  return commands_out
+  return commands_out.map(command => new MyQuadCommand(command))
 }
 
 /**
@@ -145,4 +187,4 @@ function QuadApproxCP(cubic) {
   }
 }
 
-export { OpenTypeDemo }
+export { OpenTypeDemo, StringToCommands, MyQuadCommand }
