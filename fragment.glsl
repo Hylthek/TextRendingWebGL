@@ -61,6 +61,15 @@ vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
 }
 
 void main(void) {
+
+  fragColor = vec4(
+    dFdx(vVertexPosition.x) * 10.0f,
+    dFdx(vVertexPosition.y) * 10.0f,
+    dFdx(vVertexPosition.z) * 10.0f,
+    1.0f
+  );
+  return;
+
   // Get the dimensions of uQuadTexture.
   ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
   int kQuadTexturePxWidth = quad_texture_size.x;

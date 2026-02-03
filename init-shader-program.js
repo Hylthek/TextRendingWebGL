@@ -42,6 +42,13 @@ function LoadShader(gl, type, source) {
     return null;
   }
 
+  // Print warnings (if any)
+  const infoLog = gl.getShaderInfoLog(shader);
+  if (infoLog) {
+    console.warn(`Shader compilation log (${type === gl.VERTEX_SHADER ? 'VERTEX' : 'FRAGMENT'}):`);
+    console.warn(infoLog);
+  }
+
   return shader;
 }
 
