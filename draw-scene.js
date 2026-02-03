@@ -38,8 +38,9 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
       modelViewMatrix, // matrix to translate
       [0, 0, -5],
     ); // amount to translate
-    const precession = 0//0.02;
-    const now_s = performance.now() / 1000;
+    const precession = 0.02;
+    const speed = 0.2
+    const now_s = performance.now() / 1000 * speed;
     mat4.rotate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate

@@ -69,20 +69,15 @@ void main(void) {
   // Use faceIndex for vertical accessing of uQuadTexture.
   float quad_texture_v = (float(fFaceIndex) + 0.5f) / float(kQuadTexturePxHeight);
 
-  // How much the canvas coordinate changes with an x-shift in gl_fragCoord.
-  vec2 dCanvasUVdx = dFdx(vCanvasCoord);
-
-  print_arr[0] = dCanvasUVdx.x;
-  print_arr[1] = dCanvasUVdx.y;
-  print_arr[2] = vCanvasCoord.x;
-  print_arr[3] = vCanvasCoord.y;
+  // How much the canvas coordinate changes between neighboring fragments.
+  // dFd[xy] can't be called in the dynamic loop because of shader language shenanigans, so it's called here.
+  vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
 
   // Signed running count that increments upon exiting a quad and decrements upon entering a quad.
-  int intersection_count = 0;
+  float intersection_count = 0.0f;
   // Loop through all quads for this face.
   const int INFINITE_LOOP_MAX_ITERATIONS = 1000;
   for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
-
     // Validate infinite loop hasn't run out.
     if(curr_quad == INFINITE_LOOP_MAX_ITERATIONS) {
       fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); // Error color.
@@ -120,23 +115,33 @@ void main(void) {
       case 0:
         break;
       case 1:
-        // fragColor = vec4(0, 0, 0, 1);
-        // return;
-
         // If a isn't 0, this quadratic is tangent with the x-axis raycast.
         // If b is 0, line is horizontal and doesn't intersect raycast.
         if(abs(a) > 0.01f || abs(b) < 0.01f)
           break;
+
         // Calculate t-value of intersection with quad curve.
         float t = -c / b;
-        bool is_entry = b > 0.0f;
+        // Calculate the width and height of a fragment pixel in units of vCanvasCoord coordinates.
+        float px_width = canvas_coord_fwidth.x;
+        float px_height = canvas_coord_fwidth.y;
 
-        if(t < 0.0f || t >= 1.0f || EvalQuad(p0, p1, p2, t).x < 0.0f)
+        // Invalid intersection condition.
+        vec2 point_at_t = EvalQuad(p0, p1, p2, t);
+        if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
           break;
+
+        // Calculate how much to contribute to the running total.
+        float contribution = 1.0f;
+        if(point_at_t.x > -px_width / 2.0f && point_at_t.x < px_width / 2.0f)
+          contribution = (point_at_t.x / px_width) + 0.5f;
+        // Calculate TrueType entrance or exit.
+        bool is_entry = b > 0.0f;
+        // Update the running count.
         if(is_entry) {
-          intersection_count--;
+          intersection_count -= contribution;
         } else {
-          intersection_count++;
+          intersection_count += contribution;
         }
         break;
       case 2:
@@ -144,17 +149,26 @@ void main(void) {
         for(int i = 0; i < 2; i++) {
           // Calculate t-values of intersections with quad curves.
           float t = SolveQuadratic(a, b, c, i == 0);
-          // Check if t is within the curve.
-          // Check if intersection isn't left of rightward raycast.
-          if(t < 0.0f || t >= 1.0f || EvalQuad(p0, p1, p2, t).x < 0.0f)
+          // Calculate the width and height of a fragment pixel in units of vCanvasCoord coordinates.
+          float px_width = canvas_coord_fwidth.x;
+          float px_height = canvas_coord_fwidth.y;
+
+          // Invalid intersection condition.
+          vec2 point_at_t = EvalQuad(p0, p1, p2, t);
+          if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
             continue;
-          // Determine if it is an entry point or an exit point.
-          // It's an entry if the solution is the greater one.
+
+          // Calculate how much to contribute to the running total.
+          float contribution = 1.0f;
+          if(point_at_t.x > -px_width / 2.0f && point_at_t.x < px_width / 2.0f)
+            contribution = (point_at_t.x / px_width) + 0.5f;
+          // Determine if it is an entry point or an exit point. It's an entry if the solution is the greater one.
           bool is_entry = (i == 1);
+          // Update running total
           if(is_entry) {
-            intersection_count--;
+            intersection_count -= contribution;
           } else {
-            intersection_count++;
+            intersection_count += contribution;
           }
         }
         break;
@@ -165,14 +179,14 @@ void main(void) {
   }
 
   // Use intersection_count to color fragment.
-  if(intersection_count < 0) {
+  if(intersection_count < 0.0f) {
     fragColor = vec4(1, 0, 0, 1);
     return;
-  } else if(intersection_count == 0) {
-    fragColor = vec4(1, 1, 1, 1);
-  } else {
-    fragColor = vec4(0.0f, 0.0f, 0.0f, 1.0f);
   }
+  if(intersection_count > 1.0f)
+    intersection_count = 1.0f;
+  const vec3 text_color = vec3(1, 1, 1);
+  fragColor = vec4((1.0f - intersection_count) * text_color, 1);
 
   // Color by face.
   switch(fFaceIndex) {
@@ -197,7 +211,7 @@ void main(void) {
   }
 
   // Inject some image.
-  fragColor += 1.0f * texture(uImageTexture, vImageTextureCoord);
+  fragColor += 0.2f * texture(uImageTexture, vImageTextureCoord);
 
   // Debug data output.
   PrintDebugOutput(); // Uses print_arr.
