@@ -19,7 +19,7 @@ uniform int uScreenHeightPx;
 
 // For debugging. Called at end of main().
 const int debug_array_length = 100;
-highp int print_arr[debug_array_length];
+float print_arr[debug_array_length];
 void PrintDebugOutput() {
   // Draw a data-rich line at the center of the screen, extending right.
   float w_2 = float(uScreenWidthPx / 2) + 0.5f; // Pixel must have coords ending in .5
@@ -27,12 +27,12 @@ void PrintDebugOutput() {
   if(gl_FragCoord.x >= w_2 && gl_FragCoord.x < w_2 + float(debug_array_length) && gl_FragCoord.y == h_2) {
     // Get current pixel in line.
     int curr_pixel = int(gl_FragCoord.x - w_2);
-    // Convert print_val:short to vec4.
+    // Convert print_arr:float to vec4.
     ivec4 nums;
-    nums.r = (print_arr[curr_pixel] >> 24) & 0xFF;
-    nums.g = (print_arr[curr_pixel] >> 16) & 0xFF;
-    nums.b = (print_arr[curr_pixel] >> 8) & 0xFF;
-    nums.a = print_arr[curr_pixel] & 0xFF;
+    nums.r = (int(print_arr[curr_pixel] * 1000.0f) >> 24) & 0xFF;
+    nums.g = (int(print_arr[curr_pixel] * 1000.0f) >> 16) & 0xFF;
+    nums.b = (int(print_arr[curr_pixel] * 1000.0f) >> 8) & 0xFF;
+    nums.a = int(print_arr[curr_pixel] * 1000.0f) & 0xFF;
     // Then to floats.
     vec4 nums_f = vec4(float(nums.r) / 255.0f, float(nums.g) / 255.0f, float(nums.b) / 255.0f, float(nums.a) / 255.0f);
     fragColor = nums_f;
@@ -109,6 +109,13 @@ void main(void) {
     float b = -2.0f * (p0.y - p1.y);
     float c = p0.y;
 
+    // How much the canvas coordinate changes with an x-shift in gl_fragCoord.
+    float dUdx = dFdx(vCanvasCoord.x);
+
+    print_arr[0] = dUdx;
+    print_arr[1] = vCanvasCoord.x;
+    print_arr[2] = 69.0f;
+
     // Branch based on number of intersections.
     switch(QuadraticNumSols(a, b, c)) {
       case 0:
@@ -128,10 +135,8 @@ void main(void) {
         if(t < 0.0f || t >= 1.0f || EvalQuad(p0, p1, p2, t).x < 0.0f)
           break;
         if(is_entry) {
-          print_arr[0]++;
           intersection_count--;
         } else {
-          print_arr[1]++;
           intersection_count++;
         }
         break;
@@ -140,7 +145,6 @@ void main(void) {
         for(int i = 0; i < 2; i++) {
           // Calculate t-values of intersections with quad curves.
           float t = SolveQuadratic(a, b, c, i == 0);
-          // print_arr[0] = int(t * 1000.0f);
           // Check if t is within the curve.
           // Check if intersection isn't left of rightward raycast.
           if(t < 0.0f || t >= 1.0f || EvalQuad(p0, p1, p2, t).x < 0.0f)
@@ -149,14 +153,8 @@ void main(void) {
           // It's an entry if the solution is the greater one.
           bool is_entry = (i == 1);
           if(is_entry) {
-            print_arr[2]++;
             intersection_count--;
           } else {
-            print_arr[3]++;
-            if(i == 0)
-              print_arr[3] *= 7;
-            if(i == 1)
-              print_arr[3] *= 11;
             intersection_count++;
           }
         }
@@ -165,24 +163,6 @@ void main(void) {
         fragColor = vec4(0.0f, 0.27f, 1.0f, 1.0f);
         return;
     }
-
-    if(curr_quad == 0) {
-      print_arr[4] = int(a * 1000.0f);
-      print_arr[5] = int(b * 1000.0f);
-      print_arr[6] = int(c * 1000.0f);
-    } else {
-      print_arr[7] = int(a * 1000.0f);
-      print_arr[8] = int(b * 1000.0f);
-      print_arr[9] = int(c * 1000.0f);
-    }
-
-    // Print debug info.
-    // print_arr[6 * curr_quad + 0] = int(p0.x * 1000.0f);
-    // print_arr[6 * curr_quad + 1] = int(p0.y * 1000.0f);
-    // print_arr[6 * curr_quad + 2] = int(p1.x * 1000.0f);
-    // print_arr[6 * curr_quad + 3] = int(p1.y * 1000.0f);
-    // print_arr[6 * curr_quad + 4] = int(p2.x * 1000.0f);
-    // print_arr[6 * curr_quad + 5] = int(p2.y * 1000.0f);
   }
 
   // Use intersection_count to color fragment.
@@ -217,9 +197,9 @@ void main(void) {
       break;
   }
 
-  // Inject some texture.
+  // Inject some image.
   fragColor += 1.0f * texture(uImageTexture, vImageTextureCoord);
 
   // Debug data output.
-  // PrintDebugOutput(); // Uses print_arr.
+  PrintDebugOutput(); // Uses print_arr.
 }

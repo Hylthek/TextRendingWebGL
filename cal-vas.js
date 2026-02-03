@@ -82,7 +82,7 @@ async function CalvasMain() {
   function RenderScene(now) {
     const cube_rotation = now / 1000;
     DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, gSphereCoords);
-    // PrintCenterPixelInt32(gl);
+    PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
 
@@ -137,17 +137,17 @@ function PrintCenterPixelInt32(gl) {
   gl.readPixels(gl_w_2_i, gl_h_2_i, debug_array_length, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
   // Convert pixel to int32.
   let pixel_int32 = new Int32Array(debug_array_length);
-  for (let i = 0; i < debug_array_length; i++)
+  for (let i = 0; i < debug_array_length; i++) {
     pixel_int32[i] = ((pixel[4 * i] << 24 >>> 0) + (pixel[4 * i + 1] << 16) + (pixel[4 * i + 2] << 8) + (pixel[4 * i + 3] << 0)) >> 0;
+  }
   // Print.
-  const strings = Array.from(pixel_int32).map(num => num.toString().padStart(4, " "));
+  const strings = Array.from(pixel_int32).map(num => (num/1000).toString().padStart(4, " "));
   console.log(...strings.slice(0, 16));
-  // console.log(...strings.slice(0, 16));
 }
 
 let gSphereCoords = {
   theta_deg: 45,
-  phi_deg: 30
+  phi_deg: 35.26
 }
 // Add event listener for arrow keys
 document.addEventListener("keydown", (event) => {
