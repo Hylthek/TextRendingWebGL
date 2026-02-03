@@ -141,7 +141,7 @@ void main(void) {
   float intersection_count_x = 0.0f;
   float intersection_count_y = 0.0f;
   // Loop through all quads for this face.
-  const int INFINITE_LOOP_MAX_ITERATIONS = 1000;
+  const int INFINITE_LOOP_MAX_ITERATIONS = 100000;
   for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
     // Validate infinite loop hasn't run out.
     if(curr_quad == INFINITE_LOOP_MAX_ITERATIONS) {
@@ -177,9 +177,8 @@ void main(void) {
     intersection_count_y += y_raycast_count;
   }
   float intersection_count = min(intersection_count_x, intersection_count_y);
-  if (intersection_count < 0.5f)
+  if(intersection_count < 0.5f)
     intersection_count = max(intersection_count_x, intersection_count_y);
-  print_arr[0] = intersection_count;
 
   // Use intersection_count to color fragment.
   if(intersection_count < -10.0f) {
@@ -188,34 +187,13 @@ void main(void) {
   }
   if(intersection_count > 1.0f)
     intersection_count = 1.0f;
-  const vec3 text_color = vec3(1, 1, 1);
-  fragColor = vec4((1.0f - intersection_count) * text_color, 1);
-
-  // Color by face.
-  switch(fFaceIndex) {
-    case 0:
-      fragColor.r /= 2.0f;
-      break;
-    case 1:
-      fragColor.gb /= 2.0f;
-      break;
-    case 2:
-      fragColor.g /= 2.0f;
-      break;
-    case 3:
-      fragColor.rb /= 2.0f;
-      break;
-    case 4:
-      fragColor.b /= 2.0f;
-      break;
-    case 5:
-      fragColor.rg /= 2.0f;
-      break;
-  }
-
-  // Inject some image.
-  fragColor += 0.2f * texture(uImageTexture, vImageTextureCoord);
+  const vec4 text_color = vec4(1, 1, 1, 1);
+  const float text_opacity = 0.5f;
+  vec4 tex_color = texture(uImageTexture, vImageTextureCoord);
+  float t = intersection_count * text_opacity;
+  float u = 1.0f - t;
+  fragColor = t * text_color + u * tex_color;
 
   // Debug data output.
-  PrintDebugOutput(); // Uses print_arr.
+  // PrintDebugOutput(); // Uses print_arr.
 }

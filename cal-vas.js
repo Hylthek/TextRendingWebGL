@@ -46,12 +46,12 @@ async function CalvasMain() {
 
   // Load texture
   const image_textures = [
-    LoadImageTexture(gl, "funny.webp"), // Front.
-    LoadImageTexture(gl, "funny.webp"), // Back.
-    LoadImageTexture(gl, "funny.webp"), // Top.
-    LoadImageTexture(gl, "funny.webp"), // Bottom.
-    LoadImageTexture(gl, "funny.webp"), // Right.
-    LoadImageTexture(gl, "funny.webp"), // Left.
+    LoadImageTexture(gl, "wooden-crate.webp"), // Front.
+    LoadImageTexture(gl, "wooden-crate.webp"), // Back.
+    LoadImageTexture(gl, "wooden-crate.webp"), // Top.
+    LoadImageTexture(gl, "wooden-crate.webp"), // Bottom.
+    LoadImageTexture(gl, "wooden-crate.webp"), // Right.
+    LoadImageTexture(gl, "wooden-crate.webp"), // Left.
   ]
 
   // Turn sample text into arrays of OpenType path commands.
@@ -69,6 +69,13 @@ async function CalvasMain() {
       0,
       100,
       28
+    ),
+    await StringToCommands(
+      'Hello\nCedarville\nCursive!',
+      'CedarvilleCursive-Regular.ttf',
+      0,
+      100,
+      18
     )
   ]
 
@@ -82,7 +89,7 @@ async function CalvasMain() {
   function RenderScene(now) {
     const cube_rotation = now / 1000;
     DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, gSphereCoords, gCameraPos);
-    PrintCenterPixelInt32(gl);
+    // PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
 
@@ -155,14 +162,18 @@ let gCameraPos = {
 
 // Add event listener for trackpad scrolling to smoothly change zoom level
 document.addEventListener("wheel", (event) => {
-  const zoomSensitivity = 0.001; // Adjust sensitivity as needed
+  const canvas = document.getElementById("cal-vas");
+  const canvasWidth = canvas.clientWidth;
+  const canvasHeight = canvas.clientHeight;
+
+  const zoomSensitivity = 0.001 / (Math.min(canvasWidth, canvasHeight) / 500); // Adjust sensitivity based on canvas size
   gCameraPos.zoom *= 1 - event.deltaY * zoomSensitivity;
 
   // Prevent zoom level from becoming too small or too large
   gCameraPos.zoom = Math.max(1, Math.min(1000, gCameraPos.zoom));
 
   event.preventDefault();
-});
+}, { passive: false });
 
 // Add event listener for mouse drag to rotate the sphere
 let isDragging = false;
@@ -175,11 +186,14 @@ document.addEventListener("mousedown", (event) => {
 
 document.addEventListener("mousemove", (event) => {
   if (isDragging) {
-    const deltaX = (event.clientX - previousMousePosition.x) / gCameraPos.zoom;
-    const deltaY = (event.clientY - previousMousePosition.y) / gCameraPos.zoom;
+    const canvas = document.getElementById("cal-vas");
+    const normalization_factor = canvas.clientWidth / 3;
 
-    gSphereCoords.theta_deg += deltaX * 0.5; // Adjust sensitivity as needed
-    gSphereCoords.phi_deg += deltaY * 0.5; // Adjust sensitivity as needed
+    const deltaX = (event.clientX - previousMousePosition.x) / normalization_factor / gCameraPos.zoom;
+    const deltaY = (event.clientY - previousMousePosition.y) / normalization_factor / gCameraPos.zoom;
+
+    gSphereCoords.theta_deg += deltaX * 150; // Adjust sensitivity as needed
+    gSphereCoords.phi_deg += deltaY * 150; // Adjust sensitivity as needed
 
     // Clamp phi_deg to avoid flipping
     gSphereCoords.phi_deg = Math.max(-89, Math.min(89, gSphereCoords.phi_deg));
