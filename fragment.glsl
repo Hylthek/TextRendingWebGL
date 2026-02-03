@@ -61,15 +61,6 @@ vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
 }
 
 void main(void) {
-
-  fragColor = vec4(
-    dFdx(vVertexPosition.x) * 10.0f,
-    dFdx(vVertexPosition.y) * 10.0f,
-    dFdx(vVertexPosition.z) * 10.0f,
-    1.0f
-  );
-  return;
-
   // Get the dimensions of uQuadTexture.
   ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
   int kQuadTexturePxWidth = quad_texture_size.x;
@@ -77,6 +68,14 @@ void main(void) {
 
   // Use faceIndex for vertical accessing of uQuadTexture.
   float quad_texture_v = (float(fFaceIndex) + 0.5f) / float(kQuadTexturePxHeight);
+
+  // How much the canvas coordinate changes with an x-shift in gl_fragCoord.
+  vec2 dCanvasUVdx = dFdx(vCanvasCoord);
+
+  print_arr[0] = dCanvasUVdx.x;
+  print_arr[1] = dCanvasUVdx.y;
+  print_arr[2] = vCanvasCoord.x;
+  print_arr[3] = vCanvasCoord.y;
 
   // Signed running count that increments upon exiting a quad and decrements upon entering a quad.
   int intersection_count = 0;
@@ -115,16 +114,6 @@ void main(void) {
     float a = p0.y - 2.0f * p1.y + p2.y;
     float b = -2.0f * (p0.y - p1.y);
     float c = p0.y;
-
-    // How much the canvas coordinate changes with an x-shift in gl_fragCoord.
-    vec3 dPosdx = vec3(dFdx(vVertexPosition.x), dFdx(vVertexPosition.y), dFdx(vVertexPosition.z));
-
-    print_arr[0] = dPosdx.x;
-    print_arr[1] = dPosdx.y;
-    print_arr[2] = dPosdx.z;
-    print_arr[3] = vVertexPosition.x;
-    print_arr[4] = vVertexPosition.y;
-    print_arr[5] = vVertexPosition.z;
 
     // Branch based on number of intersections.
     switch(QuadraticNumSols(a, b, c)) {
