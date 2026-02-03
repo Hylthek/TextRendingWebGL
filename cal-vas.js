@@ -81,7 +81,7 @@ async function CalvasMain() {
   // Draw the scene repeatedly
   function RenderScene(now) {
     const cube_rotation = now / 1000;
-    DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, gSphereCoords);
+    DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, gSphereCoords, gCameraPos);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
@@ -149,27 +149,49 @@ let gSphereCoords = {
   theta_deg: 45,
   phi_deg: 35.26
 }
-// Add event listener for arrow keys
-document.addEventListener("keydown", (event) => {
-  const rot_speed = 3;
-  switch (event.key) {
-    case "ArrowUp":
-      gSphereCoords.phi_deg -= rot_speed;
-      event.preventDefault();
-      break;
-    case "ArrowDown":
-      gSphereCoords.phi_deg += rot_speed;
-      event.preventDefault();
-      break;
-    case "ArrowLeft":
-      gSphereCoords.theta_deg -= rot_speed;
-      event.preventDefault();
-      break;
-    case "ArrowRight":
-      gSphereCoords.theta_deg += rot_speed;
-      event.preventDefault();
-      break;
-    default:
-      break;
+let gCameraPos = {
+  zoom: 2.5,
+}
+
+// Add event listener for trackpad scrolling to smoothly change zoom level
+document.addEventListener("wheel", (event) => {
+  const zoomSensitivity = 0.001; // Adjust sensitivity as needed
+  gCameraPos.zoom *= 1 - event.deltaY * zoomSensitivity;
+
+  // Prevent zoom level from becoming too small or too large
+  gCameraPos.zoom = Math.max(1, Math.min(1000, gCameraPos.zoom));
+
+  event.preventDefault();
+});
+
+// Add event listener for mouse drag to rotate the sphere
+let isDragging = false;
+let previousMousePosition = { x: 0, y: 0 };
+
+document.addEventListener("mousedown", (event) => {
+  isDragging = true;
+  previousMousePosition = { x: event.clientX, y: event.clientY };
+});
+
+document.addEventListener("mousemove", (event) => {
+  if (isDragging) {
+    const deltaX = (event.clientX - previousMousePosition.x) / gCameraPos.zoom;
+    const deltaY = (event.clientY - previousMousePosition.y) / gCameraPos.zoom;
+
+    gSphereCoords.theta_deg += deltaX * 0.5; // Adjust sensitivity as needed
+    gSphereCoords.phi_deg += deltaY * 0.5; // Adjust sensitivity as needed
+
+    // Clamp phi_deg to avoid flipping
+    gSphereCoords.phi_deg = Math.max(-89, Math.min(89, gSphereCoords.phi_deg));
+
+    previousMousePosition = { x: event.clientX, y: event.clientY };
   }
+});
+
+document.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
+document.addEventListener("mouseleave", () => {
+  isDragging = false;
 });

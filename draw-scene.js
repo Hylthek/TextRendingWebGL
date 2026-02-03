@@ -6,7 +6,7 @@
  * @param {*} image_textures 
  * @param {*} quad_data_texture 
  */
-function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, sphere_coords) {
+function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, sphere_coords, camera_pos) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -19,7 +19,7 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
   // Create a perspective matrix, a special matrix that is used to simulate the distortion of perspective in a camera.
   const projectionMatrix = mat4.create();
   {
-    const fieldOfView = (60 * Math.PI) / 180; // in radians
+    const fieldOfView = (150 * Math.PI) / 180 / camera_pos.zoom; // in radians
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
     const zFar = 20.0;
@@ -38,15 +38,6 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
       modelViewMatrix, // matrix to translate
       [0, 0, -5],
     ); // amount to translate
-    const precession = 0.05;
-    const speed = 0.3
-    const now_s = performance.now() / 1000 * speed;
-    mat4.rotate(
-      modelViewMatrix, // destination matrix
-      modelViewMatrix, // matrix to rotate
-      precession, // amount to rotate in radians
-      [Math.cos(now_s), Math.sin(now_s), 0],
-    );
     mat4.rotate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate
