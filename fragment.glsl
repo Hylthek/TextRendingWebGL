@@ -70,7 +70,17 @@ vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
   return u * u * p0 + 2.0f * u * t * p1 + t * t * p2;
 }
 
-float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width) {
+float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width, bool xy_flip) {
+  vec2 p0, p1, p2;
+  if(xy_flip) {
+    p0 = vec2(p0_in.y, p0_in.x);
+    p1 = vec2(p1_in.y, p1_in.x);
+    p2 = vec2(p2_in.y, p2_in.x);
+  } else {
+    p0 = p0_in;
+    p1 = p1_in;
+    p2 = p2_in;
+  }
   float a = p0.y - 2.0f * p1.y + p2.y;
   float b = -2.0f * (p0.y - p1.y);
   float c = p0.y;
@@ -79,14 +89,14 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width) {
 
   // How much the canvas coordinate changes between neighboring fragments.
   // dFd[xy] can't be called in the dynamic loop because of shader language shenanigans, so it's called here.
-  float px_width = frag_width.x;
+  float px_width = xy_flip ? frag_width.y : frag_width.x;
 
   // Linear case.
   if(QuadraticIsLinear(a, b, c)) {
     // Calc vars.
     float t = -c / b;
     vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    float entry_exit_multiplier = (b > 0.0f) ? -1.0f : 1.0f;
+    float entry_exit_multiplier = (b > 0.0f ^^ xy_flip) ? -1.0f : 1.0f;
     // Return intersection change.
     if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
       return 0.0f;
@@ -102,7 +112,7 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width) {
     // Calc vars.
     float t = SolveQuadratic(a, b, c, i == 0);
     vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    float entry_exit_multiplier = (i == 1) ? -1.0f : 1.0f; // Greater solution is the entrance.
+    float entry_exit_multiplier = (i == 1) ^^ xy_flip ? -1.0f : 1.0f; // Greater solution is the entrance.
     // Add intersection change.
     if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
       change += 0.0f;
@@ -128,7 +138,8 @@ void main(void) {
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
 
   // Signed running count that increments upon exiting a quad and decrements upon entering a quad.
-  float intersection_count = 0.0f;
+  float intersection_count_x = 0.0f;
+  float intersection_count_y = 0.0f;
   // Loop through all quads for this face.
   const int INFINITE_LOOP_MAX_ITERATIONS = 1000;
   for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
@@ -160,11 +171,18 @@ void main(void) {
     vec2 p2 = quad_rgba_r.rg - origin;
 
     // New refactored stuff.
-    intersection_count += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth);
+    float x_raycast_count = CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
+    float y_raycast_count = CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, true);
+    intersection_count_x += x_raycast_count;
+    intersection_count_y += y_raycast_count;
   }
+  float intersection_count = min(intersection_count_x, intersection_count_y);
+  if (intersection_count < 0.5f)
+    intersection_count = max(intersection_count_x, intersection_count_y);
+  print_arr[0] = intersection_count;
 
   // Use intersection_count to color fragment.
-  if(intersection_count < 0.0f) {
+  if(intersection_count < -10.0f) {
     fragColor = vec4(1, 0, 0, 1);
     return;
   }

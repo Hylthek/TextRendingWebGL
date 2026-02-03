@@ -151,19 +151,23 @@ let gSphereCoords = {
 }
 // Add event listener for arrow keys
 document.addEventListener("keydown", (event) => {
-  const rot_speed = 3
+  const rot_speed = 3;
   switch (event.key) {
     case "ArrowUp":
       gSphereCoords.phi_deg -= rot_speed;
+      event.preventDefault();
       break;
     case "ArrowDown":
       gSphereCoords.phi_deg += rot_speed;
+      event.preventDefault();
       break;
     case "ArrowLeft":
       gSphereCoords.theta_deg -= rot_speed;
+      event.preventDefault();
       break;
     case "ArrowRight":
       gSphereCoords.theta_deg += rot_speed;
+      event.preventDefault();
       break;
     default:
       break;

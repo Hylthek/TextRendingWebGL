@@ -38,8 +38,8 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
       modelViewMatrix, // matrix to translate
       [0, 0, -5],
     ); // amount to translate
-    const precession = 0.1;
-    const speed = 0.05
+    const precession = 0.05;
+    const speed = 0.3
     const now_s = performance.now() / 1000 * speed;
     mat4.rotate(
       modelViewMatrix, // destination matrix
@@ -92,7 +92,7 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
     const vertexCount = 6 // 6 vertices per face.
     const type = gl.UNSIGNED_SHORT // 2 bytes.
     const offset = currFace * 12 // each face contains 12 bytes of data.
-    // Note, buffers dont get used up, they persist and an offset picks new data.
+    // Note, buffers don't get used up, they persist and an offset picks new data.
 
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
   }
