@@ -154,87 +154,13 @@ void main(void) {
       break;
 
     // Quad curve control points in reference frame where current fragment is the origin.
-    vec2 origin = vCanvasCoord; // We use this for now.
+    vec2 origin = vCanvasCoord;
     vec2 p0 = quad_rgba_l.rg - origin;
     vec2 p1 = quad_rgba_l.ba - origin;
     vec2 p2 = quad_rgba_r.rg - origin;
 
-    // // Parse out a b & c for the quadratic equation for quad intersections (where the curve has y=0).
-    // float a = p0.y - 2.0f * p1.y + p2.y;
-    // float b = -2.0f * (p0.y - p1.y);
-    // float c = p0.y;
-
     // New refactored stuff.
-    float intersection_change = CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth);
-    intersection_count += intersection_change;
-
-    // Branch based on number of intersections.
-    // if(false)
-    //   switch(QuadraticNumSols(a, b, c)) {
-    //     case 0:
-    //       break;
-    //     case 1:
-    //     // If a isn't 0, this quadratic is tangent with the x-axis raycast.
-    //     // If b is 0, line is horizontal and doesn't intersect raycast.
-    //       if(abs(a) > 0.01f || abs(b) < 0.01f)
-    //         break;
-
-    //     // Calculate t-value of intersection with quad curve.
-    //       float t = -c / b;
-    //     // Calculate the width and height of a fragment pixel in units of vCanvasCoord coordinates.
-    //       float px_width = canvas_coord_fwidth.x;
-    //       float px_height = canvas_coord_fwidth.y;
-
-    //     // Invalid intersection condition.
-    //       vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    //       if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
-    //         break;
-
-    //     // Calculate how much to contribute to the running total.
-    //       float contribution = 1.0f;
-    //       if(point_at_t.x > -px_width / 2.0f && point_at_t.x < px_width / 2.0f)
-    //         contribution = (point_at_t.x / px_width) + 0.5f;
-    //     // Calculate TrueType entrance or exit.
-    //       bool is_entry = b > 0.0f;
-    //     // Update the running count.
-    //       if(is_entry) {
-    //         intersection_count -= contribution;
-    //       } else {
-    //         intersection_count += contribution;
-    //       }
-    //       break;
-    //     case 2:
-    //     // Process the lesser and then the greater quadratic formula solutions.
-    //       for(int i = 0; i < 2; i++) {
-    //       // Calculate t-values of intersections with quad curves.
-    //         float t = SolveQuadratic(a, b, c, i == 0);
-    //       // Calculate the width and height of a fragment pixel in units of vCanvasCoord coordinates.
-    //         float px_width = canvas_coord_fwidth.x;
-    //         float px_height = canvas_coord_fwidth.y;
-
-    //       // Invalid intersection condition.
-    //         vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    //         if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
-    //           continue;
-
-    //       // Calculate how much to contribute to the running total.
-    //         float contribution = 1.0f;
-    //         if(point_at_t.x > -px_width / 2.0f && point_at_t.x < px_width / 2.0f)
-    //           contribution = (point_at_t.x / px_width) + 0.5f;
-    //       // Determine if it is an entry point or an exit point. It's an entry if the solution is the greater one.
-    //         bool is_entry = (i == 1);
-    //       // Update running total
-    //         if(is_entry) {
-    //           intersection_count -= contribution;
-    //         } else {
-    //           intersection_count += contribution;
-    //         }
-    //       }
-    //       break;
-    //     default:
-    //       fragColor = vec4(0.0f, 0.27f, 1.0f, 1.0f);
-    //       return;
-    //   }
+    intersection_count += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth);
   }
 
   // Use intersection_count to color fragment.
