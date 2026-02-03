@@ -5,6 +5,7 @@ precision highp float;
 in highp vec2 vImageTextureCoord; // This variable is private to the shaders and is grabbed directly from the vert shader.
 in highp vec2 vCanvasCoord;
 flat in int fFaceIndex; // WebGL default states that the last vertex of a triangle is the provoking vertex, passing its aFaceIndex to the entire face.
+in highp vec3 vVertexPosition;
 
 // Sampler means the current texture to use. WebGL supports multiple loaded at once (8+).
 uniform sampler2D uImageTexture;
@@ -60,9 +61,6 @@ vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
 }
 
 void main(void) {
-  // Sample image texture.
-  // fragColor = texture(uImageTexture, vImageTextureCoord); // texture2D() is deprecated in 300 ES.
-
   // Get the dimensions of uQuadTexture.
   ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
   int kQuadTexturePxWidth = quad_texture_size.x;
@@ -110,11 +108,14 @@ void main(void) {
     float c = p0.y;
 
     // How much the canvas coordinate changes with an x-shift in gl_fragCoord.
-    float dUdx = dFdx(vCanvasCoord.x);
+    vec3 dPosdx = vec3(dFdx(vVertexPosition.x), dFdx(vVertexPosition.y), dFdx(vVertexPosition.z));
 
-    print_arr[0] = dUdx;
-    print_arr[1] = vCanvasCoord.x;
-    print_arr[2] = 69.0f;
+    print_arr[0] = dPosdx.x;
+    print_arr[1] = dPosdx.y;
+    print_arr[2] = dPosdx.z;
+    print_arr[3] = vVertexPosition.x;
+    print_arr[4] = vVertexPosition.y;
+    print_arr[5] = vVertexPosition.z;
 
     // Branch based on number of intersections.
     switch(QuadraticNumSols(a, b, c)) {

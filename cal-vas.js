@@ -141,7 +141,7 @@ function PrintCenterPixelInt32(gl) {
     pixel_int32[i] = ((pixel[4 * i] << 24 >>> 0) + (pixel[4 * i + 1] << 16) + (pixel[4 * i + 2] << 8) + (pixel[4 * i + 3] << 0)) >> 0;
   }
   // Print.
-  const strings = Array.from(pixel_int32).map(num => (num/1000).toString().padStart(4, " "));
+  const strings = Array.from(pixel_int32).map(num => (num/1000).toString().padStart(10, " "));
   console.log(...strings.slice(0, 16));
 }
 
