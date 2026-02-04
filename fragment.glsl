@@ -40,7 +40,7 @@ void PrintDebugOutput() {
   }
 }
 
-const float kSmallNumberCutoff = 0.01f;
+const float kSmallNumberCutoff = 0.0001f;
 bool QuadraticIsLinear(float a, float b, float c) {
   return abs(a) < kSmallNumberCutoff;
 }

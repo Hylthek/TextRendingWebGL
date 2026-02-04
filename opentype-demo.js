@@ -72,7 +72,7 @@ class MyQuadCommand {
  * @param {String} font_url Url of the ttf file.
  * @param {number} x x of the top-left of the string block.
  * @param {number} y y of the top-left of the string block.
- * @returns {Array<MyQuadCommand>}
+ * @returns {Promise<Array<MyQuadCommand>>}
  */
 async function StringToCommands(string_in, font_url, x = 0, y = 0, font_size = 72) {
   // Get the ttf and wait until opentype font is loaded.

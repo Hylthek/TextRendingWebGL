@@ -62,32 +62,6 @@ function InitPositionBuffer(gl) {
   return positionBuffer;
 }
 
-function initColorBuffer(gl) {
-  const faceColors = [
-    [0, 1, 0, 1.0], // Front face: green
-    [0, 0, 1, 1.0], // Back face: blue
-    [1, 1, 1, 1.0], // Top face: white
-    [1, 1, 0, 1.0], // Bottom face: yellow
-    [1, 0, 0, 1.0], // Right face: red
-    [1, 0.5, 0, 1.0], // Left face: orange
-  ];
-
-  // Convert the array of colors into a table for all the vertices.
-
-  let colors = [];
-
-  for (const c of faceColors) {
-    // Repeat each color four times for the four vertices of the face
-    colors = colors.concat(c, c, c, c);
-  }
-
-  const colorBuffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-
-  return colorBuffer;
-}
-
 function InitIndexBuffer(gl) {
   const indexBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -149,7 +123,7 @@ function InitTextCanvasBuffer(gl) {
   const canvas_coords_buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, canvas_coords_buffer);
 
-  const c_sz = 100; // canvas_size, width and height.
+  const c_sz = 1000; // canvas_size, width and height.
 
   const canvas_coords = [ // Two floats per vertex.
     // Front idx 0

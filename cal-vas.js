@@ -54,29 +54,42 @@ async function CalvasMain() {
     LoadImageTexture(gl, "wooden-crate.webp"), // Left.
   ]
 
+  // Fetch War and Peace.
+  const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
+  const text_length = 100;
+  const war_and_peace_trunc_txt = war_and_peace_txt.slice(0,text_length);
+  console.log(war_and_peace_trunc_txt);
+
   // Turn sample text into arrays of OpenType path commands.
   const commands_per_face = [
     await StringToCommands(
       'Hello\nJetBrains\nMono!',
       'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
       0,
-      100,
-      18
+      1000,
+      180
     ),
     await StringToCommands(
       'Hello\nInter!',
       'inter_ttf/Inter_24pt-Regular.ttf',
       0,
-      100,
-      28
+      1000,
+      280
     ),
     await StringToCommands(
       'Hello\nCedarville\nCursive!',
       'CedarvilleCursive-Regular.ttf',
       0,
-      100,
-      18
-    )
+      1000,
+      180
+    ),
+    await StringToCommands(
+      war_and_peace_trunc_txt,
+      'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
+      0,
+      1000,
+      30
+    ),
   ]
 
   // Turn quad commands into quad jagged-arrays. Array[face][quad]
