@@ -122,6 +122,23 @@ async function CalvasMain() {
   // Consts
   gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
   gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
+  // Bind UBO.
+  gl.uniformBlockBinding(
+    programInfo.program,
+    programInfo.uniformLocations.uGlyphBuffer,
+    0
+  );
+
+  // Test UBO data
+  const data = new ArrayBuffer(3 * 4);
+  const float_view = new Float32Array(data);
+  const int_view = new Int32Array(data);
+  float_view[0] = 1;
+  float_view[1] = 2;
+  int_view[2] = 3;
+
+  gl.bindBuffer(gl.UNIFORM_BUFFER, buffers.glyphUniform);
+  gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
 
   // Draw the scene repeatedly
   function RenderScene(now) {

@@ -18,6 +18,12 @@ out vec4 fragColor;
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
+// Uniform buffer.
+layout(std140) uniform uGlyphs {
+  vec2 pos;
+  int code;
+};
+
 // For debugging. Called at end of main().
 const int debug_array_length = 100;
 float print_arr[debug_array_length];
@@ -195,5 +201,8 @@ void main(void) {
   fragColor = t * text_color + u * tex_color;
 
   // Debug data output.
+  print_arr[0] = pos.x;
+  print_arr[1] = pos.y;
+  print_arr[2] = float(code);
   PrintDebugOutput(); // Uses print_arr.
 }
