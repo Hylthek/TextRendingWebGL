@@ -1,5 +1,12 @@
-/** Initialize a shader program, so WebGL knows how to draw our data. */
-function InitShaderProgram(gl, vsSource, fsSource) {
+/**
+ * Initialize a shader program, so WebGL knows how to draw our data.
+ * @param {WebGL2RenderingContext} gl 
+ * @returns {Promise<WebGLProgram>}
+ */
+async function InitShaderProgram(gl, vsUrl, fsUrl) {
+  const vsSource = await (await fetch(vsUrl)).text()
+  const fsSource = await (await fetch(fsUrl)).text()
+  
   const vertexShader = LoadShader(gl, gl.VERTEX_SHADER, vsSource);
   const fragmentShader = LoadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 

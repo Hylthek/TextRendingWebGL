@@ -1,4 +1,4 @@
-function InitBuffers(gl) {
+function InitVertexBuffers(gl) {
   // Buffers are per-vertex, unless they are element buffers, like elementIndicesBuffer.
   const positionBuffer = InitPositionBuffer(gl);
 
@@ -204,4 +204,4 @@ function InitGlyphBuffer(gl) {
   return glyph_buffer;
 }
 
-export { InitBuffers };
+export { InitVertexBuffers };
