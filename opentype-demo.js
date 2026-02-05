@@ -197,4 +197,19 @@ function QuadApproxCP(cubic) {
   }
 }
 
-export { OpenTypeDemo, StringToCommands, MyQuadCommand }
+/**
+ * Turns an array of QuadCurve objects into a buffer of FLOATs.
+ * @param {Array<MyQuadCommand>} commands
+ * @returns {Array<Number>} An array whose length is a multiple of 4.
+ */
+function CommandsToQuadArray(commands, metadata1 = 0, metadata2 = 0) {
+  const output = commands.map(command =>
+    [
+      command.x0, command.y0, command.x1, command.y1,
+      command.x, command.y, metadata1, metadata2,
+    ]
+  )
+  return output.flat()
+}
+
+export { OpenTypeDemo, StringToCommands, MyQuadCommand, CommandsToQuadArray }

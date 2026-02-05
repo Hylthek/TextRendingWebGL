@@ -195,5 +195,5 @@ void main(void) {
   fragColor = t * text_color + u * tex_color;
 
   // Debug data output.
-  // PrintDebugOutput(); // Uses print_arr.
+  PrintDebugOutput(); // Uses print_arr.
 }
