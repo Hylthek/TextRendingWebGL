@@ -2,7 +2,10 @@ import { InitBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { InitShaderProgram } from "./init-shader-program.js";
 import { LoadImageTexture, LoadQuadTexture } from "./load-texture.js";
-import { MyQuadCommand, OpenTypeDemo, StringToCommands } from './opentype-demo.js'
+import { OpenTypeDemo, StringToCommands, CommandsToQuadArray } from './opentype-demo.js'
+import { CanvasInit, DebugCanvasInit } from './canvas-init.js'
+import { PrintCenterPixelInt32 } from './shader-debug.js'
+import { ViewControl } from './view-control.js'
 
 // OpenType proof of concept via 2d canvas.
 const debug_ctx = DebugCanvasInit()
@@ -56,33 +59,11 @@ async function CalvasMain() {
 
   // Fetch War and Peace.
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
-  const text_length = 100;
+  const text_length = 480;
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0,text_length);
-  console.log(war_and_peace_trunc_txt);
 
   // Turn sample text into arrays of OpenType path commands.
   const commands_per_face = [
-    await StringToCommands(
-      'Hello\nJetBrains\nMono!',
-      'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
-      0,
-      1000,
-      180
-    ),
-    await StringToCommands(
-      'Hello\nInter!',
-      'inter_ttf/Inter_24pt-Regular.ttf',
-      0,
-      1000,
-      280
-    ),
-    await StringToCommands(
-      'Hello\nCedarville\nCursive!',
-      'CedarvilleCursive-Regular.ttf',
-      0,
-      1000,
-      180
-    ),
     await StringToCommands(
       war_and_peace_trunc_txt,
       'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
@@ -91,18 +72,51 @@ async function CalvasMain() {
       30
     ),
   ]
-
   // Turn quad commands into quad jagged-arrays. Array[face][quad]
   const quad_jagged_array = commands_per_face.map(face => CommandsToQuadArray(face))
-
   // Load quad data texture.
   const quad_data_texture = LoadQuadTexture(gl, quad_jagged_array);
+
+  // Init panning, zooming, etc.
+  const view = new ViewControl();
+
+  // GL Setup.
+  // Program
+  gl.useProgram(programInfo.program);
+  // Tex0
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, image_textures[0]);
+  // Tex1
+  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
+  // Consts
+  gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
+  gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
+  // Bind UBO.
+  gl.uniformBlockBinding(
+    programInfo.program,
+    programInfo.uniformLocations.uGlyphBuffer,
+    0
+  );
+
+  // Test UBO data
+  const data = new ArrayBuffer(3 * 4);
+  const float_view = new Float32Array(data);
+  const int_view = new Int32Array(data);
+  float_view[0] = 1;
+  float_view[1] = 2;
+  int_view[2] = 3;
+
+  gl.bindBuffer(gl.UNIFORM_BUFFER, buffers.glyphUniform);
+  gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
     const cube_rotation = now / 1000;
-    DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, gSphereCoords, gCameraPos);
-    // PrintCenterPixelInt32(gl);
+    DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, view);
+    PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
 
