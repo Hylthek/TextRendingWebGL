@@ -78,15 +78,13 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
   gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
 
   // Draw elements, using a different texture per 2 elements (ie 1 cube face).
-  for (let currFace = 0; currFace < image_textures.length; currFace++) {
+  const vertexCount = 6 * 6; // 6 vertices per face.
+  const type = gl.UNSIGNED_SHORT // 2 bytes.
+  const offset = 0 // each face contains 12 bytes of data.
+  // Note, buffers don't get used up, they persist and an offset picks new data.
 
-    const vertexCount = 6 // 6 vertices per face.
-    const type = gl.UNSIGNED_SHORT // 2 bytes.
-    const offset = currFace * 12 // each face contains 12 bytes of data.
-    // Note, buffers don't get used up, they persist and an offset picks new data.
+  gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
 
-    gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
-  }
 }
 
 // Tell WebGL how to pull out the positions from the position

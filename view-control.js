@@ -4,7 +4,7 @@ class ViewControl {
     phi_deg: 35.26
   }
   camera_pos = {
-    zoom: 2.5,
+    zoom: 1,
   }
   isDragging = false;
   previousMousePosition = { x: 0, y: 0 };

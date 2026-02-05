@@ -50,11 +50,6 @@ async function CalvasMain() {
   // Load texture
   const image_textures = [
     LoadImageTexture(gl, "wooden-crate.webp"), // Front.
-    LoadImageTexture(gl, "wooden-crate.webp"), // Back.
-    LoadImageTexture(gl, "wooden-crate.webp"), // Top.
-    LoadImageTexture(gl, "wooden-crate.webp"), // Bottom.
-    LoadImageTexture(gl, "wooden-crate.webp"), // Right.
-    LoadImageTexture(gl, "wooden-crate.webp"), // Left.
   ]
 
   // Fetch War and Peace.
