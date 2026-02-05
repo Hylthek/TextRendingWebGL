@@ -79,6 +79,16 @@ async function CalvasMain() {
 
   // Draw the scene repeatedly
   function RenderScene(now) {
+    const bytes = 3;
+    const offset_b = 0
+    const sub_data = new ArrayBuffer(bytes * 4);
+    const float_view = new Float32Array(sub_data);
+    const int_view = new Int32Array(sub_data);
+    float_view[0] = now;
+    float_view[1] = -now;
+    int_view[2] = now / 1000;
+    gl.bufferSubData(gl.UNIFORM_BUFFER, offset_b * 4, sub_data);
+
     DrawScene(gl, programInfo, vertex_buffers, image_textures, quad_data_texture, view);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
