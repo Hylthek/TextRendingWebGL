@@ -52,37 +52,22 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
     );
   }
 
-  // Set the shader program.
-  gl.useProgram(programInfo.program);
   // Set the shader attribute buffers.
   SetPositionAttribute(gl, buffers, programInfo);
   SetTextureAttribute(gl, buffers, programInfo);
   SetCanvasAttribute(gl, buffers, programInfo);
   SetFaceIndexAttribute(gl, buffers, programInfo);
-  // Set the shader uniforms
+
+  // Set the view uniforms.
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
-  // Bind simple uniforms.
-  gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
-  gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
-
-  // Bind textures.
-  // Tex0
-  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, image_textures[0]);
-  // Tex1
-  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
-
   // Draw elements, using a different texture per 2 elements (ie 1 cube face).
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.elementIndices)
   const vertexCount = 6 * 6; // 6 vertices per face.
   const type = gl.UNSIGNED_SHORT // 2 bytes.
   const offset = 0 // each face contains 12 bytes of data.
   // Note, buffers don't get used up, they persist and an offset picks new data.
-
   gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
 
 }

@@ -40,6 +40,7 @@ async function CalvasMain() {
       uQuadTexture: gl.getUniformLocation(shaderProgram, "uQuadTexture"),
       uScreenWidthPx: gl.getUniformLocation(shaderProgram, "uScreenWidthPx"),
       uScreenHeightPx: gl.getUniformLocation(shaderProgram, "uScreenHeightPx"),
+      uGlyphBuffer: gl.getUniformBlockIndex(shaderProgram, "uGlyphs"),
     },
   };
 
@@ -106,6 +107,21 @@ async function CalvasMain() {
 
   gl.bindBuffer(gl.UNIFORM_BUFFER, buffers.glyphUniform);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
+
+  // GL Setup.
+  // Program
+  gl.useProgram(programInfo.program);
+  // Tex0
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, image_textures[0]);
+  // Tex1
+  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
+  // Consts
+  gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
+  gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
