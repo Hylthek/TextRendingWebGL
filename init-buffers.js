@@ -10,15 +10,12 @@ function InitVertexBuffers(gl) {
 
   const faceIndexBuffer = InitFaceIndexBuffer(gl);
 
-  const glyph_buffer = InitGlyphBuffer(gl);
-
   return {
     position: positionBuffer,
     textureCoord: textureCoordBuffer,
     canvasCoord: canvas_coords_buffer,
     elementIndices: elementIndicesBuffer, // Unreferenced.
     faceIndex: faceIndexBuffer,
-    glyphUniform: glyph_buffer,
   };
 }
 
@@ -181,27 +178,6 @@ function InitFaceIndexBuffer(gl) {
   );
 
   return face_index_buffer;
-}
-
-/**
- * 
- * @param {WebGL2RenderingContext} gl 
- */
-function InitGlyphBuffer(gl) {
-  const glyph_buffer = gl.createBuffer();
-  gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
-
-  const uniform_block_size = 3 * 4; // One int and one vec2, padded to 16byte blocks, must match definition in frag shader.
-  gl.bufferData(
-    gl.UNIFORM_BUFFER,
-    uniform_block_size,
-    gl.DYNAMIC_DRAW
-  )
-
-  const bindingPoint = 0;
-  gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, glyph_buffer)
-
-  return glyph_buffer;
 }
 
 export { InitVertexBuffers };

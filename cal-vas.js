@@ -23,6 +23,8 @@ async function CalvasMain() {
 
   const vertex_buffers = InitVertexBuffers(gl);
 
+  const glyph_buffer = InitGlyphBuffer(gl);
+
   const image_textures = [LoadImageTexture(gl, "wooden-crate.webp")]
 
   const text_length = 480;
@@ -74,7 +76,7 @@ async function CalvasMain() {
   float_view[1] = 2;
   int_view[2] = 3;
 
-  gl.bindBuffer(gl.UNIFORM_BUFFER, vertex_buffers.glyphUniform);
+  gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
 
   // Draw the scene repeatedly
@@ -118,4 +120,25 @@ function GetProgramInfo(gl, shaderProgram) {
       uGlyphBuffer: gl.getUniformBlockIndex(shaderProgram, "uGlyphs"),
     },
   }
+}
+
+/**
+ * 
+ * @param {WebGL2RenderingContext} gl 
+ */
+function InitGlyphBuffer(gl) {
+  const glyph_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
+
+  const uniform_block_size = 3 * 4; // One int and one vec2, padded to 16byte blocks, must match definition in frag shader.
+  gl.bufferData(
+    gl.UNIFORM_BUFFER,
+    uniform_block_size,
+    gl.DYNAMIC_DRAW
+  )
+
+  const bindingPoint = 0;
+  gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, glyph_buffer)
+
+  return glyph_buffer;
 }
