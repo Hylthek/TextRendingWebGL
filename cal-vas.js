@@ -10,10 +10,6 @@ import { InitGlyphBuffer } from './ubo.js';
 import { FontToTexture } from './glyph-path-texture.js';
 
 async function CalvasMain() {
-  await FontToTexture('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
-  return;
-  
-  
   const gl = CanvasInit()
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
@@ -33,18 +29,7 @@ async function CalvasMain() {
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
 
-  const commands_per_face = [
-    await StringToCommands(
-      war_and_peace_trunc_txt,
-      'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf',
-      0,
-      1000,
-      30
-    ),
-  ]
-  // Turn quad commands into quad jagged-arrays. Array[face][quad]
-  const quad_jagged_array = commands_per_face.map(face => CommandsToQuadArray(face))
-  const quad_data_texture = LoadQuadTexture(gl, quad_jagged_array);
+  const font_data_texture = await FontToTexture(gl, 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
 
   // Init panning, zooming, etc.
   const view = new ViewControl();
@@ -60,7 +45,7 @@ async function CalvasMain() {
 
   // Draw the scene repeatedly
   function RenderScene(now) {
-    DrawScene(gl, programInfo, vertex_buffers, image_texture, quad_data_texture, view);
+    DrawScene(gl, programInfo, vertex_buffers, image_texture, font_data_texture, view);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
