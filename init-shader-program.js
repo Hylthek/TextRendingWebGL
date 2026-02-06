@@ -59,4 +59,28 @@ function LoadShader(gl, type, source) {
   return shader;
 }
 
-export { InitShaderProgram }
+/**
+ * Look up which attributes our shader program is using for aVertexPosition, aTextureCoord and also look up uniform locations.
+ */
+function GetProgramInfo(gl, shaderProgram) {
+  return {
+    program: shaderProgram,
+    attribLocations: {
+      vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
+      textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
+      faceIndex: gl.getAttribLocation(shaderProgram, "aFaceIndex"),
+      canvasCoord: gl.getAttribLocation(shaderProgram, "aCanvasCoord"),
+    },
+    uniformLocations: {
+      projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
+      modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
+      uSampler: gl.getUniformLocation(shaderProgram, "uImageTexture"),
+      uQuadTexture: gl.getUniformLocation(shaderProgram, "uQuadTexture"),
+      uScreenWidthPx: gl.getUniformLocation(shaderProgram, "uScreenWidthPx"),
+      uScreenHeightPx: gl.getUniformLocation(shaderProgram, "uScreenHeightPx"),
+      uGlyphBuffer: gl.getUniformBlockIndex(shaderProgram, "uGlyphs"),
+    },
+  }
+}
+
+export { InitShaderProgram, GetProgramInfo }

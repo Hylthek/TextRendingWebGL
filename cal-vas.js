@@ -1,11 +1,12 @@
-import { CanvasInit, DebugCanvasInit } from './canvas-init.js'
-import { InitShaderProgram } from "./init-shader-program.js";
+import { CanvasInit } from './canvas-init.js'
+import { InitShaderProgram, GetProgramInfo } from "./init-shader-program.js";
 import { InitVertexBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { LoadImageTexture, LoadQuadTexture } from "./load-texture.js";
 import { StringToCommands, CommandsToQuadArray } from './opentype-demo.js'
 import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
+import { InitGlyphBuffer } from './ubo.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -61,46 +62,3 @@ async function CalvasMain() {
   requestAnimationFrame(RenderScene);
 }
 CalvasMain()
-
-// Look up which attributes our shader program is using for aVertexPosition, aTextureCoord and also look up uniform locations.
-// IE configure inputs into glsl script.
-function GetProgramInfo(gl, shaderProgram) {
-  return {
-    program: shaderProgram,
-    attribLocations: {
-      vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
-      textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
-      faceIndex: gl.getAttribLocation(shaderProgram, "aFaceIndex"),
-      canvasCoord: gl.getAttribLocation(shaderProgram, "aCanvasCoord"),
-    },
-    uniformLocations: {
-      projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix"),
-      modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
-      uSampler: gl.getUniformLocation(shaderProgram, "uImageTexture"),
-      uQuadTexture: gl.getUniformLocation(shaderProgram, "uQuadTexture"),
-      uScreenWidthPx: gl.getUniformLocation(shaderProgram, "uScreenWidthPx"),
-      uScreenHeightPx: gl.getUniformLocation(shaderProgram, "uScreenHeightPx"),
-      uGlyphBuffer: gl.getUniformBlockIndex(shaderProgram, "uGlyphs"),
-    },
-  }
-}
-
-/**
- * @param {WebGL2RenderingContext} gl
- */
-function InitGlyphBuffer(gl) {
-  const glyph_buffer = gl.createBuffer();
-  gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
-
-  const uniform_block_size = 100 * 16; // 100 uints.
-  gl.bufferData(
-    gl.UNIFORM_BUFFER,
-    uniform_block_size,
-    gl.DYNAMIC_DRAW
-  )
-
-  const bindingPoint = 0;
-  gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, glyph_buffer)
-
-  return glyph_buffer;
-}
