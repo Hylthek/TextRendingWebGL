@@ -7,8 +7,13 @@ import { StringToCommands, CommandsToQuadArray } from './opentype-demo.js'
 import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
 import { InitGlyphBuffer } from './ubo.js';
+import { FontToTexture } from './glyph-path-texture.js';
 
 async function CalvasMain() {
+  await FontToTexture('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
+  return;
+  
+  
   const gl = CanvasInit()
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
