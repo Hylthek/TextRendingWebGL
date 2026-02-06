@@ -16,7 +16,12 @@ function PrintCenterPixelInt32(gl) {
   }
   // Print.
   const strings = Array.from(pixel_int32).map(num => (num / 1000).toString().padStart(0, " "));
-  console.log(...strings.slice(0, 16));
+  if (performance.now() > next_log_time) {
+    console.log(...strings.slice(0, 16));
+    next_log_time = performance.now() + 1000;
+  }
 }
+
+let next_log_time = 0
 
 export { PrintCenterPixelInt32 }
