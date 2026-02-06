@@ -43,33 +43,11 @@ async function CalvasMain() {
   // Init panning, zooming, etc.
   const view = new ViewControl();
 
-  // GL one-time Setup.
-  // Program
-  gl.useProgram(programInfo.program);
-  // Tex0
-  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
-  gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, image_texture);
-  // Tex1
-  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
-  gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
-  // Consts
-  gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
-  gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
-  // Bind UBO.
-  gl.uniformBlockBinding(
-    programInfo.program,
-    programInfo.uniformLocations.uGlyphBuffer,
-    0
-  );
-
   // Test UBO data
   const data = new ArrayBuffer(100 * 16);
   const int_view = new Int32Array(data)
-  for (let i = 0; i < int_view.length; i++) {
+  for (let i = 0; i < int_view.length; i++)
     int_view[i] = i;
-  }
 
   gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);

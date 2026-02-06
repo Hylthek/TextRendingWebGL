@@ -3,10 +3,10 @@
  * @param {WebGL2RenderingContext} gl 
  * @param {*} programInfo 
  * @param {*} buffers 
- * @param {*} image_textures 
+ * @param {*} image_texture
  * @param {*} quad_data_texture 
  */
-function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, view) {
+function DrawScene(gl, programInfo, buffers, image_texture, quad_data_texture, view) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -57,6 +57,27 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
   SetTextureAttribute(gl, buffers, programInfo);
   SetCanvasAttribute(gl, buffers, programInfo);
   SetFaceIndexAttribute(gl, buffers, programInfo);
+
+  // GL one-time Setup.
+  // Program
+  gl.useProgram(programInfo.program);
+  // Tex0
+  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, image_texture);
+  // Tex1
+  gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
+  // Consts
+  gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
+  gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
+  // Bind UBO.
+  gl.uniformBlockBinding(
+    programInfo.program,
+    programInfo.uniformLocations.uGlyphBuffer,
+    0
+  );
 
   // Set the view uniforms.
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
