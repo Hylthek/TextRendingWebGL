@@ -69,7 +69,6 @@ function DrawScene(gl, programInfo, buffers, image_textures, quad_data_texture, 
   const offset = 0 // each face contains 12 bytes of data.
   // Note, buffers don't get used up, they persist and an offset picks new data.
   gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
-
 }
 
 // Tell WebGL how to pull out the positions from the position

@@ -3,7 +3,7 @@
  * @param {WebGL2RenderingContext} gl 
  */
 function PrintCenterPixelInt32(gl) {
-  const debug_array_length = 100; // Must match the fragment shader const of the same name.
+  const debug_array_length = 1000; // Must match the fragment shader const of the same name.
   // Get shader debug info.
   const pixel = new Uint8Array(4 * debug_array_length);
   const gl_w_2_i = Math.floor(gl.canvas.width / 2);
@@ -15,7 +15,7 @@ function PrintCenterPixelInt32(gl) {
     pixel_int32[i] = ((pixel[4 * i] << 24 >>> 0) + (pixel[4 * i + 1] << 16) + (pixel[4 * i + 2] << 8) + (pixel[4 * i + 3] << 0)) >> 0;
   }
   // Print.
-  const strings = Array.from(pixel_int32).map(num => (num / 1000).toString().padStart(10, " "));
+  const strings = Array.from(pixel_int32).map(num => (num / 1000).toString().padStart(0, " "));
   console.log(...strings.slice(0, 16));
 }
 

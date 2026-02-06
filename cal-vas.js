@@ -3,13 +3,9 @@ import { InitShaderProgram } from "./init-shader-program.js";
 import { InitVertexBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { LoadImageTexture, LoadQuadTexture } from "./load-texture.js";
-import { OpenTypeDemo, StringToCommands, CommandsToQuadArray } from './opentype-demo.js'
+import { StringToCommands, CommandsToQuadArray } from './opentype-demo.js'
 import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
-
-// OpenType proof of concept via 2d canvas.
-const debug_ctx = DebugCanvasInit()
-// await OpenTypeDemo(debug_ctx)
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -17,7 +13,7 @@ async function CalvasMain() {
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
 
-  const shaderProgram = await InitShaderProgram(gl, "vertex.glsl", "fragment.glsl")
+  const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl")
 
   const programInfo = GetProgramInfo(gl, shaderProgram);
 
@@ -25,7 +21,7 @@ async function CalvasMain() {
 
   const glyph_buffer = InitGlyphBuffer(gl);
 
-  const image_textures = [LoadImageTexture(gl, "wooden-crate.webp")]
+  const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
 
   const text_length = 480;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
@@ -53,7 +49,7 @@ async function CalvasMain() {
   // Tex0
   gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
   gl.activeTexture(gl.TEXTURE0);
-  gl.bindTexture(gl.TEXTURE_2D, image_textures[0]);
+  gl.bindTexture(gl.TEXTURE_2D, image_texture);
   // Tex1
   gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
   gl.activeTexture(gl.TEXTURE1);
@@ -69,29 +65,18 @@ async function CalvasMain() {
   );
 
   // Test UBO data
-  const data = new ArrayBuffer(3 * 4);
-  const float_view = new Float32Array(data);
-  const int_view = new Int32Array(data);
-  float_view[0] = 1;
-  float_view[1] = 2;
-  int_view[2] = 3;
+  const data = new ArrayBuffer(100 * 16);
+  const int_view = new Int32Array(data)
+  for (let i = 0; i < int_view.length; i++) {
+    int_view[i] = i;
+  }
 
   gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
-    const bytes = 3;
-    const offset_b = 0
-    const sub_data = new ArrayBuffer(bytes * 4);
-    const float_view = new Float32Array(sub_data);
-    const int_view = new Int32Array(sub_data);
-    float_view[0] = now;
-    float_view[1] = -now;
-    int_view[2] = now / 1000;
-    gl.bufferSubData(gl.UNIFORM_BUFFER, offset_b * 4, sub_data);
-
-    DrawScene(gl, programInfo, vertex_buffers, image_textures, quad_data_texture, view);
+    DrawScene(gl, programInfo, vertex_buffers, image_texture, quad_data_texture, view);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
   }
@@ -123,14 +108,13 @@ function GetProgramInfo(gl, shaderProgram) {
 }
 
 /**
- * 
- * @param {WebGL2RenderingContext} gl 
+ * @param {WebGL2RenderingContext} gl
  */
 function InitGlyphBuffer(gl) {
   const glyph_buffer = gl.createBuffer();
   gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
 
-  const uniform_block_size = 3 * 4; // One int and one vec2, padded to 16byte blocks, must match definition in frag shader.
+  const uniform_block_size = 100 * 16; // 100 uints.
   gl.bufferData(
     gl.UNIFORM_BUFFER,
     uniform_block_size,

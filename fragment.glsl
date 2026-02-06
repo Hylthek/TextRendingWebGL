@@ -20,12 +20,11 @@ uniform int uScreenHeightPx;
 
 // Uniform buffer.
 layout(std140) uniform uGlyphs {
-  vec2 pos;
-  int code;
+  ivec4 array[100];
 };
 
 // For debugging. Called at end of main().
-const int debug_array_length = 100;
+const int debug_array_length = 1000;
 float print_arr[debug_array_length];
 void PrintDebugOutput() {
   // Draw a data-rich line at the center of the screen, extending right.
@@ -201,8 +200,12 @@ void main(void) {
   fragColor = t * text_color + u * tex_color;
 
   // Debug data output.
-  print_arr[0] = pos.x;
-  print_arr[1] = pos.y;
-  print_arr[2] = float(code);
+  for(int i = 0; i < 100; i++) {
+    int idx = i * 4;
+    print_arr[idx] = float(array[i].x);
+    print_arr[idx+1] = float(array[i].y);
+    print_arr[idx+2] = float(array[i].z);
+    print_arr[idx+3] = float(array[i].w);
+  }
   PrintDebugOutput(); // Uses print_arr.
 }
