@@ -203,9 +203,9 @@ void main(void) {
   for(int i = 0; i < 100; i++) {
     int idx = i * 4;
     print_arr[idx] = float(array[i].x);
-    print_arr[idx+1] = float(array[i].y);
-    print_arr[idx+2] = float(array[i].z);
-    print_arr[idx+3] = float(array[i].w);
+    print_arr[idx + 1] = float(array[i].y);
+    print_arr[idx + 2] = float(array[i].z);
+    print_arr[idx + 3] = float(array[i].w);
   }
   PrintDebugOutput(); // Uses print_arr.
 }

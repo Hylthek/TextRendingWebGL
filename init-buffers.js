@@ -123,21 +123,22 @@ function InitTextCanvasBuffer(gl) {
   const canvas_coords_buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, canvas_coords_buffer);
 
-  const c_sz = 1000; // canvas_size, width and height.
+  const canvas_size = 2000; // canvas_size, width and height.
+  const c = canvas_size / 2;
 
   const canvas_coords = [ // Two floats per vertex.
     // Front idx 0
-    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    -c, -c, +c, -c, +c, +c, -c, +c,
     // Back idx 1
-    c_sz, 0.0, c_sz, c_sz, 0.0, c_sz, 0.0, 0.0,
+    +c, -c, +c, +c, -c, +c, -c, -c,
     // Top idx 2
-    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    -c, -c, +c, -c, +c, +c, -c, +c,
     // Bottom idx 3
-    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    -c, -c, +c, -c, +c, +c, -c, +c,
     // Right idx 4
-    c_sz, 0.0, c_sz, c_sz, 0.0, c_sz, 0.0, 0.0,
+    +c, -c, +c, +c, -c, +c, -c, -c,
     // Left idx 5
-    0.0, 0.0, c_sz, 0.0, c_sz, c_sz, 0.0, c_sz,
+    -c, -c, +c, -c, +c, +c, -c, +c,
   ];
 
   gl.bufferData(

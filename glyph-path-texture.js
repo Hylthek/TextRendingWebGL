@@ -115,7 +115,7 @@ function PathToCurves(path) {
         break;
     }
   })
-  
+
   // Remove M and Z commands.
   idx_to_remove.reverse()
   idx_to_remove.forEach((idx) => {
