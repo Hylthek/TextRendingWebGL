@@ -7,6 +7,7 @@ import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
 import { InitGlyphBuffer } from './ubo.js';
 import { FontToTexture } from './glyph-path-texture.js';
+import { LoadUboFromString } from './load-ubo.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -19,8 +20,6 @@ async function CalvasMain() {
   const programInfo = GetProgramInfo(gl, shaderProgram);
   // Load static vertex attribute data.
   const vertex_buffers = InitVertexBuffers(gl);
-  // Load dynamic uniform buffer.
-  const glyph_buffer = InitGlyphBuffer(gl);
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
   // Load War and Peace.
@@ -29,7 +28,10 @@ async function CalvasMain() {
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
   // Load a font's entire glyph-set as a data texture.
   const font_data_texture = await FontToTexture(gl, 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
-
+  // Init a uniform buffer for dynamic usage.
+  const glyph_buffer = InitGlyphBuffer(gl);
+  // Load a string into the uniform buffer.
+  LoadUboFromString(gl, glyph_buffer, "HelloWorld!\n-JetBrainsMono");
   // Init panning, zooming, etc.
   const view = new ViewControl();
 
@@ -38,7 +40,6 @@ async function CalvasMain() {
   const int_view = new Int32Array(data)
   for (let i = 0; i < int_view.length; i++)
     int_view[i] = i;
-
   gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
 
