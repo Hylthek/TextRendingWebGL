@@ -19,7 +19,7 @@ uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
 // Struct
-struct Glyph {
+struct GlyphLayout {
   vec2 pos;
   int opentype_index;
   int size;
@@ -27,7 +27,7 @@ struct Glyph {
 
 // Uniform buffer.
 layout(std140) uniform uGlyphs {
-  Glyph glyph_array[100];
+  GlyphLayout glyph_array[100];
 };
 
 // For debugging. Called at end of main().
@@ -209,8 +209,8 @@ void main(void) {
   // Debug data output.
   for(int i = 0; i < 100; i++) {
     int idx = i * 4;
-    print_arr[idx] = float(glyph_array[i].pos.x);
-    print_arr[idx + 1] = float(glyph_array[i].pos.y);
+    print_arr[idx] = glyph_array[i].pos.x;
+    print_arr[idx + 1] = glyph_array[i].pos.y;
     print_arr[idx + 2] = float(glyph_array[i].opentype_index);
     print_arr[idx + 3] = float(glyph_array[i].size);
   }

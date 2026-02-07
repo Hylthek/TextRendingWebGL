@@ -7,7 +7,7 @@ import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
 import { InitGlyphBuffer } from './ubo.js';
 import { FontToTexture } from './glyph-path-texture.js';
-import { LoadUboFromString } from './load-ubo.js';
+import { LoadUboFromString, ArrayGlyphLayout } from './load-ubo.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -36,17 +36,18 @@ async function CalvasMain() {
   const view = new ViewControl();
 
   // Test UBO data
-  const data = new ArrayBuffer(100 * 16);
-  const int_view = new Int32Array(data);
-  const float_view = new Float32Array(data);
-  for (let i = 0; i < int_view.length; i += 4) {
-    float_view[i + 0] = i + 0;
-    float_view[i + 1] = i + 1;
-    int_view[i + 2] = i + 2;
-    int_view[i + 3] = i + 3;
+  const glyph_layouts = new ArrayGlyphLayout(100)
+  for (let i = 0; i < 2; i++) {
+    const glyph_layout = {
+      pos: { x: i+0.01, y: i+0.02 },
+      opentype_index: i,
+      size: i *100
+    }
+    glyph_layouts.set(i, glyph_layout);
   }
   gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
-  gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
+  gl.bufferSubData(gl.UNIFORM_BUFFER, 0, glyph_layouts.array);
+
 
   // Draw the scene repeatedly
   function RenderScene(now) {
