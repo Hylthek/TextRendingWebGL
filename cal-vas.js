@@ -2,8 +2,7 @@ import { CanvasInit } from './canvas-init.js'
 import { InitShaderProgram, GetProgramInfo } from "./init-shader-program.js";
 import { InitVertexBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
-import { LoadImageTexture, LoadQuadTexture } from "./load-texture.js";
-import { StringToCommands, CommandsToQuadArray } from './opentype-demo.js'
+import { LoadImageTexture } from "./load-texture.js";
 import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
 import { InitGlyphBuffer } from './ubo.js';
@@ -15,20 +14,20 @@ async function CalvasMain() {
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
 
+  // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl")
-
   const programInfo = GetProgramInfo(gl, shaderProgram);
-
+  // Load static vertex attribute data.
   const vertex_buffers = InitVertexBuffers(gl);
-
+  // Load dynamic uniform buffer.
   const glyph_buffer = InitGlyphBuffer(gl);
-
+  // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
-
+  // Load War and Peace.
   const text_length = 480;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
-
+  // Load a font's entire glyph-set as a data texture.
   const font_data_texture = await FontToTexture(gl, 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
 
   // Init panning, zooming, etc.
