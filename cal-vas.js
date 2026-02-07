@@ -37,9 +37,14 @@ async function CalvasMain() {
 
   // Test UBO data
   const data = new ArrayBuffer(100 * 16);
-  const int_view = new Int32Array(data)
-  for (let i = 0; i < int_view.length; i++)
-    int_view[i] = i;
+  const int_view = new Int32Array(data);
+  const float_view = new Float32Array(data);
+  for (let i = 0; i < int_view.length; i += 4) {
+    float_view[i + 0] = i + 0;
+    float_view[i + 1] = i + 1;
+    int_view[i + 2] = i + 2;
+    int_view[i + 3] = i + 3;
+  }
   gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, data);
 

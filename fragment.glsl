@@ -18,9 +18,16 @@ out vec4 fragColor;
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
+// Struct
+struct Glyph {
+  vec2 pos;
+  int opentype_index;
+  int size;
+};
+
 // Uniform buffer.
 layout(std140) uniform uGlyphs {
-  ivec4 array[100];
+  Glyph glyph_array[100];
 };
 
 // For debugging. Called at end of main().
@@ -202,10 +209,10 @@ void main(void) {
   // Debug data output.
   for(int i = 0; i < 100; i++) {
     int idx = i * 4;
-    print_arr[idx] = float(array[i].x);
-    print_arr[idx + 1] = float(array[i].y);
-    print_arr[idx + 2] = float(array[i].z);
-    print_arr[idx + 3] = float(array[i].w);
+    print_arr[idx] = float(glyph_array[i].pos.x);
+    print_arr[idx + 1] = float(glyph_array[i].pos.y);
+    print_arr[idx + 2] = float(glyph_array[i].opentype_index);
+    print_arr[idx + 3] = float(glyph_array[i].size);
   }
   PrintDebugOutput(); // Uses print_arr.
 }
