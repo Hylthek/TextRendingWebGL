@@ -36,7 +36,7 @@ function DrawScene(gl, programInfo, buffers, image_texture, quad_data_texture, v
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      [0, 0, -5],
+      [view.pan.x, view.pan.y, -5],
     ); // amount to translate
     mat4.rotate(
       modelViewMatrix, // destination matrix

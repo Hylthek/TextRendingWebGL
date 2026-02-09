@@ -25,7 +25,12 @@ uniform int uScreenHeightPx;
 const float kSmallNumberCutoff = 0.0001f;
 
 // A multiplier for anti-aliasing effect.
-const float anti_aliasing_mult = 1.0f;
+const float kAntiAliasingMult = 1.5f;
+
+// Max length of a pseudo-infinite loop.
+const int kMaxForLoops = 100;
+
+const int kGlyphLayoutArraySize = 100;
 
 // Data that tells the shader what char to draw and where.
 struct GlyphLayout {
@@ -36,7 +41,7 @@ struct GlyphLayout {
 
 // An array of GlyphLayouts.
 layout(std140) uniform uGlyphs {
-  GlyphLayout glyph_array[100];
+  GlyphLayout glyph_array[kGlyphLayoutArraySize];
 };
 
 // Draws pixel data onto the screen at certain spots
@@ -100,13 +105,10 @@ vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
 
 // Given three quadratic curve control points, calculate the
 // "intersection number" of a ray starting at the origin, point towards +x.
-float CalcIntersectionChange(
-  vec2 p0_in,
-  vec2 p1_in,
-  vec2 p2_in,
-  vec2 frag_width,
-  bool xy_flip
-) {
+// "intersection number" increases if ray leaves a TrueType font contour
+// and decreases if it enters. Antialiasing allows for fractional values if
+// the intersection is near the current fragment.
+float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width, bool xy_flip) {
   vec2 p0, p1, p2;
   if(xy_flip) {
     p0 = vec2(p0_in.y, p0_in.x);
@@ -126,7 +128,7 @@ float CalcIntersectionChange(
   // How much the canvas coordinate changes between neighboring fragments.
   // dFd[xy] can't be called in the dynamic loop because of
   // shader language shenanigans, so it's called here.
-  float px_width = (xy_flip ? frag_width.y : frag_width.x) * anti_aliasing_mult;
+  float px_width = (xy_flip ? frag_width.y : frag_width.x) * kAntiAliasingMult;
 
   // Linear case.
   if(QuadraticIsLinear(a, b, c)) {
@@ -169,77 +171,75 @@ void main(void) {
   int kQuadTexturePxWidth = quad_texture_size.x;
   int kQuadTexturePxHeight = quad_texture_size.y;
 
-  // Use faceIndex for vertical accessing of uQuadTexture.
-  float quad_texture_v = (float(fFaceIndex) + 0.5f) / float(kQuadTexturePxHeight);
-
   // How much the canvas coordinate changes between neighboring fragments.
-  // dFd[xy] can't be called in the dynamic loop because of shader language shenanigans, so it's called here.
+  // dFd[xy] can't be called in the dynamic loop because of
+  // shader language shenanigans, so it's called here.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
 
-  // Signed running count that increments upon exiting a quad and decrements upon entering a quad.
-  float intersection_count_x = 0.0f;
-  float intersection_count_y = 0.0f;
-  // Loop through all quads for this face.
-  const int INFINITE_LOOP_MAX_ITERATIONS = 100000;
-  for(int curr_quad = 0; curr_quad <= INFINITE_LOOP_MAX_ITERATIONS; curr_quad++) {
-    // Validate infinite loop hasn't run out.
-    if(curr_quad == INFINITE_LOOP_MAX_ITERATIONS) {
-      fragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f); // Error color.
-      return;
+  // Signed running count that increments upon exiting a
+  // quad and decrements upon entering a quad.
+  float intersection_count_x = 0.0f; // Ray extends to +x
+  float intersection_count_y = 0.0f; // Ray extends to +y
+
+  // Loop through all of glyph_array.
+  for(int i = 0; i < 5; i++) {
+    GlyphLayout curr_glyph = glyph_array[i];
+
+    // Use the current opentype_index to vertically access the quad texture.
+    float quad_texture_v = (float(curr_glyph.opentype_index) + 0.5f) / float(kQuadTexturePxHeight);
+    // float quad_texture_v = (float(0) + 0.5f) / float(kQuadTexturePxHeight);
+    print_arr[0] = float(curr_glyph.opentype_index);
+
+    // Loop through all quads for this glyph.
+    float loop_max_met;
+    for(int curr_quad = 0; curr_quad < 100; curr_quad++) {
+      loop_max_met = step(float(kMaxForLoops), float(curr_quad) + 0.5f);
+      int curr_px = curr_quad * 2;
+
+      // The current quad (left and right pixels) as texture u values.
+      float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
+      float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
+      // quad_rgba_l has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
+      // quad_rgba_r has rgbaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
+      vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
+      vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
+
+      // Quad curve control points in reference frame where current fragment is the origin.
+      vec2 origin = vCanvasCoord;
+      vec2 p0 = quad_rgba_l.rg - origin;
+      vec2 p1 = quad_rgba_l.ba - origin;
+      vec2 p2 = quad_rgba_r.rg - origin;
+
+      // Calculate signed intersections along +x and +y axes.
+      intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
+      intersection_count_y += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, true);
     }
-    // Break condition.
-    int curr_px = curr_quad * 2;
-    if(curr_px == kQuadTexturePxWidth)
-      break;
-
-    // The current quad (left and right pixels) as texture u values.
-    float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
-    float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
-    // quad_rgba_l has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
-    // quad_rgba_r has rgbaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
-    vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
-    vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
-    // No-more-quads break condition.
-    if(quad_rgba_l.r == 0.0f && quad_rgba_l.g == 0.0f && quad_rgba_l.b == 0.0f && quad_rgba_l.a == 0.0f)
-      break;
-
-    // Quad curve control points in reference frame where current fragment is the origin.
-    vec2 origin = vCanvasCoord;
-    vec2 p0 = quad_rgba_l.rg - origin;
-    vec2 p1 = quad_rgba_l.ba - origin;
-    vec2 p2 = quad_rgba_r.rg - origin;
-
-    // New refactored stuff.
-    float x_raycast_count = CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
-    float y_raycast_count = CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, true);
-    intersection_count_x += x_raycast_count;
-    intersection_count_y += y_raycast_count;
+    print_arr[6] = intersection_count_x;
+    print_arr[7] = intersection_count_y;
   }
-  float intersection_count = min(intersection_count_x, intersection_count_y);
-  if(intersection_count < 0.5f)
-    intersection_count = max(intersection_count_x, intersection_count_y);
+  float x_dist = abs(intersection_count_x - 0.5f);
+  float y_dist = abs(intersection_count_y - 0.5f);
+  float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_dist, x_dist));
 
-  // Use intersection_count to color fragment.
-  if(intersection_count < -10.0f) {
-    fragColor = vec4(1, 0, 0, 1);
-    return;
-  }
-  if(intersection_count > 1.0f)
-    intersection_count = 1.0f;
-  const vec4 text_color = vec4(1, 1, 1, 1);
-  const float text_opacity = 0.5f;
+  // Text color.
+  vec4 black = vec4(0, 0, 0, 1);
+  vec4 white = vec4(1, 1, 1, 1);
+  fragColor = mix(black, white, intersection_count * 0.2f);
+  // Image color.
   vec4 tex_color = texture(uImageTexture, vImageTextureCoord);
-  float t = intersection_count * text_opacity;
-  float u = 1.0f - t;
-  fragColor = t * text_color + u * tex_color;
+  fragColor = tex_color + fragColor;
+  // Error color.
+  vec4 error_col = vec4(1, 0, 0, 1);
+  float is_pos = step(0.0f, intersection_count);
+  fragColor = mix(error_col, fragColor, is_pos);
 
   // Debug data output.
-  for(int i = 0; i < 100; i++) {
-    int idx = i * 4;
-    print_arr[idx] = glyph_array[i].pos.x;
-    print_arr[idx + 1] = glyph_array[i].pos.y;
-    print_arr[idx + 2] = float(glyph_array[i].opentype_index);
-    print_arr[idx + 3] = float(glyph_array[i].size);
-  }
+  // for(int i = 0; i < 100; i++) {
+  //   int idx = i * 4;
+  //   print_arr[idx] = glyph_array[i].pos.x;
+  //   print_arr[idx + 1] = glyph_array[i].pos.y;
+  //   print_arr[idx + 2] = float(glyph_array[i].opentype_index);
+  //   print_arr[idx + 3] = float(glyph_array[i].size);
+  // }
   PrintDebugOutput(); // Uses print_arr.
 }

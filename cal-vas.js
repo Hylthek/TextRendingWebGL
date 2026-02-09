@@ -16,6 +16,7 @@ async function CalvasMain() {
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
 
+
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl")
   const programInfo = GetProgramInfo(gl, shaderProgram);
@@ -37,20 +38,6 @@ async function CalvasMain() {
   LoadUboFromString(gl, glyph_buffer, "AHelloWorld!\n-JetBrainsMono", jetbrains_mono, 72);
   // Init panning, zooming, etc.
   const view = new ViewControl();
-
-  // Test UBO data
-  // const glyph_layouts = new ArrayGlyphLayout(100)
-  // for (let i = 0; i < 2; i++) {
-  //   const glyph_layout = {
-  //     pos: { x: i+0.01, y: i+0.02 },
-  //     opentype_index: i,
-  //     size: i *100
-  //   }
-  //   glyph_layouts.set(i, glyph_layout);
-  // }
-  // gl.bindBuffer(gl.UNIFORM_BUFFER, glyph_buffer);
-  // gl.bufferSubData(gl.UNIFORM_BUFFER, 0, glyph_layouts.array);
-
 
   // Draw the scene repeatedly
   function RenderScene(now) {
