@@ -1,37 +1,47 @@
 #version 300 es
 precision highp float;
 
-// Shader externs.
-in highp vec2 vImageTextureCoord; // This variable is private to the shaders and is grabbed directly from the vert shader.
+// uv vectors for textures.
+in highp vec2 vImageTextureCoord;
 in highp vec2 vCanvasCoord;
-flat in int fFaceIndex; // WebGL default states that the last vertex of a triangle is the provoking vertex, passing its aFaceIndex to the entire face.
-in highp vec3 vVertexPosition;
 
-// Sampler means the current texture to use. WebGL supports multiple loaded at once (8+).
+// Is constant across a WebGL element.
+flat in int fFaceIndex;
+
+// Texture from a png image.
 uniform sampler2D uImageTexture;
-uniform sampler2D uQuadTexture; // A 2D texture for storing quad curve data (face, quad).
 
-// Builtins.
+// A 2D texture for storing quadratic curve data.
+uniform sampler2D uQuadTexture;
+
+// Builtin output.
 out vec4 fragColor;
 
 // Consts from JS.
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
-// Struct
+// Number that is close to 0 to signify div by 0 edge cases.
+const float kSmallNumberCutoff = 0.0001f;
+
+// A multiplier for anti-aliasing effect.
+const float anti_aliasing_mult = 1.0f;
+
+// Data that tells the shader what char to draw and where.
 struct GlyphLayout {
   vec2 pos;
   int opentype_index;
   int size;
 };
 
-// Uniform buffer.
+// An array of GlyphLayouts.
 layout(std140) uniform uGlyphs {
   GlyphLayout glyph_array[100];
 };
 
-// For debugging. Called at end of main().
-const int debug_array_length = 1000;
+// Draws pixel data onto the screen at certain spots
+// for the CPU to grab and parse. Called at end of main().
+const int debug_array_length = 1000; // Must match JS variable of same name.
 float print_arr[debug_array_length];
 void PrintDebugOutput() {
   // Draw a data-rich line at the center of the screen, extending right.
@@ -52,15 +62,17 @@ void PrintDebugOutput() {
   }
 }
 
-const float kSmallNumberCutoff = 0.0001f;
+// Find if a quadratic equation is actually a line.
 bool QuadraticIsLinear(float a, float b, float c) {
   return abs(a) < kSmallNumberCutoff;
 }
 
+// Find if a quadratic equation is actually a horizontal line.
 bool QuadraticIsHorizontalLinear(float a, float b, float c) {
   return QuadraticIsLinear(a, b, c) && abs(b) < kSmallNumberCutoff;
 }
 
+// Find the number of solutions in a quadratic equation.
 // Note, 1 solution with multiplicity 2 is equivalent to 0 solutions.
 int QuadraticNumSols(float a, float b, float c) {
   float discriminant = b * b - 4.0f * a * c;
@@ -71,18 +83,30 @@ int QuadraticNumSols(float a, float b, float c) {
   return 2;
 }
 
+// Solve a quadratic equation.
+// lesser_sol used for plus or minus in quadratic equation.
+// Doesn't handle a == 0 case.
 float SolveQuadratic(float a, float b, float c, bool lesser_sol) {
   if(lesser_sol)
     return (-b - sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
   return (-b + sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
 }
 
+// Evaluate a quadratic curve given control points and a t value.
 vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
   float u = 1.0f - t;
   return u * u * p0 + 2.0f * u * t * p1 + t * t * p2;
 }
 
-float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width, bool xy_flip) {
+// Given three quadratic curve control points, calculate the
+// "intersection number" of a ray starting at the origin, point towards +x.
+float CalcIntersectionChange(
+  vec2 p0_in,
+  vec2 p1_in,
+  vec2 p2_in,
+  vec2 frag_width,
+  bool xy_flip
+) {
   vec2 p0, p1, p2;
   if(xy_flip) {
     p0 = vec2(p0_in.y, p0_in.x);
@@ -100,8 +124,9 @@ float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width
     return 0.0f;
 
   // How much the canvas coordinate changes between neighboring fragments.
-  // dFd[xy] can't be called in the dynamic loop because of shader language shenanigans, so it's called here.
-  float px_width = xy_flip ? frag_width.y : frag_width.x;
+  // dFd[xy] can't be called in the dynamic loop because of
+  // shader language shenanigans, so it's called here.
+  float px_width = (xy_flip ? frag_width.y : frag_width.x) * anti_aliasing_mult;
 
   // Linear case.
   if(QuadraticIsLinear(a, b, c)) {
@@ -120,11 +145,13 @@ float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width
 
   // Quadratic case.
   float change = 0.0f;
-  for(int i = 0; i < 2; i++) { // Process the lesser then the greater solution.
+  for(int i = 0; i < 2; i++) {
+    // If we are currently processing the lower solution.
+    bool is_minus_sol = (i == 0);
     // Calc vars.
-    float t = SolveQuadratic(a, b, c, i == 0);
+    float t = SolveQuadratic(a, b, c, is_minus_sol);
     vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    float entry_exit_multiplier = (i == 1) ^^ xy_flip ? -1.0f : 1.0f; // Greater solution is the entrance.
+    float entry_exit_multiplier = (!is_minus_sol) ^^ xy_flip ? -1.0f : 1.0f;
     // Add intersection change.
     if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
       change += 0.0f;

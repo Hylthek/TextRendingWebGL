@@ -13,11 +13,6 @@ uniform mat4 uProjectionMatrix;
 out highp vec2 vImageTextureCoord; // Default = varying = linear face interpolation.
 out highp vec2 vCanvasCoord; // Default = varying = linear face interpolation.
 flat out int fFaceIndex; // Flat = no face interpolation.
-out highp vec3 vVertexPosition;
-
-// Consts from JS.
-uniform int uScreenWidthPx;
-uniform int uScreenHeightPx;
 
 void main(void) {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
@@ -25,5 +20,4 @@ void main(void) {
   vImageTextureCoord = aTextureCoord;
   vCanvasCoord = aCanvasCoord;
   fFaceIndex = aFaceIndex;
-  vVertexPosition = (aVertexPosition).xyz;
 }
