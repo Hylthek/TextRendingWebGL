@@ -1,20 +1,44 @@
 function LoadUboFromString(gl, uniform_buffer_object, string_in, font, size) {
   const glyph_layouts = StringToGlyphLayouts(string_in, font, size);
+  gl.bindBuffer(gl.UNIFORM_BUFFER, uniform_buffer_object);
+  gl.bufferSubData(gl.UNIFORM_BUFFER, 0, glyph_layouts.array); // Loads entire buffer for now.
 }
 
 /**
  * 
- * @param {String} string_in 
+ * @param {String} string_in
  */
 function StringToGlyphLayouts(string_in, font, size) {
   const chars = string_in.split('')
+  // Each char needs 3 things, pos, index, size.
   const opentype_indices = chars.map(char => font.charToGlyphIndex(char))
+  const sizes = new Array(chars.length).fill(size)
+  const positions = CharsToPositions(chars, font, size)
+  let glyph_layout_objects = new ArrayGlyphLayout(chars.length);
+  for (let i = 0; i < chars.length; i++) {
+    glyph_layout_objects.set(i, {
+      pos: positions[i],
+      opentype_index: opentype_indices[i],
+      size: sizes[i]
+    })
+  }
+  return glyph_layout_objects;
 }
 
+function CharsToPositions(chars, font, size) {
+  return new Array(chars.length).fill(0).map((_, idx) => { return { x: idx, y: idx } })
+}
+
+// Defined for reference/jsdoc mostly.
 class GlyphLayout {
-  pos = { x: 0, y: 0 };
-  opentype_index = 0;
-  size = 72;
+  pos;
+  opentype_index;
+  size;
+  constructor(x = 0, y = 0, idx = 0, size = 72) {
+    this.pos = { x: x, y: y };
+    this.opentype_index = idx;
+    this.size = size;
+  }
 }
 
 class ArrayGlyphLayout {
