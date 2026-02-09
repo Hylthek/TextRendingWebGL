@@ -39,10 +39,10 @@ class ArrayGlyphLayout {
   get(idx) {
     const dv = new DataView(this.array);
     const glyph_layout_obj = new GlyphLayout();
-    glyph_layout_obj.pos.x = dv.getFLoat32(idx * this.glyph_layout_bytes + 0);
-    glyph_layout_obj.pos.y = dv.getFLoat32(idx * this.glyph_layout_bytes + 4);
-    glyph_layout_obj.opentype_index = dv.getInt32(idx * this.glyph_layout_bytes + 8);
-    glyph_layout_obj.size = dv.getInt32(idx * this.glyph_layout_bytes + 12);
+    glyph_layout_obj.pos.x = dv.getFloat32(idx * this.glyph_layout_bytes + 0, true);
+    glyph_layout_obj.pos.y = dv.getFloat32(idx * this.glyph_layout_bytes + 4, true);
+    glyph_layout_obj.opentype_index = dv.getInt32(idx * this.glyph_layout_bytes + 8, true);
+    glyph_layout_obj.size = dv.getInt32(idx * this.glyph_layout_bytes + 12, true);
     return glyph_layout_obj;
   }
 
