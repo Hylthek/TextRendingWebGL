@@ -8,6 +8,7 @@ import { ViewControl } from './view-control.js'
 import { InitGlyphBuffer } from './ubo.js';
 import { FontToTexture } from './glyph-path-texture.js';
 import { LoadUboFromString, ArrayGlyphLayout } from './load-ubo.js';
+import { GetFont } from './opentype-demo.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -26,12 +27,14 @@ async function CalvasMain() {
   const text_length = 480;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
+  // Load font object.
+  const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
-  const font_data_texture = await FontToTexture(gl, 'jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
+  const font_data_texture = await FontToTexture(gl, jetbrains_mono)
   // Init a uniform buffer for dynamic usage.
   const glyph_buffer = InitGlyphBuffer(gl);
   // Load a string into the uniform buffer.
-  LoadUboFromString(gl, glyph_buffer, "HelloWorld!\n-JetBrainsMono");
+  // LoadUboFromString(gl, glyph_buffer, "HelloWorld!\n-JetBrainsMono", jetbrains_mono, 72);
   // Init panning, zooming, etc.
   const view = new ViewControl();
 

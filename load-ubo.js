@@ -1,5 +1,14 @@
-function LoadUboFromString(gl, uniform_buffer_object, string_in) {
+function LoadUboFromString(gl, uniform_buffer_object, string_in, font, size) {
+  const glyph_layouts = StringToGlyphLayouts(string_in, font, size);
+}
 
+/**
+ * 
+ * @param {String} string_in 
+ */
+function StringToGlyphLayouts(string_in, font, size) {
+  const chars = string_in.split('')
+  const opentype_indices = chars.map(char => font.charToGlyphIndex(char))
 }
 
 class GlyphLayout {

@@ -212,4 +212,17 @@ function CommandsToQuadArray(commands, metadata1 = 0, metadata2 = 0) {
   return output.flat()
 }
 
-export { OpenTypeDemo, StringToCommands, MyQuadCommand, CommandsToQuadArray }
+async function GetFont(font_url) {
+  let font = null;
+  opentype.load(font_url, (err, loadedFont) => {
+    if (err) {
+      console.error('Font loading error:', err);
+      return;
+    }
+    font = loadedFont
+  });
+  while (font === null) { await new Promise(resolve => setTimeout(resolve, 100)); }
+  return font;
+}
+
+export { OpenTypeDemo, StringToCommands, MyQuadCommand, CommandsToQuadArray, GetFont }

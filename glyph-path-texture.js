@@ -1,6 +1,6 @@
-async function FontToTexture(gl, font_url) {
+async function FontToTexture(gl, font) {
   // Is an array of path objects, one for each glyph in the font.
-  const path_per_glyph = await FontToPathArray(font_url);
+  const path_per_glyph = await FontToPathArray(font);
   // Is an array of arrays of Quadratic Bezier Curves, one set per glyph in the font.
   const curves_per_glyph = path_per_glyph.map(path => PathToCurves(path));
   // Is an array of ArrayBuffers, each corresponding to a glyph in the font / a row in the texture.
@@ -15,23 +15,13 @@ async function FontToTexture(gl, font_url) {
  * @param {String} font_url Url of a ttf file.
  * @returns {Array<OpenTypePath>} An array of every glyph's OpenType path object, ordered by OpenType index.
  */
-async function FontToPathArray(font_url) {
-  let font_obj;
-  let glyph_paths;
-  // Load.
-  opentype.load(font_url, function (err, font) {
-    if (err) { console.error('Font could not be loaded: ' + err); }
-    else {
-      font_obj = font;
-      glyph_paths = Array(font.numGlyphs);
-      for (let i = 0; i < font.numGlyphs; i++) {
-        const glyph = font.glyphs.get(i);
-        glyph_paths[i] = glyph.path;
-      }
-    }
-  });
-  // Wait.
-  while (font_obj === undefined) { await new Promise(resolve => setTimeout(resolve, 100)); }
+async function FontToPathArray(font) {
+  // Load paths
+  let glyph_paths = Array(font.numGlyphs);
+  for (let i = 0; i < font.numGlyphs; i++) {
+    const glyph = font.glyphs.get(i);
+    glyph_paths[i] = glyph.path;
+  }
   // Return.
   return glyph_paths;
 }
