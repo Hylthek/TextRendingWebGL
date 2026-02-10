@@ -40,7 +40,7 @@ const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
 struct GlyphLayout {
   vec2 pos;
   int opentype_index;
-  int size;
+  float size;
 }; // Size, 16bytes.
 
 // An array of GlyphLayouts.
@@ -203,9 +203,9 @@ void main(void) {
 
       // Quad curve control points in reference frame where current fragment is the origin.
       vec2 origin = vCanvasCoord;
-      vec2 p0 = quad_rgba_l.rg - origin + glyph_array[i].pos;
-      vec2 p1 = quad_rgba_l.ba - origin + glyph_array[i].pos;
-      vec2 p2 = quad_rgba_r.rg - origin + glyph_array[i].pos;
+      vec2 p0 = (quad_rgba_l.rg * glyph_array[i].size) - origin + glyph_array[i].pos;
+      vec2 p1 = (quad_rgba_l.ba * glyph_array[i].size) - origin + glyph_array[i].pos;
+      vec2 p2 = (quad_rgba_r.rg * glyph_array[i].size) - origin + glyph_array[i].pos;
 
       // Calculate signed intersections along +x and +y axes.
       intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
@@ -219,7 +219,7 @@ void main(void) {
   // Text color.
   vec4 black = vec4(0, 0, 0, 1);
   vec4 white = vec4(1, 1, 1, 1);
-  fragColor = mix(black, white, intersection_count * 0.2f);
+  fragColor = mix(black, white, intersection_count);
   // Image color.
   vec4 tex_color = texture(uImageTexture, vImageTextureCoord);
   fragColor = tex_color + fragColor;
@@ -229,12 +229,12 @@ void main(void) {
   fragColor = mix(error_col, fragColor, is_pos);
 
   // Debug data output.
-  // for(int i = 0; i < 100; i++) {
-  //   int idx = i * 4;
-  //   print_arr[idx] = glyph_array[i].pos.x;
-  //   print_arr[idx + 1] = glyph_array[i].pos.y;
-  //   print_arr[idx + 2] = float(glyph_array[i].opentype_index);
-  //   print_arr[idx + 3] = float(glyph_array[i].size);
-  // }
+  for(int i = 0; i < 100; i++) {
+    int idx = i * 4;
+    print_arr[idx] = glyph_array[i].pos.x;
+    print_arr[idx + 1] = glyph_array[i].pos.y;
+    print_arr[idx + 2] = float(glyph_array[i].opentype_index);
+    print_arr[idx + 3] = glyph_array[i].size;
+  }
   PrintDebugOutput(); // Uses print_arr.
 }
