@@ -60,8 +60,20 @@ CalvasMain()
  * @param {HTMLElement} fps_span_element
  */
 function UpdateFps(now, fps_span_element) {
-  const fps = 1000 / (now - (window.lastFrameTime || 0));
-  window.lastFrameTime = now;
+  const n = 5;
+  // Init statics.
+  window.lastNthFrameTime = window.lastNthFrameTime || 0;
+  window.counter = window.counter || 0;
+  // Return early condition.
+  if (window.counter < n - 1) {
+    window.counter++;
+    return
+  }
+  window.counter = 0;
+  // Calculate fps/
+  const fps = n * 1000 / (now - (window.lastNthFrameTime || 0));
+  window.lastNthFrameTime = now;
+  // Update text.
   const fps_rounded = Math.round(fps * 10) / 10;
   const fpsString = fps_rounded.toFixed(1).padStart(4, ' ');
   fps_span_element.textContent = fpsString +

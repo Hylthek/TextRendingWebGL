@@ -1,6 +1,6 @@
 class ViewControl {
   sphere_coords = {
-    theta_deg: 45,
+    theta_deg: 135,
     phi_deg: 35.26
     // theta_deg: 0,
     // phi_deg: 0
