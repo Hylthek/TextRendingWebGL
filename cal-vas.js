@@ -22,12 +22,13 @@ async function CalvasMain() {
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
   // Load War and Peace.
-  const text_length = 5;
+  const text_length = 310;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
   // Load font object.
   const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
+  console.log("Preloading font glyphs.")
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
@@ -35,10 +36,12 @@ async function CalvasMain() {
   // Init a uniform buffer for dynamic usage.
   const glyph_buffer = InitGlyphBuffer(gl, text_length);
   // Load a string into the uniform buffer.
-  LoadUboFromString(gl, glyph_buffer, war_and_peace_trunc_txt, jetbrains_mono, 3);
+  console.log("Loading text into uniform buffer object.")
+  LoadUboFromString(gl, glyph_buffer, war_and_peace_trunc_txt, jetbrains_mono, 2.5);
   // Get JS const values.
-  const js_consts = GetJsConstValues(gl, glyph_buffer, font_data_texture_dims);
+  const js_consts = GetJsConstValues(gl, glyph_buffer, font_data_texture_dims, jetbrains_mono);
   // Compile program and get pointers.
+  console.log("Setting up shader program.")
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
   // Init panning, zooming, etc.
@@ -46,6 +49,7 @@ async function CalvasMain() {
   // Get fps html span element.
   const fps_span_element = document.getElementById('fps');
 
+  console.log("Rendering scene.")
   // Draw the scene repeatedly
   function RenderScene(now) {
     DrawScene(gl, programInfo, vertex_buffers, image_texture, font_data_texture, view);

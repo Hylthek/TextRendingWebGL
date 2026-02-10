@@ -28,7 +28,9 @@ function InitGlyphBuffer(gl, ubo_size) {
  * @param {Number} px_size The size of the text in ems.
  */
 function LoadUboFromString(gl, uniform_buffer_object, string_in, font, px_size) {
+  console.log("* Converting text into glyphs.")
   const glyph_layouts = StringToGlyphLayouts(string_in, font, px_size);
+  console.log("* Writing glyphs to uniform buffer array.")
   gl.bindBuffer(gl.UNIFORM_BUFFER, uniform_buffer_object);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, glyph_layouts.array); // Loads entire buffer for now.
 }

@@ -36,6 +36,9 @@ uniform int uScreenHeightPx;
 #define kQuadTexturePxWidth QUAD_TEXTURE_PX_WIDTH // Replaced in JS.
 #define kQuadTexturePxHeight QUAD_TEXTURE_PX_HEIGHT // Replaced in JS.
 
+// The maximum distance from GlyphLayout.pos that a glyph can extend.
+#define kGlyphBoundingRadius GLYPH_BOUNDING_RADIUS // Replaced in JS.
+
 // Data that tells the shader what char to draw and where.
 struct GlyphLayout {
   vec2 pos;
@@ -179,13 +182,21 @@ void main(void) {
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
 
   // Signed running count that increments upon exiting a
-  // quad and decrements upon entering a quad.
+  // TrueType contour and decrements upon entering a contour.
   float intersection_count_x = 0.0f; // Ray extends to +x
   float intersection_count_y = 0.0f; // Ray extends to +y
 
   // Loop through all of glyph_array.
   for(int i = 0; i < kGlyphLayoutArraySize; i++) {
     GlyphLayout curr_glyph = glyph_array[i];
+
+    float dist_to_glyph_orig = distance(vCanvasCoord, curr_glyph.pos);
+
+    print_arr[0] = dist_to_glyph_orig;
+    print_arr[1] = kGlyphBoundingRadius * curr_glyph.size;
+    if(dist_to_glyph_orig > kGlyphBoundingRadius * curr_glyph.size) {
+      continue;
+    }
 
     // Use the current opentype_index to vertically access the quad texture.
     float quad_texture_v = (float(curr_glyph.opentype_index) + 0.5f) / float(kQuadTexturePxHeight);
@@ -203,9 +214,9 @@ void main(void) {
 
       // Quad curve control points in reference frame where current fragment is the origin.
       vec2 origin = vCanvasCoord;
-      vec2 p0 = (quad_rgba_l.rg * glyph_array[i].size) - origin + glyph_array[i].pos;
-      vec2 p1 = (quad_rgba_l.ba * glyph_array[i].size) - origin + glyph_array[i].pos;
-      vec2 p2 = (quad_rgba_r.rg * glyph_array[i].size) - origin + glyph_array[i].pos;
+      vec2 p0 = (quad_rgba_l.rg * curr_glyph.size) - origin + curr_glyph.pos;
+      vec2 p1 = (quad_rgba_l.ba * curr_glyph.size) - origin + curr_glyph.pos;
+      vec2 p2 = (quad_rgba_r.rg * curr_glyph.size) - origin + curr_glyph.pos;
 
       // Calculate signed intersections along +x and +y axes.
       intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
