@@ -23,21 +23,21 @@ uniform int uScreenHeightPx;
 
 // Number that is close enough to 0 to be considered 0.
 // For div by 0 edge cases.
-#define kSmallNumberCutoff 0.0001f
+const float kSmallNumberCutoff = 0.0001f;
 
 // A multiplier for anti-aliasing effect.
-#define kAntiAliasingMult 1.5f
+const float kAntiAliasingMult = 1.5f;
 
 // Length of glyph_array[].
-#define kGlyphLayoutArraySizeBytes GLYPH_LAYOUT_ARRAY_SIZE_BYTES // Replaced in JS.
-#define kGlyphLayoutArraySize kGlyphLayoutArraySizeBytes / 16
+const int kGlyphLayoutArraySizeBytes = GLYPH_LAYOUT_ARRAY_SIZE_BYTES; // Replaced in JS.
+const int kGlyphLayoutArraySize = kGlyphLayoutArraySizeBytes / 16;
 
 // Width and Height of the font quadratic curve data texture.
-#define kQuadTexturePxWidth QUAD_TEXTURE_PX_WIDTH // Replaced in JS.
-#define kQuadTexturePxHeight QUAD_TEXTURE_PX_HEIGHT // Replaced in JS.
+const int kQuadTexturePxWidth = QUAD_TEXTURE_PX_WIDTH; // Replaced in JS.
+const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
 
 // The maximum distance from GlyphLayout.pos that a glyph can extend.
-#define kGlyphBoundingRadius GLYPH_BOUNDING_RADIUS // Replaced in JS.
+const float kGlyphBoundingRadius = GLYPH_BOUNDING_RADIUS; // Replaced in JS.
 
 // Data that tells the shader what char to draw and where.
 struct GlyphLayout {

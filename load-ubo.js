@@ -28,9 +28,7 @@ function InitGlyphBuffer(gl, ubo_size) {
  * @param {Number} px_size The size of the text in ems.
  */
 function LoadUboFromString(gl, uniform_buffer_object, string_in, font, px_size) {
-  console.log("* Converting text into glyphs.")
   const glyph_layouts = StringToGlyphLayouts(string_in, font, px_size);
-  console.log("* Writing glyphs to uniform buffer array.")
   gl.bindBuffer(gl.UNIFORM_BUFFER, uniform_buffer_object);
   gl.bufferSubData(gl.UNIFORM_BUFFER, 0, glyph_layouts.array); // Loads entire buffer for now.
 }
@@ -70,7 +68,7 @@ function StringToEmPositions(string_in, font, px_size) {
     const line_chars = lines[i].split('');
     // Init array of positions for this line. Set the y-vals via line height.
     const line_positions = Array.from({ length: line_chars.length }, () => (
-      { y: (lines.length - i) * line_height_em * px_size }
+      { y: (-1 - i) * line_height_em * px_size }
     ));
     for (let j = 0; j < line_positions.length; j++) {
       // For first case.
