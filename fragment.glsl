@@ -21,23 +21,27 @@ out vec4 fragColor;
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
-// Number that is close to 0 to signify div by 0 edge cases.
+// Number that is close enough to 0 to be considered 0.
+// For div by 0 edge cases.
 const float kSmallNumberCutoff = 0.0001f;
 
 // A multiplier for anti-aliasing effect.
 const float kAntiAliasingMult = 1.5f;
 
-// Max length of a pseudo-infinite loop.
-const int kMaxForLoops = 100;
+// Length of glyph_array[].
+const int kGlyphLayoutArraySizeBytes = GLYPH_LAYOUT_ARRAY_SIZE_BYTES; // Replaced in JS.
+const int kGlyphLayoutArraySize = kGlyphLayoutArraySizeBytes / 16;
 
-const int kGlyphLayoutArraySize = 100;
+// Width and Height of the font quadratic curve data texture.
+const int kQuadTexturePxWidth = QUAD_TEXTURE_PX_WIDTH; // Replaced in JS.
+const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
 
 // Data that tells the shader what char to draw and where.
 struct GlyphLayout {
   vec2 pos;
   int opentype_index;
   int size;
-};
+}; // Size, 16bytes.
 
 // An array of GlyphLayouts.
 layout(std140) uniform uGlyphs {
@@ -168,8 +172,6 @@ float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width
 void main(void) {
   // Get the dimensions of uQuadTexture.
   ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
-  int kQuadTexturePxWidth = quad_texture_size.x;
-  int kQuadTexturePxHeight = quad_texture_size.y;
 
   // How much the canvas coordinate changes between neighboring fragments.
   // dFd[xy] can't be called in the dynamic loop because of
@@ -182,20 +184,15 @@ void main(void) {
   float intersection_count_y = 0.0f; // Ray extends to +y
 
   // Loop through all of glyph_array.
-  for(int i = 0; i < 5; i++) {
+  for(int i = 0; i < kGlyphLayoutArraySize; i++) {
     GlyphLayout curr_glyph = glyph_array[i];
 
     // Use the current opentype_index to vertically access the quad texture.
     float quad_texture_v = (float(curr_glyph.opentype_index) + 0.5f) / float(kQuadTexturePxHeight);
-    // float quad_texture_v = (float(0) + 0.5f) / float(kQuadTexturePxHeight);
-    print_arr[0] = float(curr_glyph.opentype_index);
 
     // Loop through all quads for this glyph.
-    float loop_max_met;
-    for(int curr_quad = 0; curr_quad < 100; curr_quad++) {
-      loop_max_met = step(float(kMaxForLoops), float(curr_quad) + 0.5f);
+    for(int curr_quad = 0; curr_quad < kQuadTexturePxWidth / 2; curr_quad++) {
       int curr_px = curr_quad * 2;
-
       // The current quad (left and right pixels) as texture u values.
       float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
       float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
@@ -206,16 +203,14 @@ void main(void) {
 
       // Quad curve control points in reference frame where current fragment is the origin.
       vec2 origin = vCanvasCoord;
-      vec2 p0 = quad_rgba_l.rg - origin;
-      vec2 p1 = quad_rgba_l.ba - origin;
-      vec2 p2 = quad_rgba_r.rg - origin;
+      vec2 p0 = quad_rgba_l.rg - origin + glyph_array[i].pos;
+      vec2 p1 = quad_rgba_l.ba - origin + glyph_array[i].pos;
+      vec2 p2 = quad_rgba_r.rg - origin + glyph_array[i].pos;
 
       // Calculate signed intersections along +x and +y axes.
       intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
       intersection_count_y += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, true);
     }
-    print_arr[6] = intersection_count_x;
-    print_arr[7] = intersection_count_y;
   }
   float x_dist = abs(intersection_count_x - 0.5f);
   float y_dist = abs(intersection_count_y - 0.5f);

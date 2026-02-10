@@ -9,6 +9,7 @@ import { InitGlyphBuffer } from './ubo.js';
 import { FontToTexture } from './glyph-path-texture.js';
 import { LoadUboFromString, ArrayGlyphLayout } from './load-ubo.js';
 import { GetFont } from './opentype-demo.js';
+import {GetJsConstValues} from './get-js-consts.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -17,9 +18,6 @@ async function CalvasMain() {
   gl.clear(gl.COLOR_BUFFER_BIT);
 
 
-  // Compile program and get pointers.
-  const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl")
-  const programInfo = GetProgramInfo(gl, shaderProgram);
   // Load static vertex attribute data.
   const vertex_buffers = InitVertexBuffers(gl);
   // Load a basic image texture.
@@ -31,11 +29,16 @@ async function CalvasMain() {
   // Load font object.
   const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
-  const font_data_texture = await FontToTexture(gl, jetbrains_mono)
+  const {texture: font_data_texture, dimensions: font_data_texture_dims} = await FontToTexture(gl, jetbrains_mono)
   // Init a uniform buffer for dynamic usage.
-  const glyph_buffer = InitGlyphBuffer(gl);
+  const glyph_buffer = InitGlyphBuffer(gl, 100);
   // Load a string into the uniform buffer.
   LoadUboFromString(gl, glyph_buffer, "AHelloWorld!\n-JetBrainsMono", jetbrains_mono, 72);
+  // Get JS const values.
+  const js_consts = GetJsConstValues(gl, glyph_buffer, font_data_texture_dims);
+  // Compile program and get pointers.
+  const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
+  const programInfo = GetProgramInfo(gl, shaderProgram);
   // Init panning, zooming, etc.
   const view = new ViewControl();
 

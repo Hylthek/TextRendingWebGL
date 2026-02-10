@@ -6,9 +6,12 @@ async function FontToTexture(gl, font) {
   // Is an array of ArrayBuffers, each corresponding to a glyph in the font / a row in the texture.
   const buffer_per_glyph = curves_per_glyph.map(curves => CurvesToBuffer(curves))
 
-  const font_data_texture = LoadDataTexture(gl, buffer_per_glyph);
+  const { texture: font_data_texture, width: width, height: height } = LoadDataTexture(gl, buffer_per_glyph);
 
-  return font_data_texture;
+  return {
+    texture: font_data_texture,
+    dimensions: { width: width, height: height },
+  };
 }
 
 /**
@@ -153,7 +156,7 @@ function CurvesToBuffer(curves, metadata1 = 0, metadata2 = 0) {
  * @param {WebGL2RenderingContext} gl
  * @param {Array<Array<Float32>>} quad_jagged_array
  * A jagged array of Floats where idx = (row, column).  
- * @returns {WebGLTexture} A WebGL texture.
+ * @returns {Object} Contains: a WebGL texture, pixel width and height of texture.
  */
 function LoadDataTexture(gl, quad_jagged_array) {
   // Check for quad_jagged_array sub-array mod4 validity.
@@ -195,7 +198,11 @@ function LoadDataTexture(gl, quad_jagged_array) {
   const border = 0; // Must be 0 or error is thrown. Why is it even here? Deprecated, apparently. Very ugly :(
   gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, format, type, data);
 
-  return texture;
+  return {
+    texture: texture,
+    width: width,
+    height: height
+  };
 }
 
 /**

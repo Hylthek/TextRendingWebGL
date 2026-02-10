@@ -3,25 +3,27 @@
  * @param {WebGL2RenderingContext} gl 
  * @returns {Promise<WebGLProgram>}
  */
-async function InitShaderProgram(gl, vsUrl, fsUrl) {
+async function InitShaderProgram(gl, vsUrl, fsUrl, js_consts) {
+  // Fetch glsl source.
   const vsSource = await (await fetch(vsUrl)).text()
   const fsSource = await (await fetch(fsUrl)).text()
-  
-  const vertexShader = LoadShader(gl, gl.VERTEX_SHADER, vsSource);
-  const fragmentShader = LoadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+  // Manually replace runtime consts.
+  const vsSourceReplaced = ReplaceJsConsts(vsSource, js_consts);
+  const fsSourceReplaced = ReplaceJsConsts(fsSource, js_consts);
+
+  const vertexShader = LoadShader(gl, gl.VERTEX_SHADER, vsSourceReplaced);
+  const fragmentShader = LoadShader(gl, gl.FRAGMENT_SHADER, fsSourceReplaced);
 
   // Create the shader program
-
   const shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
 
   // If creating the shader program failed, alert
-
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
     console.error(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`);
-    alert("GLSL ERROR:")
     return null;
   }
 
@@ -33,18 +35,15 @@ function LoadShader(gl, type, source) {
   const shader = gl.createShader(type);
 
   // Send the source to the shader object
-
   gl.shaderSource(shader, source);
 
   // Compile the shader program
-
   gl.compileShader(shader);
 
   // See if it compiled successfully
-
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     console.error(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
-    alert("GLSL ERROR:")
+    console.log(source)
     gl.deleteShader(shader);
     return null;
   }
@@ -81,6 +80,28 @@ function GetProgramInfo(gl, shaderProgram) {
       uGlyphBuffer: gl.getUniformBlockIndex(shaderProgram, "uGlyphs"),
     },
   }
+}
+
+/**
+ * 
+ * @param {String} source_txt 
+ * @param {Object} js_consts 
+ * @returns 
+ */
+function ReplaceJsConsts(source_txt, js_consts) {
+  // Get all keys of js_consts.
+  const keys = Object.keys(js_consts);
+  // Iterate.
+  for (const key of keys) {
+    source_txt = source_txt.replace(key, js_consts[key]);
+  }
+  // Assert that all keys were replaced.
+  for (const key of keys) {
+    if (source_txt.includes(key)) {
+      console.error(`Replacement failed for key: ${key}`);
+    }
+  }
+  return source_txt;
 }
 
 export { InitShaderProgram, GetProgramInfo }
