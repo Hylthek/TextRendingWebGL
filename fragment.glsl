@@ -23,18 +23,18 @@ uniform int uScreenHeightPx;
 
 // Number that is close enough to 0 to be considered 0.
 // For div by 0 edge cases.
-const float kSmallNumberCutoff = 0.0001f;
+#define kSmallNumberCutoff 0.0001f
 
 // A multiplier for anti-aliasing effect.
-const float kAntiAliasingMult = 1.5f;
+#define kAntiAliasingMult 1.5f
 
 // Length of glyph_array[].
-const int kGlyphLayoutArraySizeBytes = GLYPH_LAYOUT_ARRAY_SIZE_BYTES; // Replaced in JS.
-const int kGlyphLayoutArraySize = kGlyphLayoutArraySizeBytes / 16;
+#define kGlyphLayoutArraySizeBytes GLYPH_LAYOUT_ARRAY_SIZE_BYTES // Replaced in JS.
+#define kGlyphLayoutArraySize kGlyphLayoutArraySizeBytes / 16
 
 // Width and Height of the font quadratic curve data texture.
-const int kQuadTexturePxWidth = QUAD_TEXTURE_PX_WIDTH; // Replaced in JS.
-const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
+#define kQuadTexturePxWidth QUAD_TEXTURE_PX_WIDTH // Replaced in JS.
+#define kQuadTexturePxHeight QUAD_TEXTURE_PX_HEIGHT // Replaced in JS.
 
 // Data that tells the shader what char to draw and where.
 struct GlyphLayout {
@@ -229,12 +229,12 @@ void main(void) {
   fragColor = mix(error_col, fragColor, is_pos);
 
   // Debug data output.
-  for(int i = 0; i < 100; i++) {
-    int idx = i * 4;
-    print_arr[idx] = glyph_array[i].pos.x;
-    print_arr[idx + 1] = glyph_array[i].pos.y;
-    print_arr[idx + 2] = float(glyph_array[i].opentype_index);
-    print_arr[idx + 3] = glyph_array[i].size;
-  }
+  // for(int i = 0; i < kGlyphLayoutArraySize; i++) {
+  //   int idx = i * 4;
+  //   print_arr[idx] = glyph_array[i].pos.x;
+  //   print_arr[idx + 1] = glyph_array[i].pos.y;
+  //   print_arr[idx + 2] = float(glyph_array[i].opentype_index);
+  //   print_arr[idx + 3] = glyph_array[i].size;
+  // }
   PrintDebugOutput(); // Uses print_arr.
 }

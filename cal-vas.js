@@ -22,17 +22,20 @@ async function CalvasMain() {
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
   // Load War and Peace.
-  const text_length = 10;
+  const text_length = 5;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
   // Load font object.
   const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
-  const { texture: font_data_texture, dimensions: font_data_texture_dims } = await FontToTexture(gl, jetbrains_mono)
+  const {
+    texture: font_data_texture,
+    dimensions: font_data_texture_dims
+  } = await FontToTexture(gl, jetbrains_mono)
   // Init a uniform buffer for dynamic usage.
-  const glyph_buffer = InitGlyphBuffer(gl);
+  const glyph_buffer = InitGlyphBuffer(gl, text_length);
   // Load a string into the uniform buffer.
-  LoadUboFromString(gl, glyph_buffer, "abcd", jetbrains_mono, 1);
+  LoadUboFromString(gl, glyph_buffer, war_and_peace_trunc_txt, jetbrains_mono, 3);
   // Get JS const values.
   const js_consts = GetJsConstValues(gl, glyph_buffer, font_data_texture_dims);
   // Compile program and get pointers.

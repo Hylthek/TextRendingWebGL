@@ -1,12 +1,12 @@
 class ViewControl {
   sphere_coords = {
-    theta_deg: 135,
-    phi_deg: 35.26
+    theta_deg: 90,
+    // phi_deg: 35.26
     // theta_deg: 0,
-    // phi_deg: 0
+    phi_deg: 45
   }
   camera_pos = {
-    zoom: 5.2,
+    zoom: 8.5,
   }
   pan = { x: 0, y: 0 }
   isDragging = false;
