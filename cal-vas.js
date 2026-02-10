@@ -9,7 +9,7 @@ import { InitGlyphBuffer } from './ubo.js';
 import { FontToTexture } from './glyph-path-texture.js';
 import { LoadUboFromString, ArrayGlyphLayout } from './load-ubo.js';
 import { GetFont } from './opentype-demo.js';
-import {GetJsConstValues} from './get-js-consts.js';
+import { GetJsConstValues } from './get-js-consts.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -29,9 +29,9 @@ async function CalvasMain() {
   // Load font object.
   const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
-  const {texture: font_data_texture, dimensions: font_data_texture_dims} = await FontToTexture(gl, jetbrains_mono)
+  const { texture: font_data_texture, dimensions: font_data_texture_dims } = await FontToTexture(gl, jetbrains_mono)
   // Init a uniform buffer for dynamic usage.
-  const glyph_buffer = InitGlyphBuffer(gl, 100);
+  const glyph_buffer = InitGlyphBuffer(gl);
   // Load a string into the uniform buffer.
   LoadUboFromString(gl, glyph_buffer, "AHelloWorld!\n-JetBrainsMono", jetbrains_mono, 72);
   // Get JS const values.
@@ -41,13 +41,35 @@ async function CalvasMain() {
   const programInfo = GetProgramInfo(gl, shaderProgram);
   // Init panning, zooming, etc.
   const view = new ViewControl();
+  // Get fps html span element.
+  const fps_span_element = document.getElementById('fps');
 
   // Draw the scene repeatedly
   function RenderScene(now) {
     DrawScene(gl, programInfo, vertex_buffers, image_texture, font_data_texture, view);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
+    UpdateFps(now, 1, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
 }
 CalvasMain()
+
+/**
+ * 
+ * @param {Number} now
+ * @param {Number} lpf_rate
+ * @param {HTMLElement} fps_span_element
+ */
+function UpdateFps(now, lpf_rate, fps_span_element) {
+  const fps_now = 1000 / (now - (window.lastFrameTime || 0));
+  window.lastFrameTime = now;
+  window.fps_moving_avg = lpf_rate * fps_now + (1 - lpf_rate) * (window.fps_moving_avg || 60);
+  const fps_moving_avg_rounded = Math.round(window.fps_moving_avg);
+  fps_span_element.textContent = fps_moving_avg_rounded.toString().padStart(2,"0") +
+    ' ' +
+    '[' +
+    '█'.repeat(fps_moving_avg_rounded) +
+    ' '.repeat(Math.max(0, 60 - fps_moving_avg_rounded)) +
+    ']'
+}

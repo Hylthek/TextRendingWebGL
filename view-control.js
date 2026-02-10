@@ -1,9 +1,9 @@
 class ViewControl {
   sphere_coords = {
-    // theta_deg: 45,
-    // phi_deg: 35.26
-    theta_deg: 0,
-    phi_deg: 0
+    theta_deg: 45,
+    phi_deg: 35.26
+    // theta_deg: 0,
+    // phi_deg: 0
   }
   camera_pos = {
     zoom: 5.2,
