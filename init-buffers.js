@@ -123,7 +123,7 @@ function InitTextCanvasBuffer(gl) {
   const canvas_coords_buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, canvas_coords_buffer);
 
-  const scale = 100;
+  const scale = 1000;
   const p1 = { x: 0, y: -scale }
   const p2 = { x: scale, y: 0 }
 

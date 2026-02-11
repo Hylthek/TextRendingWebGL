@@ -1,25 +1,44 @@
 #version 300 es
 precision highp float;
 
-// uv vectors for textures.
-in highp vec2 vImageTextureCoord;
-in highp vec2 vCanvasCoord;
-
-// Is constant across a WebGL element.
-flat in int fFaceIndex;
+// Builtin output.
+out vec4 fragColor;
 
 // Texture from a png image.
 uniform sampler2D uImageTexture;
+// uv vector for texture.
+in highp vec2 vImageTextureCoord;
 
 // A 2D texture for storing quadratic curve data.
 uniform sampler2D uQuadTexture;
+// Width and Height of the font quadratic curve data texture.
+const int kQuadTexturePxWidth = QUAD_TEXTURE_PX_WIDTH; // Replaced in JS.
+const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
 
-// Builtin output.
-out vec4 fragColor;
+// Data that tells the shader what char to draw and where.
+struct GlyphLayout {
+  vec2 pos;
+  float opentype_index;
+  float size;
+}; // Size, 16bytes.
+
+// A 2D data texture for storing glyph layouts.
+uniform sampler2D uGlyphLayoutTexture;
+// Width and Height of the font quadratic curve data texture.
+const int kGlyphTexturePxWidth = GLYPH_TEXTURE_PX_WIDTH; // Replaced in JS.
+const int kGlyphTexturePxHeight = GLYPH_TEXTURE_PX_HEIGHT; // Replaced in JS.
+
+// Text rendering 2D coordinate in "glyph-space".
+in highp vec2 vCanvasCoord;
+// The maximum distance from GlyphLayout.pos that a glyph can extend.
+const float kGlyphBoundingRadius = GLYPH_BOUNDING_RADIUS; // Replaced in JS.
 
 // Consts from JS.
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
+
+// Is constant across a WebGL element.
+flat in int fFaceIndex;
 
 // Number that is close enough to 0 to be considered 0.
 // For div by 0 edge cases.
@@ -27,29 +46,6 @@ const float kSmallNumberCutoff = 0.0001f;
 
 // A multiplier for anti-aliasing effect.
 const float kAntiAliasingMult = 1.5f;
-
-// Length of glyph_array[].
-const int kGlyphLayoutArraySizeBytes = GLYPH_LAYOUT_ARRAY_SIZE_BYTES; // Replaced in JS.
-const int kGlyphLayoutArraySize = kGlyphLayoutArraySizeBytes / 16;
-
-// Width and Height of the font quadratic curve data texture.
-const int kQuadTexturePxWidth = QUAD_TEXTURE_PX_WIDTH; // Replaced in JS.
-const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
-
-// The maximum distance from GlyphLayout.pos that a glyph can extend.
-const float kGlyphBoundingRadius = GLYPH_BOUNDING_RADIUS; // Replaced in JS.
-
-// Data that tells the shader what char to draw and where.
-struct GlyphLayout {
-  vec2 pos;
-  int opentype_index;
-  float size;
-}; // Size, 16bytes.
-
-// An array of GlyphLayouts.
-layout(std140) uniform uGlyphs {
-  GlyphLayout glyph_array[kGlyphLayoutArraySize];
-};
 
 // Draws pixel data onto the screen at certain spots
 // for the CPU to grab and parse. Called at end of main().
@@ -173,33 +169,35 @@ float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width
 }
 
 void main(void) {
-  // Get the dimensions of uQuadTexture.
-  ivec2 quad_texture_size = textureSize(uQuadTexture, 0);
-
   // How much the canvas coordinate changes between neighboring fragments.
-  // dFd[xy] can't be called in the dynamic loop because of
-  // shader language shenanigans, so it's called here.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
 
   // Signed running count that increments upon exiting a
   // TrueType contour and decrements upon entering a contour.
+  // Fractional increments for anti-aliasing.
   float intersection_count_x = 0.0f; // Ray extends to +x
   float intersection_count_y = 0.0f; // Ray extends to +y
 
   // Loop through all of glyph_array.
-  for(int i = 0; i < kGlyphLayoutArraySize; i++) {
-    GlyphLayout curr_glyph = glyph_array[i];
+  for(int i = 0; i < kGlyphTexturePxWidth; i++) {
+    // Fetch GlyphLayout texel.
+    float glyph_u = (float(i) + 0.5f) / float(kGlyphTexturePxWidth);
+    float glyph_v = (float(0) + 0.5f) / float(kGlyphTexturePxHeight);
+    vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, vec2(glyph_u, glyph_v));
 
+    // Parse into a GlyphLayout object.
+    GlyphLayout curr_glyph;
+    curr_glyph.pos = glyph_layout_texel.xy;
+    curr_glyph.opentype_index = glyph_layout_texel.z;
+    curr_glyph.size = glyph_layout_texel.w;
+
+    // Calculate distance to glyph origin and check for early continue.
     float dist_to_glyph_orig = distance(vCanvasCoord, curr_glyph.pos);
-
-    print_arr[0] = dist_to_glyph_orig;
-    print_arr[1] = kGlyphBoundingRadius * curr_glyph.size;
-    if(dist_to_glyph_orig > kGlyphBoundingRadius * curr_glyph.size) {
+    if(dist_to_glyph_orig > kGlyphBoundingRadius * curr_glyph.size)
       continue;
-    }
 
     // Use the current opentype_index to vertically access the quad texture.
-    float quad_texture_v = (float(curr_glyph.opentype_index) + 0.5f) / float(kQuadTexturePxHeight);
+    float quad_texture_v = (curr_glyph.opentype_index + 0.5f) / float(kQuadTexturePxHeight);
 
     // Loop through all quads for this glyph.
     for(int curr_quad = 0; curr_quad < kQuadTexturePxWidth / 2; curr_quad++) {
@@ -240,12 +238,5 @@ void main(void) {
   fragColor = mix(error_col, fragColor, is_pos);
 
   // Debug data output.
-  // for(int i = 0; i < kGlyphLayoutArraySize; i++) {
-  //   int idx = i * 4;
-  //   print_arr[idx] = glyph_array[i].pos.x;
-  //   print_arr[idx + 1] = glyph_array[i].pos.y;
-  //   print_arr[idx + 2] = float(glyph_array[i].opentype_index);
-  //   print_arr[idx + 3] = glyph_array[i].size;
-  // }
   PrintDebugOutput(); // Uses print_arr.
 }

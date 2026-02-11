@@ -79,9 +79,9 @@ function GetProgramInfo(gl, shaderProgram) {
       modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
       uSampler: gl.getUniformLocation(shaderProgram, "uImageTexture"),
       uQuadTexture: gl.getUniformLocation(shaderProgram, "uQuadTexture"),
+      uGlyphLayoutTexture: gl.getUniformLocation(shaderProgram, "uGlyphLayoutTexture"),
       uScreenWidthPx: gl.getUniformLocation(shaderProgram, "uScreenWidthPx"),
       uScreenHeightPx: gl.getUniformLocation(shaderProgram, "uScreenHeightPx"),
-      uGlyphBuffer: gl.getUniformBlockIndex(shaderProgram, "uGlyphs"),
     },
   }
 }

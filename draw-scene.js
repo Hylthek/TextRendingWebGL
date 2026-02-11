@@ -4,9 +4,9 @@
  * @param {*} programInfo 
  * @param {*} buffers 
  * @param {*} image_texture
- * @param {*} quad_data_texture 
+ * @param {*} font_data_texture 
  */
-function DrawScene(gl, programInfo, buffers, image_texture, quad_data_texture, view) {
+function DrawScene(gl, programInfo, buffers, view, image_texture, font_data_texture, glyph_data_texture) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -68,16 +68,15 @@ function DrawScene(gl, programInfo, buffers, image_texture, quad_data_texture, v
   // Tex1
   gl.uniform1i(programInfo.uniformLocations.uQuadTexture, 1);
   gl.activeTexture(gl.TEXTURE1);
-  gl.bindTexture(gl.TEXTURE_2D, quad_data_texture);
-  // Consts
+  gl.bindTexture(gl.TEXTURE_2D, font_data_texture);
+  // Tex2
+  gl.uniform1i(programInfo.uniformLocations.uGlyphLayoutTexture, 2);
+  gl.activeTexture(gl.TEXTURE2);
+  gl.bindTexture(gl.TEXTURE_2D, glyph_data_texture);
+
+  // WebGL canvas px dims for shader debug features.
   gl.uniform1i(programInfo.uniformLocations.uScreenWidthPx, gl.canvas.width);
   gl.uniform1i(programInfo.uniformLocations.uScreenHeightPx, gl.canvas.height);
-  // Bind UBO.
-  gl.uniformBlockBinding(
-    programInfo.program,
-    programInfo.uniformLocations.uGlyphBuffer,
-    0
-  );
 
   // Set the view uniforms.
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
@@ -88,6 +87,8 @@ function DrawScene(gl, programInfo, buffers, image_texture, quad_data_texture, v
   const vertexCount = 6 * 6; // 6 vertices per face.
   const type = gl.UNSIGNED_SHORT // 2 bytes.
   const offset = 0 // each face contains 12 bytes of data.
+
+  // Draw triangles.
   // Note, buffers don't get used up, they persist and an offset picks new data.
   gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
 }
@@ -111,27 +112,6 @@ function SetPositionAttribute(gl, buffers, programInfo) {
     offset,
   );
   gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-}
-
-// Tell WebGL how to pull out the colors from the color buffer
-// into the vertexColor attribute.
-function SetColorAttribute(gl, buffers, programInfo) {
-  const numComponents = 4;
-  const type = gl.FLOAT;
-  const normalize = false;
-  const stride = 0;
-  const offset = 0;
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-  gl.vertexAttribPointer(
-    programInfo.attribLocations.vertexColor,
-    numComponents,
-    type,
-    normalize,
-    stride,
-    offset,
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexColor);
 }
 
 /**
