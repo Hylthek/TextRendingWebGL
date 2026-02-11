@@ -6,7 +6,7 @@ class ViewControl {
     phi_deg: 45
   }
   camera_pos = {
-    zoom: 8.5,
+    zoom: 4,
   }
   pan = { x: 0, y: 0 }
   isDragging = false;

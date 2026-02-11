@@ -5,16 +5,13 @@
  */
 async function InitShaderProgram(gl, vsUrl, fsUrl, js_consts) {
   // Fetch glsl source.
-  performance.mark("start fetching source")
   const vsSource = await (await fetch(vsUrl)).text()
   const fsSource = await (await fetch(fsUrl)).text()
 
   // Manually replace runtime consts.
-  performance.mark("start replacing source")
   const vsSourceReplaced = ReplaceJsConsts(vsSource, js_consts);
   const fsSourceReplaced = ReplaceJsConsts(fsSource, js_consts);
 
-  performance.mark("start loading source")
   const vertexShader = LoadShader(gl, gl.VERTEX_SHADER, vsSourceReplaced);
   const fragmentShader = LoadShader(gl, gl.FRAGMENT_SHADER, fsSourceReplaced);
 
@@ -22,9 +19,9 @@ async function InitShaderProgram(gl, vsUrl, fsUrl, js_consts) {
   const shaderProgram = gl.createProgram();
   gl.attachShader(shaderProgram, vertexShader);
   gl.attachShader(shaderProgram, fragmentShader);
-  performance.mark("start linking program")
+  performance.mark("Shader linking...")
   gl.linkProgram(shaderProgram);
-  performance.mark("done linking program")
+  performance.mark("Shader linked")
 
   // If creating the shader program failed, alert
   if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
@@ -43,7 +40,9 @@ function LoadShader(gl, type, source) {
   gl.shaderSource(shader, source);
 
   // Compile the shader program
+  performance.mark("Shader compiling...")
   gl.compileShader(shader);
+  performance.mark("Shader compiled")
 
   // See if it compiled successfully
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {

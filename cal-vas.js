@@ -5,8 +5,8 @@ import { DrawScene } from "./draw-scene.js";
 import { LoadImageTexture } from "./load-texture.js";
 import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
-import { FontToTexture } from './glyph-path-texture.js';
-import { LoadUboFromString, ArrayGlyphLayout, InitGlyphBuffer } from './load-ubo.js';
+import { FontToTexture } from './load-font-texture.js';
+import { LoadUboFromString, ArrayGlyphLayout, InitGlyphBuffer } from './load-char-ubo.js';
 import { GetFont } from './opentype-demo.js';
 import { GetJsConstValues } from './get-js-consts.js';
 
@@ -15,7 +15,6 @@ async function CalvasMain() {
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
-
 
   // Load static vertex attribute data.
   const vertex_buffers = InitVertexBuffers(gl);
@@ -28,22 +27,19 @@ async function CalvasMain() {
   // Load font object.
   const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
-  console.log("Preloading font glyphs.")
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
   } = await FontToTexture(gl, jetbrains_mono)
+
   // Init a uniform buffer for dynamic usage.
   const glyph_buffer = InitGlyphBuffer(gl, text_length);
   // Load a string into the uniform buffer.
-  console.log("Loading text into uniform buffer object.")
-  performance.mark("start LoadUboFromString")
   LoadUboFromString(gl, glyph_buffer, war_and_peace_trunc_txt, jetbrains_mono, 2.5);
-  performance.mark("finish LoadUboFromString")
+
   // Get JS const values.
   const js_consts = GetJsConstValues(gl, glyph_buffer, font_data_texture_dims, jetbrains_mono);
   // Compile program and get pointers.
-  console.log("Setting up shader program.")
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
   // Init panning, zooming, etc.
@@ -51,7 +47,6 @@ async function CalvasMain() {
   // Get fps html span element.
   const fps_span_element = document.getElementById('fps');
 
-  console.log("Rendering scene.")
   // Draw the scene repeatedly
   function RenderScene(now) {
     DrawScene(gl, programInfo, vertex_buffers, image_texture, font_data_texture, view);
@@ -85,10 +80,6 @@ function UpdateFps(now, fps_span_element) {
   // Update text.
   const fps_rounded = Math.round(fps * 10) / 10;
   const fpsString = fps_rounded.toFixed(1).padStart(4, ' ');
-  fps_span_element.textContent = fpsString +
-    ' ' +
-    '[' +
-    '█'.repeat(fps_rounded) +
-    ' '.repeat(Math.max(0, 60 - fps_rounded)) +
-    ']'
+  const bar_string = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
+  fps_span_element.textContent = fpsString + bar_string;
 }

@@ -8,14 +8,18 @@
 </head>
 
 <style>
+  body {
+    background-color: black;
+  }
+
   canvas {
-    border: 1px solid black;
-    width: 90vw;
-    height: calc(90vw * 9 / 16);
+    width: min(90vw, calc(90vh * 16 / 9));
+    height: min(calc(90vw * 9 / 16), 90vh);
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    border: 0.18vw solid #00FF41;
   }
 
   canvas#debug-canvas {
@@ -23,17 +27,32 @@
     top: calc(5vh * 9/16);
     width: 20vw;
     height: calc(20vw * 9/16);
-    transform: translate(0, 0);
     display: none;
+  }
+
+  @font-face {
+    font-family: 'Terminal';
+    src: url('/Terminal/Terminal.ttf') format('truetype');
+  }
+
+  .fps-div {
+    position: fixed;
+    top: calc((100vh - min(90vh, calc(90vw * 9 / 16)))/4);
+    transform: translate(0, -50%);
+    left: calc((100vw - min(90vw, calc(90vh * 16 / 9)))/2);
+    font-family: Terminal;
+    font-size: min(2.044vw, calc(2.044vh * 16 / 9));
+    color: #00FF41;
+    display: inline-block;
   }
 </style>
 
 <body>
-  <div style="position: fixed; top: 3vh; left: 3vh; font-family: monospace; font-size: 2vh; white-space: pre;">
-    <span>FPS: </span><span id="fps">Nan</span>
-  </div>
   <canvas id="cal-vas"></canvas>
   <canvas id="debug-canvas"></canvas>
+  <div class="fps-div">
+    <span>FPS: </span><span id="fps">[]</span>
+  </div>
 </body>
 
 
