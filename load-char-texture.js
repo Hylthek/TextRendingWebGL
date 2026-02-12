@@ -99,30 +99,38 @@ function StringToGlyphLayouts(string_in, font, px_size) {
 function StringToEmPositions(string_in, font, px_size) {
   // Get line height in ems.
   const line_height_em = GetLineHeight(font) / font.unitsPerEm;
-  // Get an array of strings for each line.
-  const lines = string_in.split('\n')
+
+  // Get an array of strings for each line, doesn't reduce total char count.
+  const lines = string_in.split(/(?<=\n)/);
+
   // Output array.
   const string_positions = [];
+
   // Iterate over lines.
-  for (let i = 0; i < lines.length; i++) {
+  for (let curr_line = 0; curr_line < lines.length; curr_line++) {
+
     // Get chars for this line.
-    const line_chars = lines[i].split('');
+    const line_chars = lines[curr_line].split('');
+
     // Init array of positions for this line. Set the y-vals via line height.
     const line_positions = Array.from({ length: line_chars.length }, () => (
-      { y: (-1 - i) * line_height_em * px_size }
+      { x: 0, y: (-1 - curr_line) * line_height_em * px_size }
     ));
-    for (let j = 0; j < line_positions.length; j++) {
-      // For first case.
-      line_positions[j].x = line_positions[j].x || 0;
+    for (let curr_char = 0; curr_char < line_positions.length; curr_char++) {
       // Get advance width.
-      const em_advance_width = font.charToGlyph(line_chars[j]).advanceWidth * px_size / font.unitsPerEm;
+      const em_advance_width = font.charToGlyph(line_chars[curr_char]).advanceWidth * px_size / font.unitsPerEm;
+
       // Alter next idx.
-      if (j != line_positions.length - 1)
-        line_positions[j + 1].x = line_positions[j].x + em_advance_width;
+      if (curr_char != line_positions.length - 1)
+        line_positions[curr_char + 1].x = line_positions[curr_char].x + em_advance_width;
+
+      // Dont render newlines.
+      if (line_chars[curr_char] === '\n') {
+        line_positions[curr_char].x = Infinity;
+        line_positions[curr_char].y = Infinity;
+      }
     }
-    // Push one more char position for the removed newline char.
-    if (lines[i + 1])
-      line_positions.push({ y: -100, x: -100 })
+
     // Append line_positions to positions.
     string_positions.push(...line_positions)
   }

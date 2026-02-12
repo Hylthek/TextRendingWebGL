@@ -253,7 +253,7 @@ void main(void) {
   // Image color, additive.
   vec4 tex_color = texture(uImageTexture, vImageTextureCoord);
   num_texel_fetches++;
-  // fragColor = tex_color + fragColor;
+  fragColor = tex_color + fragColor;
   // Error color if intersections < 0.
   vec4 error_col = vec4(1, 0, 0, 1);
   float is_pos = step(0.0f, intersection_count);

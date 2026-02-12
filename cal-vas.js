@@ -60,7 +60,7 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(InitNewCharTexture, 50, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size]);
+  setInterval(InitNewCharTexture, 1000/30, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size]);
 }
 CalvasMain()
 
