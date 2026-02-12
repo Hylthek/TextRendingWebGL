@@ -33,10 +33,13 @@ async function CalvasMain() {
   } = await FontToTexture(gl, jetbrains_mono)
 
   // Load a string into a texture.
+  const text_px_size = 18;
+  performance.mark("LoadTextureFromStart()...")
   const {
     texture: glyph_data_texture,
     dimensions: glyph_data_texture_dims
-  } = LoadTextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, 18);
+  } = LoadTextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size);
+  performance.mark("LoadTextureFromStart() Done.")
 
   // Get JS const values.
   const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, jetbrains_mono);
@@ -47,15 +50,17 @@ async function CalvasMain() {
   const view = new ViewControl();
   // Get fps html span element.
   const fps_span_element = document.getElementById('fps');
-  
+
   // Draw the scene repeatedly
+  window.curr_glyph_data_texture = glyph_data_texture;
   function RenderScene(now) {
-    DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, glyph_data_texture);
+    DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
     PrintCenterPixelInt32(gl);
     requestAnimationFrame(RenderScene);
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
+  setInterval(InitNewCharTexture, 50, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size]);
 }
 CalvasMain()
 
@@ -83,4 +88,18 @@ function UpdateFps(now, fps_span_element) {
   const fpsString = fps_rounded.toFixed(1).padStart(4, ' ');
   const bar_string = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
   fps_span_element.textContent = fpsString + bar_string;
+}
+
+/**
+ * 
+ * @param {WebGL2RenderingContext} gl 
+ * @param {String} string_in 
+ */
+
+function InitNewCharTexture(gl, string_in, font, px_size) {
+  const chars_per_sec = 100;
+  const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
+  const string_sub = string_in.slice(0, num_chars)
+  const { texture } = LoadTextureFromString(gl, string_sub, font, px_size);
+  window.curr_glyph_data_texture = texture;
 }
