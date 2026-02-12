@@ -168,6 +168,23 @@ float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width
   return change;
 }
 
+vec3 rgb2hsv(vec3 c) {
+  vec4 K = vec4(0.0f, -1.0f / 3.0f, 2.0f / 3.0f, -1.0f);
+  vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
+  vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+
+  float d = q.x - min(q.w, q.y);
+  float e = 1.0e-10f;
+  return vec3(abs(q.z + (q.w - q.y) / (6.0f * d + e)), d / (q.x + e), q.x);
+}
+
+// All components are in the range [0…1], including hue.
+vec3 hsv2rgb(vec3 c) {
+  vec4 K = vec4(1.0f, 2.0f / 3.0f, 1.0f / 3.0f, 3.0f);
+  vec3 p = abs(fract(c.xxx + K.xyz) * 6.0f - K.www);
+  return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0f, 1.0f), c.y);
+}
+
 void main(void) {
   // How much the canvas coordinate changes between neighboring fragments.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
@@ -179,11 +196,13 @@ void main(void) {
   float intersection_count_y = 0.0f; // Ray extends to +y
 
   // Loop through all of glyph_array.
+  float num_texel_fetches = 0.0f;
   for(int i = 0; i < kGlyphTexturePxWidth; i++) {
     // Fetch GlyphLayout texel.
     float glyph_u = (float(i) + 0.5f) / float(kGlyphTexturePxWidth);
     float glyph_v = (float(0) + 0.5f) / float(kGlyphTexturePxHeight);
     vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, vec2(glyph_u, glyph_v));
+    num_texel_fetches++;
 
     // Parse into a GlyphLayout object.
     GlyphLayout curr_glyph;
@@ -209,6 +228,8 @@ void main(void) {
       // quad_rgba_r has rgbaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
       vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
       vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
+      num_texel_fetches++;
+      num_texel_fetches++;
 
       // Quad curve control points in reference frame where current fragment is the origin.
       vec2 origin = vCanvasCoord;
@@ -229,13 +250,21 @@ void main(void) {
   vec4 black = vec4(0, 0, 0, 1);
   vec4 white = vec4(1, 1, 1, 1);
   fragColor = mix(black, white, intersection_count);
-  // Image color.
+  // Image color, additive.
   vec4 tex_color = texture(uImageTexture, vImageTextureCoord);
-  fragColor = tex_color + fragColor;
-  // Error color.
+  num_texel_fetches++;
+  // fragColor = tex_color + fragColor;
+  // Error color if intersections < 0.
   vec4 error_col = vec4(1, 0, 0, 1);
   float is_pos = step(0.0f, intersection_count);
   fragColor = mix(error_col, fragColor, is_pos);
+  // Highlighting, number of texture() calls.
+  float num_tex_fet_clamped = float(num_texel_fetches) / 14000.0f;
+  vec4 highlight_color = vec4(hsv2rgb(vec3(num_tex_fet_clamped, 1, 1)), 1);
+  if (num_tex_fet_clamped > 1.0f)
+    highlight_color = vec4(1,1,1,1);
+  fragColor = mix(fragColor, highlight_color, 0.5f);
+  print_arr[0] = float(num_texel_fetches);
 
   // Debug data output.
   PrintDebugOutput(); // Uses print_arr.
