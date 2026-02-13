@@ -130,8 +130,7 @@ function StringToEmPositions(string_in, font, px_size) {
 
       // Don't render newlines.
       if (line_chars[curr_char] === '\n') {
-        line_positions[curr_char].x = Infinity;
-        line_positions[curr_char].y = Infinity;
+        line_positions[curr_char] = font.charToGlyphIndex(' ');
       }
     }
 
