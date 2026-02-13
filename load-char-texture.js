@@ -124,7 +124,7 @@ function StringToEmPositions(string_in, font, px_size) {
       if (curr_char != line_positions.length - 1)
         line_positions[curr_char + 1].x = line_positions[curr_char].x + em_advance_width;
 
-      // Dont render newlines.
+      // Don't render newlines.
       if (line_chars[curr_char] === '\n') {
         line_positions[curr_char].x = Infinity;
         line_positions[curr_char].y = Infinity;

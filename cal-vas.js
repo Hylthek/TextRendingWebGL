@@ -21,7 +21,7 @@ async function CalvasMain() {
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
   // Load War and Peace.
-  const text_length = 1700;
+  const text_length = 3000;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
   // Load font object.
@@ -33,16 +33,17 @@ async function CalvasMain() {
   } = await FontToTexture(gl, jetbrains_mono)
 
   // Load a string into a texture.
-  const text_px_size = 18;
+  const text_px_size = 9;
   performance.mark("LoadTextureFromStart()...")
   const {
     texture: glyph_data_texture,
-    dimensions: glyph_data_texture_dims
+    dimensions: glyph_data_texture_dims,
   } = LoadTextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size);
   performance.mark("LoadTextureFromStart() Done.")
+  performance.measure("LoadTextureFromStart()", "LoadTextureFromStart()...", "LoadTextureFromStart() Done.")
 
   // Get JS const values.
-  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, jetbrains_mono);
+  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, jetbrains_mono, war_and_peace_trunc_txt.length);
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
@@ -97,7 +98,7 @@ function UpdateFps(now, fps_span_element) {
  */
 
 function InitNewCharTexture(gl, string_in, font, px_size) {
-  const chars_per_sec = 100;
+  const chars_per_sec = 500;
   const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
   const string_sub = string_in.slice(0, num_chars)
   const { texture } = LoadTextureFromString(gl, string_sub, font, px_size);

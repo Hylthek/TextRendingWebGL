@@ -5,7 +5,7 @@
  * @param {WebGLBuffer} glyph_buffer 
  * @returns 
  */
-function GetJsConstValues(gl, font_tex_dims, glyph_tex_dims, font) {
+function GetJsConstValues(gl, font_tex_dims, glyph_tex_dims, font, glyph_buffer_len) {
   // Get data texture dimensions.
   const font_data_width = font_tex_dims.width;
   const font_data_height = font_tex_dims.height;
@@ -23,7 +23,8 @@ function GetJsConstValues(gl, font_tex_dims, glyph_tex_dims, font) {
     QUAD_TEXTURE_PX_HEIGHT: font_data_height.toString(),
     GLYPH_TEXTURE_PX_WIDTH: glyph_data_width.toString(),
     GLYPH_TEXTURE_PX_HEIGHT: glyph_data_height.toString(),
-    GLYPH_BOUNDING_RADIUS: glyph_bounding_radius
+    GLYPH_BOUNDING_RADIUS: glyph_bounding_radius.toString(),
+    GLYPH_BUFFER_LENGTH: glyph_buffer_len.toString()
   };
 }
 

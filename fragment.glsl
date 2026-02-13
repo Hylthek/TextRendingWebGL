@@ -27,6 +27,8 @@ uniform sampler2D uGlyphLayoutTexture;
 // Width and Height of the font quadratic curve data texture.
 const int kGlyphTexturePxWidth = --GLYPH_TEXTURE_PX_WIDTH--;
 const int kGlyphTexturePxHeight = --GLYPH_TEXTURE_PX_HEIGHT--;
+// Length of the full GlyphLayout ArrayBuffer.
+const int kGlyphBufferLength = --GLYPH_BUFFER_LENGTH--;
 
 // Text rendering 2D coordinate in "glyph-space".
 in highp vec2 vCanvasCoord;
@@ -207,7 +209,7 @@ void main(void) {
 
   // Loop through all of glyph_array.
   float num_texel_fetches = 0.0f;
-  for(int i = 0; i < kGlyphTexturePxWidth; i++) {
+  for(int i = 0; i < kGlyphBufferLength; i++) {
     // Fetch GlyphLayout texel.
     vec2 glyph_uv = IdxToUV(i, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
     vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, glyph_uv);
