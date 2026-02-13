@@ -8,7 +8,7 @@ import { ViewControl } from './view-control.js'
 import { FontToTexture } from './load-font-texture.js';
 import { GetFont } from './opentype-demo.js';
 import { GetJsConstValues } from './get-js-consts.js';
-import { LoadTextureFromString } from './load-char-texture.js';
+import { TextureFromString } from './load-char-texture.js';
 
 async function CalvasMain() {
   const gl = CanvasInit()
@@ -38,7 +38,7 @@ async function CalvasMain() {
   const {
     texture: glyph_data_texture,
     dimensions: glyph_data_texture_dims,
-  } = LoadTextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size);
+  } = TextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size);
   performance.mark("LoadTextureFromStart() Done.")
   performance.measure("LoadTextureFromStart()", "LoadTextureFromStart()...", "LoadTextureFromStart() Done.")
 
@@ -101,6 +101,6 @@ function InitNewCharTexture(gl, string_in, font, px_size) {
   const chars_per_sec = 500;
   const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
   const string_sub = string_in.slice(0, num_chars)
-  const { texture } = LoadTextureFromString(gl, string_sub, font, px_size);
+  const { texture } = TextureFromString(gl, string_sub, font, px_size);
   window.curr_glyph_data_texture = texture;
 }

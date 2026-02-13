@@ -1,46 +1,49 @@
-class GlyphLayout {
-  pos; // units are in TrueType ems
-  opentype_index;
-  size; // units are in TrueType ems
-  constructor(x, y, idx, size) {
-    this.pos = { x: x, y: y };
-    this.opentype_index = idx;
-    this.size = size;
-  }
-}
+class GlyphLayoutArray {
+  constructor(length) {
+    this.structSize = 16; // Size of each struct in bytes
+    this.length = length; // Number of structs
+    this.buffer = new ArrayBuffer(this.structSize * length); // Backing buffer
+    this.data_view = new DataView(this.buffer);
 
-class ArrayGlyphLayout {
-  glyph_layout_bytes = 16;
-  constructor(size) {
-    this.array = new ArrayBuffer(size * this.glyph_layout_bytes)
-  }
-
-  /**
-   * 
-   * @param {number} idx 
-   * @param {GlyphLayout} glyph_layout_obj 
-   */
-  set(idx, glyph_layout_obj) {
-    const dv = new DataView(this.array)
-    dv.setFloat32(idx * this.glyph_layout_bytes + 0, glyph_layout_obj.pos.x, true);
-    dv.setFloat32(idx * this.glyph_layout_bytes + 4, glyph_layout_obj.pos.y, true);
-    dv.setFloat32(idx * this.glyph_layout_bytes + 8, glyph_layout_obj.opentype_index, true);
-    dv.setFloat32(idx * this.glyph_layout_bytes + 12, glyph_layout_obj.size, true);
+    // Return a Proxy to overload the [] operator
+    return new Proxy(this, {
+      get: (target, prop) => {
+        if (typeof prop === "string" && !isNaN(prop)) {
+          // Handle numeric index access
+          return target.get(parseInt(prop));
+        }
+        return target[prop]; // Default behavior for other properties
+      },
+      set: (target, prop, value) => {
+        if (typeof prop === "string" && !isNaN(prop)) {
+          // Handle numeric index assignment
+          target.set(parseInt(prop), value);
+          return true;
+        }
+        target[prop] = value; // Default behavior for other properties
+        return true;
+      },
+    });
   }
 
-  get(idx) {
-    const dv = new DataView(this.array);
-    const glyph_layout_obj = new GlyphLayout(
-      dv.getFloat32(idx * this.glyph_layout_bytes + 0, true),
-      dv.getFloat32(idx * this.glyph_layout_bytes + 4, true),
-      dv.getFloat32(idx * this.glyph_layout_bytes + 8, true),
-      dv.getFloat32(idx * this.glyph_layout_bytes + 12, true),
-    );
-    return glyph_layout_obj;
+  // Set a struct at a specific index
+  set(index, { x, y, id, size }) {
+    const offset = index * this.structSize;
+    this.data_view.setFloat32(offset, x, true);
+    this.data_view.setFloat32(offset + 4, y, true);
+    this.data_view.setFloat32(offset + 8, id, true);
+    this.data_view.setFloat32(offset + 12, size, true);
   }
 
-  get length() {
-    return this.array.byteLength / this.glyph_layout_bytes;
+  // Get a struct at a specific index
+  get(index) {
+    const offset = index * this.structSize;
+    return {
+      x: this.data_view.getFloat32(offset, true),
+      y: this.data_view.getFloat32(offset + 4, true),
+      id: this.data_view.getFloat32(offset + 8, true),
+      size: this.data_view.getFloat32(offset + 12, true),
+    };
   }
 }
 
@@ -52,9 +55,9 @@ class ArrayGlyphLayout {
  * @param {OpenTypeFont} font 
  * @param {Number} px_size The size of the text in ems.
  */
-function LoadTextureFromString(gl, string_in, font, px_size) {
-  const glyph_layouts = StringToGlyphLayouts(string_in, font, px_size);
-  const texture = LoadTextureFromGlyphLayouts(gl, glyph_layouts);
+function TextureFromString(gl, string_in, font, px_size) {
+  const glyph_layouts = StringToGlyphLayoutArray(string_in, font, px_size);
+  const texture = LoadTextureFromGlyphLayoutArray(gl, glyph_layouts);
   return {
     texture: texture,
     dimensions: {
@@ -72,22 +75,23 @@ const gTextureHeight = 100; // Magic numbers for now.
  * 
  * @param {String} string_in
  */
-function StringToGlyphLayouts(string_in, font, px_size) {
+function StringToGlyphLayoutArray(string_in, font, px_size) {
   const chars = string_in.split('')
   // Each char needs 3 things, pos, index, size.
   const opentype_indices = chars.map(char => font.charToGlyphIndex(char))
   const em_size = px_size * (1 / font.unitsPerEm);
   const em_sizes = new Array(chars.length).fill(em_size)
   const em_positions = StringToEmPositions(string_in, font, px_size)
-  let glyph_layout_objects = new ArrayGlyphLayout(chars.length);
+  let glyph_layouts = new GlyphLayoutArray(chars.length);
   for (let i = 0; i < chars.length; i++) {
-    glyph_layout_objects.set(i, {
-      pos: em_positions[i],
-      opentype_index: opentype_indices[i],
+    glyph_layouts[i] = {
+      x: em_positions[i].x,
+      y: em_positions[i].y,
+      id: opentype_indices[i],
       size: em_sizes[i]
-    })
+    }
   }
-  return glyph_layout_objects;
+  return glyph_layouts;
 }
 
 /**
@@ -161,7 +165,7 @@ function GetLineHeight(font) {
  * @param {WebGL2RenderingContext} gl 
  * @param {ArrayGlyphLayout} glyph_layouts 
  */
-function LoadTextureFromGlyphLayouts(gl, glyph_layouts) {
+function LoadTextureFromGlyphLayoutArray(gl, glyph_layouts) {
   // Init WebGL2 texture object.
   const texture = gl.createTexture()
   // Bind texture.
@@ -183,7 +187,7 @@ function LoadTextureFromGlyphLayouts(gl, glyph_layouts) {
   const border = 0; // Deprecated, keep 0.
 
   // Get a typed array compatible with "type".
-  const glyph_layouts_f32 = new Float32Array(glyph_layouts.array);
+  const glyph_layouts_f32 = new Float32Array(glyph_layouts.buffer);
   const num_pixels = glyph_layouts_f32.length / 4;
 
   // Define pixel width and height.
@@ -204,4 +208,4 @@ function LoadTextureFromGlyphLayouts(gl, glyph_layouts) {
   return texture;
 }
 
-export { LoadTextureFromString }
+export { TextureFromString }
