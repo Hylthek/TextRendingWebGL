@@ -66,7 +66,7 @@ function LoadTextureFromString(gl, string_in, font, px_size) {
 
 // Texture dimension consts.
 const gTextureWidth = 1600; // Magic numbers for now.
-const gTextureHeight = 1; // Magic numbers for now.
+const gTextureHeight = 100; // Magic numbers for now.
 
 /**
  * 
@@ -184,16 +184,22 @@ function LoadTextureFromGlyphLayouts(gl, glyph_layouts) {
 
   // Get a typed array compatible with "type".
   const glyph_layouts_f32 = new Float32Array(glyph_layouts.array);
+  const num_pixels = glyph_layouts_f32.length / 4;
 
   // Define pixel width and height.
-  const width = glyph_layouts_f32.length / 4;
-  const height = 1;
+  const width = Math.min(num_pixels, gTextureWidth);
+  const height = Math.floor((num_pixels - 1) / gTextureWidth) + 1;
+
+  // Pad glyph_layouts_f32 with 0s until its length is width * height * 4.
+  const target_length = width * height * 4;
+  const zeros = new Float32Array(target_length)
+  const glyph_layouts_f32_padded = zeros.map((zero, idx) => (glyph_layouts_f32[idx] || 0))
 
   // Initialize texture.
   const dummy_data = new Float32Array(gTextureWidth * gTextureHeight * 4);
   gl.texImage2D(gl.TEXTURE_2D, level, internal_format, gTextureWidth, gTextureHeight, border, format, type, dummy_data);
   // Fill subset of texture.
-  gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, width, height, format, type, glyph_layouts_f32)
+  gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, width, height, format, type, glyph_layouts_f32_padded)
 
   return texture;
 }
