@@ -23,7 +23,7 @@ async function CalvasMain() {
   // Load War and Peace.
   const text_length = 3000;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
-  const war_and_peace_trunc_txt = war_and_peace_txt.slice(0, text_length);
+  const war_and_peace_trunc_txt = '\n' + war_and_peace_txt.slice(0, text_length);
   // Load font object.
   const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
@@ -101,6 +101,8 @@ function InitNewCharTexture(gl, string_in, font, px_size) {
   const chars_per_sec = 500;
   const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
   const string_sub = string_in.slice(0, num_chars)
+  performance.mark("repeated texture call")
   const { texture } = TextureFromString(gl, string_sub, font, px_size);
+  performance.measure("repeated texture call", "repeated texture call")
   window.curr_glyph_data_texture = texture;
 }
