@@ -11,6 +11,8 @@ import { GetJsConstValues } from './get-js-consts.js';
 import { TextureFromString } from './load-char-texture.js';
 
 async function CalvasMain() {
+  console.log("我的朋友是一个先生！")
+
   const gl = CanvasInit()
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
@@ -61,7 +63,7 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(InitNewCharTexture, 1000/30, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size]);
+  setInterval(InitNewCharTexture, 1000 / 30, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size]);
 }
 CalvasMain()
 
@@ -87,8 +89,8 @@ function UpdateFps(now, fps_span_element) {
   // Update text.
   const fps_rounded = Math.round(fps * 10) / 10;
   const fpsString = fps_rounded.toFixed(1).padStart(4, ' ');
-  const bar_string = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
-  fps_span_element.textContent = fpsString + bar_string;
+  const 你的 = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
+  fps_span_element.textContent = fpsString + 你的;
 }
 
 /**

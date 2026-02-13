@@ -17,4 +17,4 @@ function DebugCanvasInit() {
   return canvas.getContext("2d")
 }
 
-export {CanvasInit, DebugCanvasInit}
+export { CanvasInit, DebugCanvasInit }
