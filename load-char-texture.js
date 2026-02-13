@@ -130,7 +130,8 @@ function StringToEmPositions(string_in, font, px_size) {
 
       // Don't render newlines.
       if (line_chars[curr_char] === '\n') {
-        line_positions[curr_char] = font.charToGlyphIndex(' ');
+        line_positions[curr_char].x = Infinity;
+        line_positions[curr_char].y = Infinity;
       }
     }
 
@@ -199,8 +200,8 @@ function LoadTextureFromGlyphLayoutArray(gl, glyph_layouts) {
   const glyph_layouts_f32_padded = zeros.map((zero, idx) => (glyph_layouts_f32[idx] || 0))
 
   // Initialize texture.
-  const dummy_data = new Float32Array(gTextureWidth * gTextureHeight * 4);
-  gl.texImage2D(gl.TEXTURE_2D, level, internal_format, gTextureWidth, gTextureHeight, border, format, type, dummy_data);
+  const zeroes = new Float32Array(gTextureWidth * gTextureHeight * 4);
+  gl.texImage2D(gl.TEXTURE_2D, level, internal_format, gTextureWidth, gTextureHeight, border, format, type, zeroes);
   // Fill subset of texture.
   gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, width, height, format, type, glyph_layouts_f32_padded)
 
