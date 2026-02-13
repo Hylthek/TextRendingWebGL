@@ -185,6 +185,16 @@ vec3 hsv2rgb(vec3 c) {
   return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0f, 1.0f), c.y);
 }
 
+// Turns a 1D array index into a 2D texture coord.
+// left->right, bottom->top.
+vec2 IdxToUV(int idx, int tex_width, int tex_height) {
+  int u_idx = idx % tex_width;
+  int v_idx = idx / tex_width;
+  float u = (float(u_idx) + 0.5f) / float(tex_width);
+  float v = (float(v_idx) + 0.5f) / float(tex_height);
+  return vec2(u, v);
+}
+
 void main(void) {
   // How much the canvas coordinate changes between neighboring fragments.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
@@ -199,9 +209,8 @@ void main(void) {
   float num_texel_fetches = 0.0f;
   for(int i = 0; i < kGlyphTexturePxWidth; i++) {
     // Fetch GlyphLayout texel.
-    float glyph_u = (float(i) + 0.5f) / float(kGlyphTexturePxWidth);
-    float glyph_v = (float(0) + 0.5f) / float(kGlyphTexturePxHeight);
-    vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, vec2(glyph_u, glyph_v));
+    vec2 glyph_uv = IdxToUV(i, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
+    vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, glyph_uv);
     num_texel_fetches++;
 
     // Parse into a GlyphLayout object.
@@ -261,8 +270,8 @@ void main(void) {
   // Highlighting, number of texture() calls.
   float num_tex_fet_clamped = float(num_texel_fetches) / 14000.0f;
   vec4 highlight_color = vec4(hsv2rgb(vec3(num_tex_fet_clamped, 1, 1)), 1);
-  if (num_tex_fet_clamped > 1.0f)
-    highlight_color = vec4(1,1,1,1);
+  if(num_tex_fet_clamped > 1.0f)
+    highlight_color = vec4(1, 1, 1, 1);
   fragColor = mix(fragColor, highlight_color, 0.5f);
   print_arr[0] = float(num_texel_fetches);
 
