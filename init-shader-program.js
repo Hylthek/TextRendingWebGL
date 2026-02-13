@@ -46,8 +46,8 @@ function LoadShader(gl, type, source) {
 
   // See if it compiled successfully
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
     console.log(source)
+    console.error(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
     gl.deleteShader(shader);
     return null;
   }
@@ -97,13 +97,8 @@ function ReplaceJsConsts(source_txt, js_consts) {
   const keys = Object.keys(js_consts);
   // Iterate.
   for (const key of keys) {
-    source_txt = source_txt.replace(key, js_consts[key]);
-  }
-  // Assert that all keys were replaced.
-  for (const key of keys) {
-    if (source_txt.includes(key)) {
-      console.error(`Replacement failed for key: ${key}`);
-    }
+    const search_value = "--" + key + "--";
+    source_txt = source_txt.replace(search_value, js_consts[key]);
   }
   return source_txt;
 }

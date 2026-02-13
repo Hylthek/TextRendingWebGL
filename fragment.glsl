@@ -12,8 +12,8 @@ in highp vec2 vImageTextureCoord;
 // A 2D texture for storing quadratic curve data.
 uniform sampler2D uQuadTexture;
 // Width and Height of the font quadratic curve data texture.
-const int kQuadTexturePxWidth = QUAD_TEXTURE_PX_WIDTH; // Replaced in JS.
-const int kQuadTexturePxHeight = QUAD_TEXTURE_PX_HEIGHT; // Replaced in JS.
+const int kQuadTexturePxWidth = --QUAD_TEXTURE_PX_WIDTH--; // -- marks the variable for string replacement in JS.
+const int kQuadTexturePxHeight = --QUAD_TEXTURE_PX_HEIGHT--;
 
 // Data that tells the shader what char to draw and where.
 struct GlyphLayout {
@@ -25,13 +25,13 @@ struct GlyphLayout {
 // A 2D data texture for storing glyph layouts.
 uniform sampler2D uGlyphLayoutTexture;
 // Width and Height of the font quadratic curve data texture.
-const int kGlyphTexturePxWidth = GLYPH_TEXTURE_PX_WIDTH; // Replaced in JS.
-const int kGlyphTexturePxHeight = GLYPH_TEXTURE_PX_HEIGHT; // Replaced in JS.
+const int kGlyphTexturePxWidth = --GLYPH_TEXTURE_PX_WIDTH--;
+const int kGlyphTexturePxHeight = --GLYPH_TEXTURE_PX_HEIGHT--;
 
 // Text rendering 2D coordinate in "glyph-space".
 in highp vec2 vCanvasCoord;
 // The maximum distance from GlyphLayout.pos that a glyph can extend.
-const float kGlyphBoundingRadius = GLYPH_BOUNDING_RADIUS; // Replaced in JS.
+const float kGlyphBoundingRadius = --GLYPH_BOUNDING_RADIUS--;
 
 // Consts from JS.
 uniform int uScreenWidthPx;
