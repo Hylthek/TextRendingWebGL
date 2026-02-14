@@ -11,7 +11,7 @@ import { GetJsConstValues } from './get-js-consts.js';
 import { TextureFromString } from './load-char-texture.js';
 
 async function CalvasMain() {
-  console.log("我的朋友是一个先生！")
+  console.log("早安！我很喜欢编程。")
 
   const gl = CanvasInit()
   if (!gl) { console.error("WebGL not supported"); return; }
@@ -23,7 +23,7 @@ async function CalvasMain() {
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
   // Load War and Peace.
-  const text_length = 3000;
+  const text_length = 1500;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = '\n' + war_and_peace_txt.slice(0, text_length);
   // Load font object.
@@ -35,12 +35,12 @@ async function CalvasMain() {
   } = await FontToTexture(gl, jetbrains_mono)
 
   // Load a string into a texture.
-  const px_per_em = 9;
+  const px_per_em = 8;
   performance.mark("LoadTextureFromStart()...")
   const {
     texture: glyph_data_texture,
     dimensions: glyph_data_texture_dims,
-  } = TextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, px_per_em);
+  } = TextureFromString(gl, "\nHi!", jetbrains_mono, px_per_em);
   performance.mark("LoadTextureFromStart() Done.")
   performance.measure("LoadTextureFromStart()", "LoadTextureFromStart()...", "LoadTextureFromStart() Done.")
 
@@ -58,7 +58,7 @@ async function CalvasMain() {
   window.curr_glyph_data_texture = glyph_data_texture;
   function RenderScene(now) {
     DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
-    PrintCenterPixelInt32(gl);
+    PrintCenterPixelInt32(gl, 8);
     requestAnimationFrame(RenderScene);
     UpdateFps(now, fps_span_element);
   }

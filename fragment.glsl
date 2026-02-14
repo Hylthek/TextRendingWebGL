@@ -20,7 +20,17 @@ struct GlyphLayout {
   vec2 pos;
   float opentype_index;
   float size;
-}; // Size, 16bytes.
+};
+
+// Data that tells the shader where lines of chars are and where those chars are in the glyph array.
+struct LineLayout {
+  float x1;
+  float x2;
+  float y1;
+  float y2;
+  float buffer_offset;
+  float num_chars;
+};
 
 // A 2D data texture for storing glyph layouts.
 uniform sampler2D uGlyphLayoutTexture;
@@ -51,16 +61,16 @@ const float kAntiAliasingMult = 1.5f;
 
 // Draws pixel data onto the screen at certain spots
 // for the CPU to grab and parse. Called at end of main().
-const int debug_array_length = 1000; // Must match JS variable of same name.
-float print_arr[debug_array_length];
+const int kDebugArrayLength = 1000; // Must match JS variable of same name.
+float print_arr[kDebugArrayLength];
 void PrintDebugOutput() {
   // Draw a data-rich line at the center of the screen, extending right.
   float w_2 = float(uScreenWidthPx / 2) + 0.5f; // Pixel must have coords ending in .5
   float h_2 = float(uScreenHeightPx / 2) + 0.5f;
-  if(gl_FragCoord.x >= w_2 && gl_FragCoord.x < w_2 + float(debug_array_length) && gl_FragCoord.y == h_2) {
+  if(gl_FragCoord.x >= w_2 && gl_FragCoord.x < w_2 + float(kDebugArrayLength) && gl_FragCoord.y == h_2) {
     // Get current pixel in line.
     int curr_pixel = int(gl_FragCoord.x - w_2);
-    // Convert print_arr:float to vec4.
+    // Convert print_arr:float to ivec4.
     ivec4 nums;
     nums.r = (int(print_arr[curr_pixel] * 1000.0f) >> 24) & 0xFF;
     nums.g = (int(print_arr[curr_pixel] * 1000.0f) >> 16) & 0xFF;
@@ -198,6 +208,8 @@ vec2 IdxToUV(int idx, int tex_width, int tex_height) {
 }
 
 void main(void) {
+  float num_texel_fetches = 0.0f;
+
   // How much the canvas coordinate changes between neighboring fragments.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
 
@@ -207,52 +219,81 @@ void main(void) {
   float intersection_count_x = 0.0f; // Ray extends to +x
   float intersection_count_y = 0.0f; // Ray extends to +y
 
-  // Loop through all of glyph_array.
-  float num_texel_fetches = 0.0f;
-  for(int i = 0; i < kGlyphBufferLength; i++) {
-    // Fetch GlyphLayout texel.
-    vec2 glyph_uv = IdxToUV(i, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
-    vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, glyph_uv);
+  // Iterate through line layouts.
+  for(int i_line = 0; i_line < kGlyphBufferLength; i_line++) {
+    // Get line bounding box and parse.
+    vec2 uv_l = IdxToUV(2 * i_line, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
+    vec4 line_px_l = texture(uGlyphLayoutTexture, vec2(uv_l.x, 1.0f - uv_l.y));
     num_texel_fetches++;
+    LineLayout curr_line_layout;
+    curr_line_layout.x1 = line_px_l.x;
+    curr_line_layout.x2 = line_px_l.y;
+    curr_line_layout.y1 = line_px_l.z;
+    curr_line_layout.y2 = line_px_l.w;
 
-    // Parse into a GlyphLayout object.
-    GlyphLayout curr_glyph;
-    curr_glyph.pos = glyph_layout_texel.xy;
-    curr_glyph.opentype_index = glyph_layout_texel.z;
-    curr_glyph.size = glyph_layout_texel.w;
-
-    // Calculate distance to glyph origin and check for early continue.
-    float dist_to_glyph_orig = distance(vCanvasCoord, curr_glyph.pos);
-    if(dist_to_glyph_orig > kGlyphBoundingRadius * curr_glyph.size)
+    // Continue if curr canvas coord is out of line bounding box.
+    if(vCanvasCoord.x < curr_line_layout.x1 || vCanvasCoord.x > curr_line_layout.x2 ||
+      vCanvasCoord.y < curr_line_layout.y1 || vCanvasCoord.y > curr_line_layout.y2)
       continue;
 
-    // Use the current opentype_index to vertically access the quad texture.
-    float quad_texture_v = (curr_glyph.opentype_index + 0.5f) / float(kQuadTexturePxHeight);
+    // Get rest of line info and parse.
+    vec2 uv_r = IdxToUV(2 * i_line + 1, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
+    vec4 line_px_r = texture(uGlyphLayoutTexture, vec2(uv_r.x, 1.0f - uv_r.y));
+    num_texel_fetches++;
+    curr_line_layout.buffer_offset = line_px_r.x;
+    curr_line_layout.num_chars = line_px_r.y;
 
-    // Loop through all quads for this glyph.
-    for(int curr_quad = 0; curr_quad < kQuadTexturePxWidth / 2; curr_quad++) {
-      int curr_px = curr_quad * 2;
-      // The current quad (left and right pixels) as texture u values.
-      float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
-      float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
-      // quad_rgba_l has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
-      // quad_rgba_r has rgbaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
-      vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
-      vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
+    // Iterate through glyph layouts.
+    int idx_start = int(curr_line_layout.buffer_offset);
+    int idx_end = int(curr_line_layout.buffer_offset + curr_line_layout.num_chars);
+
+    for(int i = idx_start; i < idx_end; i++) {
+      // Fetch GlyphLayout texel.
+      vec2 glyph_uv = IdxToUV(i, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
+      vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, glyph_uv);
       num_texel_fetches++;
-      num_texel_fetches++;
 
-      // Quad curve control points in reference frame where current fragment is the origin.
-      vec2 origin = vCanvasCoord;
-      vec2 p0 = (quad_rgba_l.rg * curr_glyph.size) - origin + curr_glyph.pos;
-      vec2 p1 = (quad_rgba_l.ba * curr_glyph.size) - origin + curr_glyph.pos;
-      vec2 p2 = (quad_rgba_r.rg * curr_glyph.size) - origin + curr_glyph.pos;
+      // Parse into a GlyphLayout object.
+      GlyphLayout curr_glyph;
+      curr_glyph.pos = glyph_layout_texel.xy;
+      curr_glyph.opentype_index = glyph_layout_texel.z;
+      curr_glyph.size = glyph_layout_texel.w;
 
-      // Calculate signed intersections along +x and +y axes.
-      intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
-      intersection_count_y += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, true);
+      // Calculate distance to glyph origin and check for early continue.
+      float dist_to_glyph_orig = distance(vCanvasCoord, curr_glyph.pos);
+      if(dist_to_glyph_orig > kGlyphBoundingRadius * curr_glyph.size)
+        continue;
+
+      // Use the current opentype_index to vertically access the quad texture.
+      float quad_texture_v = (curr_glyph.opentype_index + 0.5f) / float(kQuadTexturePxHeight);
+
+      // Loop through all quads for this glyph.
+      for(int curr_quad = 0; curr_quad < kQuadTexturePxWidth / 2; curr_quad++) {
+        int curr_px = curr_quad * 2;
+        // The current quad (left and right pixels) as texture u values.
+        float quad_u_val_l = (float(curr_px + 0) + 0.5f) / float(kQuadTexturePxWidth);
+        float quad_u_val_r = (float(curr_px + 1) + 0.5f) / float(kQuadTexturePxWidth);
+        // quad_rgba_l has rgbaF32 = P0(x:F32,y:F32) & P1(x:F32,y:F32)
+        // quad_rgba_r has rgbaF32 = P2(x:F32,y:F32) & Metadata(h:F32,l:F32)
+        vec4 quad_rgba_l = texture(uQuadTexture, vec2(quad_u_val_l, quad_texture_v));
+        vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
+        num_texel_fetches++;
+        num_texel_fetches++;
+
+        // Quad curve control points in reference frame where current fragment is the origin.
+        vec2 origin = vCanvasCoord;
+        vec2 p0 = (quad_rgba_l.rg * curr_glyph.size) - origin + curr_glyph.pos;
+        vec2 p1 = (quad_rgba_l.ba * curr_glyph.size) - origin + curr_glyph.pos;
+        vec2 p2 = (quad_rgba_r.rg * curr_glyph.size) - origin + curr_glyph.pos;
+
+        // Calculate signed intersections along +x and +y axes.
+        intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
+        intersection_count_y += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, true);
+      }
     }
   }
+
+  // Combine vertical and horizontal intersection counts.
   float x_dist = abs(intersection_count_x - 0.5f);
   float y_dist = abs(intersection_count_y - 0.5f);
   float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_dist, x_dist));
@@ -275,8 +316,8 @@ void main(void) {
   if(num_tex_fet_clamped > 1.0f)
     highlight_color = vec4(1, 1, 1, 1);
   fragColor = mix(fragColor, highlight_color, 0.5f);
-  print_arr[0] = float(num_texel_fetches);
 
   // Debug data output.
+  print_arr[0] = float(num_texel_fetches);
   PrintDebugOutput(); // Uses print_arr.
 }
