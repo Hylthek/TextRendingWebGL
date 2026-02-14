@@ -53,9 +53,9 @@ class GlyphLayoutArray {
  * @param {WebGLBuffer} uniform_buffer_object 
  * @param {String} string_in 
  * @param {OpenTypeFont} font 
- * @param {Number} px_size The size of the text in ems.
+ * @param {Number} px_per_em The size of the text in ems.
  */
-function TextureFromString(gl, string_in, font, px_size) {
+function TextureFromString(gl, string_in, font, px_per_em) {
   // Init texture if not done yet.
   if (!window.gCurrTexture)
     InitTexture(gl);
@@ -64,7 +64,7 @@ function TextureFromString(gl, string_in, font, px_size) {
   window.gCurrDisplayedString = string_in;
 
   // Get GlyphLayoutArray.
-  const glyph_layouts = StringToGlyphLayoutArray(string_in, font, px_size, 0, 0);
+  const glyph_layouts = StringToGlyphLayoutArray(string_in, font, px_per_em, 0, 0);
 
   // Update global texture.
   LoadTextureFromGlyphLayoutArray(gl, glyph_layouts);
@@ -86,20 +86,20 @@ const gTextureHeight = 2048; // Magic numbers for now.
  * 
  * @param {String} string_in
  */
-function StringToGlyphLayoutArray(string_in, font, px_size, x_offset, y_offset) {
+function StringToGlyphLayoutArray(string_in, font, px_per_em, x_offset, y_offset) {
   const chars = string_in.split('')
   // Each char needs 3 things, pos, index, size.
   const opentype_indices = chars.map(char => font.charToGlyphIndex(char))
-  const em_size = px_size * (1 / font.unitsPerEm);
-  const em_sizes = new Array(chars.length).fill(em_size)
-  const em_positions = StringToEmPositions(string_in, font, px_size, x_offset, y_offset)
+  const px_per_unit = px_per_em / font.unitsPerEm;
+  const px_per_unit_array = new Array(chars.length).fill(px_per_unit)
+  const positions_px = StringToPxPositions(string_in, font, px_per_em, x_offset, y_offset)
   let glyph_layouts = new GlyphLayoutArray(chars.length);
   for (let i = 0; i < chars.length; i++) {
     glyph_layouts[i] = {
-      x: em_positions[i].x,
-      y: em_positions[i].y,
+      x: positions_px[i].x,
+      y: positions_px[i].y,
       id: opentype_indices[i],
-      size: em_sizes[i]
+      size: px_per_unit_array[i]
     }
   }
   return glyph_layouts;
@@ -109,11 +109,13 @@ function StringToGlyphLayoutArray(string_in, font, px_size, x_offset, y_offset) 
  * 
  * @param {String} string_in 
  * @param {OpenTypeFont} font 
- * @param {Number} px_size 
+ * @param {Number} px_per_em 
  */
-function StringToEmPositions(string_in, font, px_size, x_offset, y_offset) {
-  // Get line height in ems.
-  const line_height_em = GetLineHeight(font) / font.unitsPerEm;
+function StringToPxPositions(string_in, font, px_per_em, x_offset_px, y_offset_px) {
+  const em_per_units = 1 / font.unitsPerEm;
+
+  // Get line height in px.
+  const line_height_px = GetLineHeightUnits(font) * em_per_units * px_per_em;
 
   // Get an array of strings for each line, doesn't reduce total char count.
   const lines = string_in.split(/(?<=\n)/);
@@ -129,15 +131,15 @@ function StringToEmPositions(string_in, font, px_size, x_offset, y_offset) {
 
     // Init array of positions for this line. Set the y-vals via line height.
     const line_positions = Array.from({ length: line_chars.length }, () => (
-      { x: x_offset, y: -curr_line * line_height_em * px_size + y_offset }
+      { x: x_offset_px, y: -curr_line * line_height_px + y_offset_px }
     ));
     for (let curr_char = 0; curr_char < line_positions.length; curr_char++) {
-      // Get advance width.
-      const em_advance_width = font.charToGlyph(line_chars[curr_char]).advanceWidth * px_size / font.unitsPerEm;
+      // Get advance width in px.
+      const advance_width_px = font.charToGlyph(line_chars[curr_char]).advanceWidth * em_per_units * px_per_em;
 
       // Alter next idx.
       if (curr_char != line_positions.length - 1)
-        line_positions[curr_char + 1].x = line_positions[curr_char].x + em_advance_width;
+        line_positions[curr_char + 1].x = line_positions[curr_char].x + advance_width_px;
 
       // Don't render newlines.
       if (line_chars[curr_char] === '\n') {
@@ -152,7 +154,7 @@ function StringToEmPositions(string_in, font, px_size, x_offset, y_offset) {
   return string_positions
 }
 
-function GetLineHeight(font) {
+function GetLineHeightUnits(font) {
   // Check which metrics to use
   const useTypoMetrics = font.tables.os2.fsSelection & (1 << 7);
   // Get metrics.
@@ -167,8 +169,8 @@ function GetLineHeight(font) {
     lineGap = font.tables.hhea.lineGap;
   }
   // Calc and return line height.
-  const lineHeight = ascender - descender + lineGap;
-  return lineHeight
+  const line_height_units = ascender - descender + lineGap;
+  return line_height_units
 }
 
 let gPrevTextureWidth;

@@ -35,12 +35,12 @@ async function CalvasMain() {
   } = await FontToTexture(gl, jetbrains_mono)
 
   // Load a string into a texture.
-  const text_px_size = 9;
+  const px_per_em = 9;
   performance.mark("LoadTextureFromStart()...")
   const {
     texture: glyph_data_texture,
     dimensions: glyph_data_texture_dims,
-  } = TextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size);
+  } = TextureFromString(gl, war_and_peace_trunc_txt, jetbrains_mono, px_per_em);
   performance.mark("LoadTextureFromStart() Done.")
   performance.measure("LoadTextureFromStart()", "LoadTextureFromStart()...", "LoadTextureFromStart() Done.")
 
@@ -63,7 +63,7 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(InitNewCharTexture, 1000 / 30, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, text_px_size]);
+  setInterval(InitNewCharTexture, 1000 / 30, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, px_per_em]);
 }
 CalvasMain()
 
@@ -99,12 +99,12 @@ function UpdateFps(now, fps_span_element) {
  * @param {String} string_in 
  */
 
-function InitNewCharTexture(gl, string_in, font, px_size) {
+function InitNewCharTexture(gl, string_in, font, px_per_em) {
   const chars_per_sec = 500;
   const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
   const string_sub = string_in.slice(0, num_chars)
   performance.mark("repeated texture call")
-  const { texture } = TextureFromString(gl, string_sub, font, px_size);
+  const { texture } = TextureFromString(gl, string_sub, font, px_per_em);
   performance.measure("repeated texture call", "repeated texture call")
   window.curr_glyph_data_texture = texture;
 }
