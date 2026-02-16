@@ -35,7 +35,7 @@ async function CalvasMain() {
   } = await FontToTexture(gl, jetbrains_mono)
 
   // Load a string into a texture.
-  const px_per_em = 8;
+  const px_per_em = 24;
   performance.mark("LoadTextureFromStart()...")
   const {
     texture: glyph_data_texture,

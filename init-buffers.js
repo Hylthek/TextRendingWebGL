@@ -21,7 +21,7 @@ function InitVertexBuffers(gl) {
 
 const gCubeBase = 1
 const gCubeWidth = 1
-const gCubeHeight = 5
+const gCubeHeight = 15
 
 function InitPositionBuffer(gl) {
   // Create a buffer for the square's positions.

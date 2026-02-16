@@ -254,8 +254,8 @@ void main(void) {
     int idx_start = int(curr_line_layout.buffer_offset);
     int idx_end = int(curr_line_layout.buffer_offset + curr_line_layout.num_chars);
 
-    for(int i = 0; i < kGlyphBufferLength; i++) {
-      int i_glyph = i + idx_start;
+    for(int i_glyph_gpu_stable = 0; i_glyph_gpu_stable < kGlyphBufferLength; i_glyph_gpu_stable++) {
+      int i_glyph = i_glyph_gpu_stable + idx_start;
       // Break if number of glyphs reached
       if (i_glyph >= idx_end)
         break;
@@ -279,7 +279,7 @@ void main(void) {
       // Use the current opentype_index to vertically access the quad texture.
       float quad_texture_v = (curr_glyph.opentype_index + 0.5f) / float(kQuadTexturePxHeight);
 
-      // Loop through all quads for this glyph.
+      // Iterate through quadratic curves.
       for(int curr_quad = 0; curr_quad < kQuadTexturePxWidth / 2; curr_quad++) {
         int curr_px = curr_quad * 2;
         // The current quad (left and right pixels) as texture u values.
@@ -291,6 +291,10 @@ void main(void) {
         vec4 quad_rgba_r = texture(uQuadTexture, vec2(quad_u_val_r, quad_texture_v));
         num_texel_fetches++;
         num_texel_fetches++;
+
+        // Break if no more curves.
+        if(quad_rgba_l == vec4(0.0f) && quad_rgba_r == vec4(0.0f))
+          break;
 
         // Quad curve control points in reference frame where current fragment is the origin.
         vec2 origin = vCanvasCoord;
@@ -323,11 +327,11 @@ void main(void) {
   float is_pos = step(0.0f, intersection_count);
   fragColor = mix(error_col, fragColor, is_pos);
   // Highlighting, number of texture() calls.
-  float num_tex_fet_clamped = float(num_texel_fetches) / 14000.0f;
+  float num_tex_fet_clamped = float(num_texel_fetches) / 1500.0f;
   vec4 highlight_color = vec4(hsv2rgb(vec3(num_tex_fet_clamped, 1, 1)), 1);
   if(num_tex_fet_clamped > 1.0f)
     highlight_color = vec4(1, 1, 1, 1);
-  fragColor = mix(fragColor, highlight_color, 0.5f);
+  // fragColor = mix(fragColor, highlight_color, 0.5f);
 
   // Debug data output.
   print_arr[0] = float(num_texel_fetches);
