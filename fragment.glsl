@@ -45,6 +45,9 @@ in highp vec2 vCanvasCoord;
 // The maximum distance from GlyphLayout.pos that a glyph can extend.
 const float kGlyphBoundingRadius = --GLYPH_BOUNDING_RADIUS--;
 
+// The number of lines contained in the data texture.
+uniform int uNumLines;
+
 // Consts from JS.
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
@@ -221,6 +224,10 @@ void main(void) {
 
   // Iterate through line layouts.
   for(int i_line = 0; i_line < kGlyphBufferLength; i_line++) {
+    // Break if no more lines.
+    if(i_line >= uNumLines)
+      break;
+
     // Get line bounding box and parse.
     vec2 uv_l = IdxToUV(2 * i_line, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
     vec4 line_px_l = texture(uGlyphLayoutTexture, vec2(uv_l.x, 1.0f - uv_l.y));
@@ -247,9 +254,14 @@ void main(void) {
     int idx_start = int(curr_line_layout.buffer_offset);
     int idx_end = int(curr_line_layout.buffer_offset + curr_line_layout.num_chars);
 
-    for(int i = idx_start; i < idx_end; i++) {
+    for(int i = 0; i < kGlyphBufferLength; i++) {
+      int i_glyph = i + idx_start;
+      // Break if number of glyphs reached
+      if (i_glyph >= idx_end)
+        break;
+
       // Fetch GlyphLayout texel.
-      vec2 glyph_uv = IdxToUV(i, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
+      vec2 glyph_uv = IdxToUV(i_glyph, kGlyphTexturePxWidth, kGlyphTexturePxHeight);
       vec4 glyph_layout_texel = texture(uGlyphLayoutTexture, glyph_uv);
       num_texel_fetches++;
 

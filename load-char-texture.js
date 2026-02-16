@@ -1,3 +1,5 @@
+import { gProgramInfo } from "./init-shader-program.js";
+
 class GlyphLayoutArray {
   constructor(length) {
     this.structSize = 16; // Size of each struct in bytes
@@ -198,7 +200,7 @@ function StringToPxPositionsAndLineLayouts(string_in, font, px_per_em, x_offset_
     let line_y1;
     let line_y2;
     const glyph_radius_px = GetGlyphBoundingRadiusUnits(font) * em_per_units * px_per_em;
-    
+
     // Init array of positions for this line. Set the y-vals via line height.
     const curr_line_char_positions_px = Array.from({ length: line_chars.length }, () => (
       { x: x_offset_px, y: -i_line * line_height_px + y_offset_px }
@@ -325,6 +327,12 @@ function LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts) {
       const curr_row_data_f32 = new Float32Array(line_layouts.slice(buffer_start, buffer_end).buffer)
       gl.texSubImage2D(gl.TEXTURE_2D, level, 0, y_offset, gTextureWidth, 1, format, type, curr_row_data_f32)
     }
+  }
+
+  // Set number of line layouts as a uniform.
+  if (gProgramInfo) {
+    const num_lines_location = gProgramInfo.uniformLocations.uNumLines;
+    gl.uniform1i(num_lines_location, line_layouts.length);
   }
 }
 

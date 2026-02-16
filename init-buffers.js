@@ -19,6 +19,10 @@ function InitVertexBuffers(gl) {
   };
 }
 
+const gCubeBase = 1
+const gCubeWidth = 1
+const gCubeHeight = 5
+
 function InitPositionBuffer(gl) {
   // Create a buffer for the square's positions.
   const positionBuffer = gl.createBuffer();
@@ -26,9 +30,9 @@ function InitPositionBuffer(gl) {
   // Select the positionBuffer as the one to apply buffer operations to from here out.
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-  const base_2 = 1
-  const width_2 = 1
-  const height_2 = 1
+  const base_2 = gCubeBase / 2;
+  const width_2 = gCubeWidth / 2;
+  const height_2 = gCubeHeight / 2;
 
   // Now create an array of positions for the cube.
   const positions = [
@@ -124,7 +128,7 @@ function InitTextCanvasBuffer(gl) {
   gl.bindBuffer(gl.ARRAY_BUFFER, canvas_coords_buffer);
 
   const scale = 1000;
-  const p1 = { x: 0, y: -scale }
+  const p1 = { x: 0, y: -scale * gCubeHeight }
   const p2 = { x: scale, y: 0 }
 
   const canvas_coords = [ // Two floats per vertex.

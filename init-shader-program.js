@@ -62,11 +62,13 @@ function LoadShader(gl, type, source) {
   return shader;
 }
 
+let gProgramInfo;
+
 /**
  * Look up which attributes our shader program is using for aVertexPosition, aTextureCoord and also look up uniform locations.
  */
 function GetProgramInfo(gl, shaderProgram) {
-  return {
+  gProgramInfo = {
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
@@ -82,8 +84,10 @@ function GetProgramInfo(gl, shaderProgram) {
       uGlyphLayoutTexture: gl.getUniformLocation(shaderProgram, "uGlyphLayoutTexture"),
       uScreenWidthPx: gl.getUniformLocation(shaderProgram, "uScreenWidthPx"),
       uScreenHeightPx: gl.getUniformLocation(shaderProgram, "uScreenHeightPx"),
-    },
+      uNumLines: gl.getUniformLocation(shaderProgram, "uNumLines"),
+    }
   }
+  return gProgramInfo
 }
 
 /**
@@ -103,4 +107,6 @@ function ReplaceJsConsts(source_txt, js_consts) {
   return source_txt;
 }
 
-export { InitShaderProgram, GetProgramInfo }
+
+
+export { InitShaderProgram, GetProgramInfo, gProgramInfo}
