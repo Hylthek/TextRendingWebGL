@@ -23,10 +23,10 @@ function DrawScene(gl, programInfo, buffers, view, image_texture, font_data_text
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
     const zFar = 20.0;
-    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-    // const foo = 2
-    // const bar = foo / aspect
-    // mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, zNear, zFar) // Projection matrix that takes the specified box to the unit cube.
+    // mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+    const foo = 1 / view.camera_pos.zoom
+    const bar = foo / aspect
+    mat4.ortho(projectionMatrix, -foo, foo, -bar, bar, zNear, zFar) // Projection matrix that takes the specified box to the unit cube.
   }
 
   // Create the modelViewMatrix which is only named that because we only have one 3D solid.

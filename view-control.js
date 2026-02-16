@@ -1,12 +1,11 @@
 class ViewControl {
   sphere_coords = {
     theta_deg: 90,
+    phi_deg: 0
     // phi_deg: 35.26
-    // theta_deg: 0,
-    phi_deg: 45
   }
   camera_pos = {
-    zoom: 4,
+    zoom: 0.2,
   }
   pan = { x: 0, y: 0 }
   isDragging = false;
@@ -23,7 +22,7 @@ class ViewControl {
       this.camera_pos.zoom *= 1 - event.deltaY * zoomSensitivity;
 
       // Prevent zoom level from becoming too small or too large
-      this.camera_pos.zoom = Math.max(1, Math.min(1000, this.camera_pos.zoom));
+      this.camera_pos.zoom = Math.max(0.1, Math.min(100, this.camera_pos.zoom));
 
       event.preventDefault();
     }, { passive: false });
@@ -41,22 +40,25 @@ class ViewControl {
     document.addEventListener("mousemove", (event) => {
       if (this.isDragging) {
         const canvas = document.getElementById("cal-vas");
-        const normalization_factor = canvas.clientWidth / 3;
+        const normalization_factor = canvas.clientWidth;
 
         const deltaX = (event.clientX - this.previousMousePosition.x) / normalization_factor / this.camera_pos.zoom;
         const deltaY = (event.clientY - this.previousMousePosition.y) / normalization_factor / this.camera_pos.zoom;
 
-        this.sphere_coords.theta_deg += deltaX * 150; // Adjust sensitivity as needed
-        this.sphere_coords.phi_deg += deltaY * 150; // Adjust sensitivity as needed
+        const scale = 50;
+        this.sphere_coords.theta_deg += deltaX * scale;
+        this.sphere_coords.phi_deg += deltaY * scale;
 
         // Clamp phi_deg to avoid flipping
         this.sphere_coords.phi_deg = Math.max(-89, Math.min(89, this.sphere_coords.phi_deg));
       }
       if (this.isPanning) {
-        const scale = 0.001;
-        const deltaX = (event.clientX - this.previousMousePosition.x)
-        const deltaY = (event.clientY - this.previousMousePosition.y)
+        const canvas = document.getElementById("cal-vas");
+        const normalization_factor = canvas.clientWidth;
+        const deltaX = (event.clientX - this.previousMousePosition.x) / this.camera_pos.zoom / normalization_factor
+        const deltaY = (event.clientY - this.previousMousePosition.y) / this.camera_pos.zoom / normalization_factor
 
+        const scale = 2;
         this.pan.x += deltaX * scale;
         this.pan.y -= deltaY * scale;
       }
