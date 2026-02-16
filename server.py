@@ -8,7 +8,7 @@ class GLSLHTTPRequestHandler(SimpleHTTPRequestHandler):
         return super().guess_type(path)
 
 # Start the server
-PORT = 8000
+PORT = 1313
 httpd = HTTPServer(('localhost', PORT), GLSLHTTPRequestHandler)
 print(f"Serving on port {PORT}")
 httpd.serve_forever()
