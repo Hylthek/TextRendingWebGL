@@ -223,7 +223,7 @@ function StringToPxPositionsAndLineLayouts(string_in, font, px_per_em, x_offset_
         line_x2 = curr_line_char_positions_px[i_char].x + glyph_radius_px;
 
       // Don't render newlines.
-      if (line_chars[i_char] === '\n') {
+      if (line_chars[i_char] === '\n' || line_chars[i_char] === '\r') {
         curr_line_char_positions_px[i_char].x = Infinity;
         curr_line_char_positions_px[i_char].y = Infinity;
       }

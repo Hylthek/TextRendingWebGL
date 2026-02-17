@@ -27,12 +27,13 @@ async function CalvasMain() {
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = '\n' + war_and_peace_txt.slice(0, text_length);
   // Load font object.
-  const jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
+  const font_jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
+  const font_inter = await GetFont('inter_ttf/Inter_18pt-Regular.ttf')
   // Load a font's entire glyph-set as a data texture.
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
-  } = await FontToTexture(gl, jetbrains_mono)
+  } = await FontToTexture(gl, font_inter)
 
   // Load a string into a texture.
   const px_per_em = 24;
@@ -40,12 +41,12 @@ async function CalvasMain() {
   const {
     texture: glyph_data_texture,
     dimensions: glyph_data_texture_dims,
-  } = TextureFromString(gl, "\nHi!", jetbrains_mono, px_per_em);
+  } = TextureFromString(gl, "\nHi!", font_inter, px_per_em);
   performance.mark("LoadTextureFromStart() Done.")
   performance.measure("LoadTextureFromStart()", "LoadTextureFromStart()...", "LoadTextureFromStart() Done.")
 
   // Get JS const values.
-  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, jetbrains_mono, war_and_peace_trunc_txt.length);
+  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_inter, war_and_peace_trunc_txt.length);
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
@@ -63,7 +64,7 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(InitNewCharTexture, 1000 / 30, ...[gl, war_and_peace_trunc_txt, jetbrains_mono, px_per_em]);
+  setInterval(InitNewCharTexture, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_inter, px_per_em]);
 }
 CalvasMain()
 
