@@ -30,32 +30,46 @@ function InitPositionBuffer(gl) {
   // Select the positionBuffer as the one to apply buffer operations to from here out.
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
-  const base_2 = gCubeBase / 2;
-  const width_2 = gCubeWidth / 2;
-  const height_2 = gCubeHeight / 2;
+  const p1 = [-gCubeBase / 2, -gCubeWidth / 2, 0]
+  const p2 = [gCubeBase / 2, gCubeWidth / 2, -gCubeHeight]
 
   // Now create an array of positions for the cube.
   const positions = [
     // Front face
-    -width_2, -height_2, base_2,
-    width_2, -height_2, base_2,
-    width_2, height_2, base_2,
-    -width_2, height_2, base_2,
+    p1[1], p2[2], p2[0],
+    p2[1], p2[2], p2[0],
+    p2[1], p1[2], p2[0],
+    p1[1], p1[2], p2[0],
 
     // Back face
-    -width_2, -height_2, -base_2, -width_2, height_2, -base_2, width_2, height_2, -base_2, width_2, -height_2, -base_2,
+    p1[1], p2[2], p1[0],
+    p1[1], p1[2], p1[0],
+    p2[1], p1[2], p1[0],
+    p2[1], p2[2], p1[0],
 
     // Top face
-    -width_2, height_2, -base_2, -width_2, height_2, base_2, width_2, height_2, base_2, width_2, height_2, -base_2,
+    p1[1], p1[2], p1[0],
+    p1[1], p1[2], p2[0],
+    p2[1], p1[2], p2[0],
+    p2[1], p1[2], p1[0],
 
     // Bottom face
-    -width_2, -height_2, -base_2, width_2, -height_2, -base_2, width_2, -height_2, base_2, -width_2, -height_2, base_2,
+    p1[1], p2[2], p1[0],
+    p2[1], p2[2], p1[0],
+    p2[1], p2[2], p2[0],
+    p1[1], p2[2], p2[0],
 
     // Right face
-    width_2, -height_2, -base_2, width_2, height_2, -base_2, width_2, height_2, base_2, width_2, -height_2, base_2,
+    p2[1], p2[2], p1[0],
+    p2[1], p1[2], p1[0],
+    p2[1], p1[2], p2[0],
+    p2[1], p2[2], p2[0],
 
     // Left face
-    -width_2, -height_2, -base_2, -width_2, -height_2, base_2, -width_2, height_2, base_2, -width_2, height_2, -base_2,
+    p1[1], p2[2], p1[0],
+    p1[1], p2[2], p2[0],
+    p1[1], p1[2], p2[0],
+    p1[1], p1[2], p1[0],
   ];
 
   // Now pass the list of positions into WebGL to build the
