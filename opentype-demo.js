@@ -1,3 +1,5 @@
+import * as opentype from "./node_modules/opentype.js/dist/opentype.module.js"
+
 /**
  * @param {CanvasRenderingContext2D} ctx
  */
