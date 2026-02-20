@@ -57,8 +57,8 @@ async function CalvasMain() {
   const fps_span_element = document.getElementById('fps');
 
   // Load a string into a texture.
-  const px_per_em = 24;
-  window.curr_glyph_data_texture = TextureFromString(gl, "\nHello\nHelloHello\nHelloHelloHello", font_data_inter, px_per_em, programInfo);
+  const px_per_em = 150;
+  window.curr_glyph_data_texture = TextureFromString(gl, "\nTest", font_data_inter, px_per_em, programInfo);
 
   // Draw the scene repeatedly
   function RenderScene(now) {

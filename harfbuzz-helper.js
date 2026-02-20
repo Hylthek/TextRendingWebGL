@@ -1,4 +1,5 @@
 import opentype from './node_modules/opentype.js/dist/opentype.module.js'
+import { GlyphLayoutArray } from './load-char-texture.js';
 
 /**
  * HarfBuzz helper module for proper text shaping with kerning
@@ -6,7 +7,6 @@ import opentype from './node_modules/opentype.js/dist/opentype.module.js'
  */
 
 let hbInstance = null;
-let hbFontCache = new Map();
 
 /**
  * Initialize HarfBuzz (call once at startup)
@@ -31,7 +31,6 @@ export async function InitHarfBuzz() {
   // Wrap with the hbjs helper
   hbInstance = hbjs(hbModule);
 
-  console.log('✓ HarfBuzz initialized');
   return hbInstance;
 }
 
@@ -41,11 +40,6 @@ export async function InitHarfBuzz() {
  * @returns {Promise<{hbFont, hbFace, openTypeFont}>}
  */
 export async function LoadHBFont(fontUrl) {
-  // Check cache
-  if (hbFontCache.has(fontUrl)) {
-    return hbFontCache.get(fontUrl);
-  }
-
   // Ensure HarfBuzz is initialized
   const hb = await InitHarfBuzz();
 
@@ -66,11 +60,10 @@ export async function LoadHBFont(fontUrl) {
     });
   });
 
-  const fontData = { hbFont, hbFace, openTypeFont, hb };
-  hbFontCache.set(fontUrl, fontData);
+  // Set scale to match opentype font's scale.
+  hbFont.setScale(openTypeFont.unitsPerEm, openTypeFont.unitsPerEm);
 
-  console.log(`✓ Loaded HarfBuzz font: ${fontUrl}`);
-  return fontData;
+  return { hbFont, hbFace, openTypeFont, hb };
 }
 
 /**
@@ -81,18 +74,13 @@ export async function LoadHBFont(fontUrl) {
  * @param {Object} options - Shaping options
  * @returns {Array} Array of shaped glyphs with positions
  */
-export function ShapeText(hb, hbFont, text, options = {}) {
+export function ShapeText(hb, hbFont, text) {
   if (!hb) throw new Error('HarfBuzz not initialized. Call InitHarfBuzz() first.');
 
   // Create buffer
   const buffer = hb.createBuffer();
   buffer.addText(text);
   buffer.guessSegmentProperties();
-
-  // Set options
-  if (options.script) buffer.setScript(options.script);
-  if (options.language) buffer.setLanguage(options.language);
-  if (options.direction) buffer.setDirection(options.direction);
 
   // Shape (this applies kerning automatically!)
   hb.shape(hbFont, buffer);
@@ -109,22 +97,20 @@ export function ShapeText(hb, hbFont, text, options = {}) {
 /**
  * Convert HarfBuzz shaped output to glyph layout data
  * @param {Array} shaped - Output from ShapeText()
- * @param {Object} openTypeFont - OpenType.js font for getting glyph data
- * @param {number} fontSize - Font size in pixels
+ * @param {Object} em_per_units - OpenType.js font for getting glyph data
+ * @param {number} px_per_em - Font size in pixels
  * @returns {Array} Array of {glyphId, x, y, advanceX, advanceY}
  */
-export function ShapedToLayout(shaped, openTypeFont, fontSize) {
-  const scale = fontSize / openTypeFont.unitsPerEm;
-
+export function ShapedToLayout(shaped, px_per_unit) {
   let cursorX = 0;
   let cursorY = 0;
 
-  const layout = shaped.map((item) => {
-    const glyphId = item.g;
-    const xOffset = (item.dx || 0) * scale;
-    const yOffset = (item.dy || 0) * scale;
-    const xAdvance = (item.ax || 0) * scale;
-    const yAdvance = (item.ay || 0) * scale;
+  return shaped.map((item) => {
+    const glyphId = item.g; // This is same as opentype's id.
+    const xOffset = (item.dx || 0) * px_per_unit;
+    const yOffset = (item.dy || 0) * px_per_unit;
+    const xAdvance = (item.ax || 0) * px_per_unit;
+    const yAdvance = (item.ay || 0) * px_per_unit;
 
     const layoutData = {
       glyphId: glyphId,
@@ -138,10 +124,29 @@ export function ShapedToLayout(shaped, openTypeFont, fontSize) {
     cursorX += xAdvance;
     cursorY += yAdvance;
 
+    console.log("hb layout", layoutData)
+
     return layoutData;
   });
+}
 
-  return layout;
+export function TextToGlyphLayoutArray(hb, hbFont, text, px_per_unit) {
+  // Shape text.
+  const shaped_text = ShapeText(hb, hbFont, text);
+  // Get glyph layouts.
+  const hb_layouts = ShapedToLayout(shaped_text, px_per_unit);
+  // Turn into glyph layouts array.
+  const glyph_layouts = new GlyphLayoutArray(hb_layouts.length);
+  hb_layouts.forEach((item, i) => {
+    glyph_layouts[i] = {
+      x: item.x,
+      y: item.y,
+      id: item.glyphId,
+      size: px_per_unit
+    };
+    console.log("glyph layouts", glyph_layouts[i])
+  });
+  return glyph_layouts;
 }
 
 /**

@@ -1,6 +1,6 @@
-import { ShapeText, ShapedToLayout } from "./harfbuzz-helper.js";
+import { ShapeText, ShapedToLayout, TextToGlyphLayoutArray } from "./harfbuzz-helper.js";
 
-class GlyphLayoutArray {
+export class GlyphLayoutArray {
   constructor(length) {
     this.structSize = 16; // Size of each struct in bytes
     this.length = length; // Number of structs
@@ -39,6 +39,8 @@ class GlyphLayoutArray {
 
   // Get a struct at a specific index
   get(index) {
+    if (index < 0 || index >= this.length)
+      console.error("Index out of bounds")
     const offset = index * this.structSize;
     return {
       x: this.data_view.getFloat32(offset, true),
@@ -54,6 +56,12 @@ class GlyphLayoutArray {
       result[i - start] = this.get(i);
     }
     return result;
+  }
+
+  push(array_to_push) {
+    this.buffer.push(array_to_push.buffer)
+    this.length += array_to_push.length;
+    this.data_view = new DataView(this.buffer);
   }
 }
 
@@ -131,43 +139,18 @@ class LineLayoutArray {
 function TextureFromString(gl, string_in, fontData, px_per_em, programInfo) {
   const { hb, hbFont, openTypeFont } = fontData;
 
-  // Shape text with HarfBuzz (applies kerning!)
-  const shaped = ShapeText(hb, hbFont, string_in);
+  // Shape text with HarfBuzz.
+  const px_per_unit = px_per_em / openTypeFont.unitsPerEm;
+  const glyph_layouts = TextToGlyphLayoutArray(hb, hbFont, string_in, px_per_unit)
 
-  // Convert shaped output to layout
-  const layout = ShapedToLayout(shaped, openTypeFont, px_per_em);
-
-  // Create glyph layout array
-  const glyph_layout_array = new GlyphLayoutArray(layout.length);
-
-  layout.forEach((item, i) => {
-    glyph_layout_array[i] = {
-      x: item.x,
-      y: item.y,
-      id: item.glyphId,
-      size: px_per_em
-    };
-  });
-
-  // Init texture if not done yet.
-  if (!window.gCurrTexture)
-    InitTexture(gl);
-
-  // Update global string.
-  window.gCurrDisplayedString = string_in;
-
-  // Get GlyphLayoutArray.
-  const { glyph_layouts, line_layouts } = StringToLayoutArrays(string_in, openTypeFont, px_per_em, 0, 0);
-
-  // console.log(glyph_layouts, glyph_layout_array)
+  // Get line layouts.
+  const { line_layouts } = StringToLayoutArrays(string_in, openTypeFont, px_per_unit, 0, 0);
 
   // Update texture.
   LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts);
 
   // Update uniform.
   gl.uniform1i(programInfo.uniformLocations.uNumLines, line_layouts.length);
-
-  console.log(glyph_layouts, line_layouts)
 
   return window.gCurrTexture
 }
@@ -180,13 +163,24 @@ export const gTextureHeight = 2048;
  * 
  * @param {String} string_in
  */
-function StringToLayoutArrays(string_in, font, px_per_em, x_offset, y_offset) {
+function StringToLayoutArrays(string_in, font, px_per_unit, x_offset, y_offset) {
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   const chars = string_in.split('')
   // Each char needs 3 things, pos, index, size.
   const opentype_indices = chars.map(char => font.charToGlyphIndex(char))
-  const px_per_unit = px_per_em / font.unitsPerEm;
   const px_per_unit_array = new Array(chars.length).fill(px_per_unit)
-  const { char_positions_px, line_layouts } = StringToPxPositionsAndLineLayouts(string_in, font, px_per_em, x_offset, y_offset)
+  const { char_positions_px, line_layouts } = StringToPxPositionsAndLineLayouts(string_in, font, px_per_unit, x_offset, y_offset)
   let glyph_layouts = new GlyphLayoutArray(chars.length);
   for (let i = 0; i < chars.length; i++) {
     glyph_layouts[i] = {
@@ -195,6 +189,7 @@ function StringToLayoutArrays(string_in, font, px_per_em, x_offset, y_offset) {
       id: opentype_indices[i],
       size: px_per_unit_array[i]
     }
+    console.log("opentype char", glyph_layouts[i])
   }
   return { glyph_layouts, line_layouts };
 }
@@ -205,11 +200,9 @@ function StringToLayoutArrays(string_in, font, px_per_em, x_offset, y_offset) {
  * @param {OpenTypeFont} font 
  * @param {Number} px_per_em 
  */
-function StringToPxPositionsAndLineLayouts(string_in, font, px_per_em, x_offset_px, y_offset_px) {
-  const em_per_units = 1 / font.unitsPerEm;
-
+function StringToPxPositionsAndLineLayouts(string_in, font, px_per_unit, x_offset_px, y_offset_px) {
   // Get line height in px.
-  const line_height_px = GetLineHeightUnits(font) * em_per_units * px_per_em;
+  const line_height_px = GetLineHeightUnits(font) * px_per_unit;
 
   // Get an array of strings for each line, doesn't reduce total char count.
   const lines = string_in.split(/(?<=\n)/);
@@ -228,7 +221,7 @@ function StringToPxPositionsAndLineLayouts(string_in, font, px_per_em, x_offset_
     let line_x2;
     let line_y1;
     let line_y2;
-    const glyph_radius_px = GetGlyphBoundingRadiusUnits(font) * em_per_units * px_per_em;
+    const glyph_radius_px = GetGlyphBoundingRadiusUnits(font) * px_per_unit;
 
     // Init array of positions for this line. Set the y-vals via line height.
     const curr_line_char_positions_px = Array.from({ length: line_chars.length }, () => (
@@ -236,7 +229,7 @@ function StringToPxPositionsAndLineLayouts(string_in, font, px_per_em, x_offset_
     ));
     for (let i_char = 0; i_char < curr_line_char_positions_px.length; i_char++) {
       // Get advance width in px.
-      const advance_width_px = font.charToGlyph(line_chars[i_char]).advanceWidth * em_per_units * px_per_em;
+      const advance_width_px = font.charToGlyph(line_chars[i_char]).advanceWidth * px_per_unit;
 
       // Alter next idx.
       if (i_char != curr_line_char_positions_px.length - 1)
@@ -312,6 +305,10 @@ let gPrevTextureHeight;
  * @param {LineLayoutArray} line_layouts 
  */
 function LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts) {
+  // Init texture if not done yet.
+  if (!window.gCurrTexture)
+    InitTexture(gl);
+
   // Fill texture with glyph and line layouts.
   FillDataTexture(gl, window.gCurrTexture, glyph_layouts, 1, false);
   FillDataTexture(gl, window.gCurrTexture, line_layouts, 2, true);
@@ -327,7 +324,7 @@ function FillDataTexture(gl, texture, object_array, pixels_per_object, from_top)
   const num_rows = Math.floor(object_array_pixels / gTextureWidth) + 1;
   for (let curr_row = 0; curr_row < num_rows; curr_row++) {
     const y_offset = from_top ? gTextureHeight - 1 - curr_row : curr_row;
-    
+
     const buffer_start = curr_row * gTextureWidth / pixels_per_object;
     if (curr_row == num_rows - 1) {
       const buffer_end = object_array.length
