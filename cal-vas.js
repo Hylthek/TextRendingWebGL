@@ -6,13 +6,12 @@ import { LoadImageTexture } from "./load-texture.js";
 import { PrintCenterPixelInt32 } from './shader-debug.js'
 import { ViewControl } from './view-control.js'
 import { FontToTexture } from './load-font-texture.js';
-import { GetFont } from './opentype-demo.js';
 import { GetJsConstValues } from './get-js-consts.js';
-import { TextureFromString } from './load-char-texture.js';
+import { TextureFromString, gTextureWidth, gTextureHeight, InitTexture } from './load-char-texture.js';
+import { LoadHBFont } from './harfbuzz-helper.js'; // Import helper
 
 async function CalvasMain() {
-  console.log("早安！我很喜欢编程。")
-
+  // Init WebGL canvas.
   const gl = CanvasInit()
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
@@ -20,51 +19,57 @@ async function CalvasMain() {
 
   // Load static vertex attribute data.
   const vertex_buffers = InitVertexBuffers(gl);
+
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
+
   // Load War and Peace.
   const text_length = 15000;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
   const war_and_peace_trunc_txt = '\n' + war_and_peace_txt.slice(0, text_length);
-  // Load font object.
-  const font_jetbrains_mono = await GetFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
-  const font_inter = await GetFont('inter_ttf/Inter_18pt-Regular.ttf')
-  // Load a font's entire glyph-set as a data texture.
+
+  // Load font objects.
+  const font_data_jetbrains_mono = await LoadHBFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
+  const font_data_inter = await LoadHBFont('inter_ttf/Inter_18pt-Regular.ttf')
+
+  // Load a font's entire set of glyph paths as a data texture.
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
-  } = await FontToTexture(gl, font_inter)
+  } = await FontToTexture(gl, font_data_inter.openTypeFont)
 
-  // Load a string into a texture.
-  const px_per_em = 24;
-  performance.mark("LoadTextureFromStart()...")
-  const {
-    texture: glyph_data_texture,
-    dimensions: glyph_data_texture_dims,
-  } = TextureFromString(gl, "\nHi!", font_inter, px_per_em);
-  performance.mark("LoadTextureFromStart() Done.")
-  performance.measure("LoadTextureFromStart()", "LoadTextureFromStart()...", "LoadTextureFromStart() Done.")
+  // Init char texture.
+  InitTexture(gl);
 
   // Get JS const values.
-  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_inter, war_and_peace_trunc_txt.length);
+  const glyph_data_texture_dims = {
+    width: gTextureWidth,
+    height: gTextureHeight
+  }
+  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_data_inter.openTypeFont, war_and_peace_trunc_txt.length);
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
+  gl.useProgram(shaderProgram)
   // Init panning, zooming, etc.
   const view = new ViewControl();
   // Get fps html span element.
   const fps_span_element = document.getElementById('fps');
 
+  // Load a string into a texture.
+  const px_per_em = 24;
+  window.curr_glyph_data_texture = TextureFromString(gl, "\nHello\nHelloHello\nHelloHelloHello", font_data_inter, px_per_em, programInfo);
+
   // Draw the scene repeatedly
-  window.curr_glyph_data_texture = glyph_data_texture;
   function RenderScene(now) {
-    DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
+    if (window.curr_glyph_data_texture)
+      DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
     PrintCenterPixelInt32(gl, 8);
     requestAnimationFrame(RenderScene);
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(InitNewCharTexture, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_inter, px_per_em]);
+  // setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
 }
 CalvasMain()
 
@@ -100,12 +105,10 @@ function UpdateFps(now, fps_span_element) {
  * @param {String} string_in 
  */
 
-function InitNewCharTexture(gl, string_in, font, px_per_em) {
+function LoadScrollingText(gl, string_in, font, px_per_em, programInfo) {
   const chars_per_sec = 500;
   const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
   const string_sub = string_in.slice(0, num_chars)
-  performance.mark("repeated texture call")
-  const { texture } = TextureFromString(gl, string_sub, font, px_per_em);
-  performance.measure("repeated texture call", "repeated texture call")
+  const texture = TextureFromString(gl, string_sub, font, px_per_em, programInfo);
   window.curr_glyph_data_texture = texture;
 }

@@ -62,13 +62,12 @@ function LoadShader(gl, type, source) {
   return shader;
 }
 
-let gProgramInfo;
 
 /**
  * Look up which attributes our shader program is using for aVertexPosition, aTextureCoord and also look up uniform locations.
  */
 function GetProgramInfo(gl, shaderProgram) {
-  gProgramInfo = {
+  return {
     program: shaderProgram,
     attribLocations: {
       vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
@@ -87,7 +86,6 @@ function GetProgramInfo(gl, shaderProgram) {
       uNumLines: gl.getUniformLocation(shaderProgram, "uNumLines"),
     }
   }
-  return gProgramInfo
 }
 
 /**
@@ -109,4 +107,4 @@ function ReplaceJsConsts(source_txt, js_consts) {
 
 
 
-export { InitShaderProgram, GetProgramInfo, gProgramInfo}
+export { InitShaderProgram, GetProgramInfo }

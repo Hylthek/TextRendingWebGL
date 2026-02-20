@@ -1,4 +1,4 @@
-import { gProgramInfo } from "./init-shader-program.js";
+import { ShapeText, ShapedToLayout } from "./harfbuzz-helper.js";
 
 class GlyphLayoutArray {
   constructor(length) {
@@ -46,6 +46,14 @@ class GlyphLayoutArray {
       id: this.data_view.getFloat32(offset + 8, true),
       size: this.data_view.getFloat32(offset + 12, true),
     };
+  }
+
+  slice(start, end) {
+    const result = new GlyphLayoutArray(end - start);
+    for (let i = start; i < end; i++) {
+      result[i - start] = this.get(i);
+    }
+    return result;
   }
 }
 
@@ -120,7 +128,27 @@ class LineLayoutArray {
  * @param {OpenTypeFont} font 
  * @param {Number} px_per_em The size of the text in ems.
  */
-function TextureFromString(gl, string_in, font, px_per_em) {
+function TextureFromString(gl, string_in, fontData, px_per_em, programInfo) {
+  const { hb, hbFont, openTypeFont } = fontData;
+
+  // Shape text with HarfBuzz (applies kerning!)
+  const shaped = ShapeText(hb, hbFont, string_in);
+
+  // Convert shaped output to layout
+  const layout = ShapedToLayout(shaped, openTypeFont, px_per_em);
+
+  // Create glyph layout array
+  const glyph_layout_array = new GlyphLayoutArray(layout.length);
+
+  layout.forEach((item, i) => {
+    glyph_layout_array[i] = {
+      x: item.x,
+      y: item.y,
+      id: item.glyphId,
+      size: px_per_em
+    };
+  });
+
   // Init texture if not done yet.
   if (!window.gCurrTexture)
     InitTexture(gl);
@@ -129,23 +157,24 @@ function TextureFromString(gl, string_in, font, px_per_em) {
   window.gCurrDisplayedString = string_in;
 
   // Get GlyphLayoutArray.
-  const { glyph_layouts, line_layouts } = StringToLayoutArrays(string_in, font, px_per_em, 0, 0);
+  const { glyph_layouts, line_layouts } = StringToLayoutArrays(string_in, openTypeFont, px_per_em, 0, 0);
+
+  // console.log(glyph_layouts, glyph_layout_array)
 
   // Update texture.
   LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts);
 
-  return {
-    texture: window.gCurrTexture,
-    dimensions: {
-      width: gTextureWidth,
-      height: gTextureHeight
-    }
-  }
+  // Update uniform.
+  gl.uniform1i(programInfo.uniformLocations.uNumLines, line_layouts.length);
+
+  console.log(glyph_layouts, line_layouts)
+
+  return window.gCurrTexture
 }
 
 // Texture dimension consts.
-const gTextureWidth = 2048; // Must be even
-const gTextureHeight = 2048;
+export const gTextureWidth = 2048; // Must be even
+export const gTextureHeight = 2048;
 
 /**
  * 
@@ -283,60 +312,37 @@ let gPrevTextureHeight;
  * @param {LineLayoutArray} line_layouts 
  */
 function LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts) {
-  // Configure texture to use 4 FLOAT32s per pixel.
+  // Fill texture with glyph and line layouts.
+  FillDataTexture(gl, window.gCurrTexture, glyph_layouts, 1, false);
+  FillDataTexture(gl, window.gCurrTexture, line_layouts, 2, true);
+}
+
+function FillDataTexture(gl, texture, object_array, pixels_per_object, from_top) {
+  gl.bindTexture(gl.TEXTURE_2D, texture);
   const format = gl.RGBA;
   const type = gl.FLOAT;
   const level = 0; // mipmap thing, keep 0 for "NPOT" textures.
 
-  // Get a typed array compatible with "type".
-  const glyph_layouts_f32 = new Float32Array(glyph_layouts.buffer);
-  const num_pixels = glyph_layouts_f32.length / 4;
-
-  // Define pixel width and height.
-  const width_thiscall = Math.min(num_pixels, gTextureWidth);
-  const height_thiscall = Math.floor((num_pixels - 1) / gTextureWidth) + 1;
-  // Define width and height that we will actually use.
-  const width = Math.max(gPrevTextureWidth, width_thiscall);
-  const height = Math.max(gPrevTextureHeight, height_thiscall);
-  // Update prev dims
-  gPrevTextureWidth = width_thiscall
-  gPrevTextureHeight = height_thiscall
-
-  // Pad glyph_layouts_f32 with 0s until its length is width * height * 4.
-  const target_length = width * height * 4;
-  const zeros = new Float32Array(target_length)
-  const glyph_layouts_f32_padded = zeros.map((zero, idx) => (glyph_layouts_f32[idx] || 0))
-
-  // Fill texture with glyph layouts.
-  gl.bindTexture(gl.TEXTURE_2D, window.gCurrTexture);
-  gl.texSubImage2D(gl.TEXTURE_2D, level, 0, 0, width, height, format, type, glyph_layouts_f32_padded)
-
-  // Fill texture with line layouts.
-  const line_layout_pixels = line_layouts.length * 2; // 2 pixels per line_layout.
-  const line_layout_num_rows = Math.floor(line_layout_pixels / gTextureWidth) + 1;
-  for (let curr_row = 0; curr_row < line_layout_num_rows; curr_row++) {
-    const y_offset = gTextureHeight - 1 - curr_row;
-    const buffer_start = curr_row * gTextureWidth / 2;
-    if (curr_row == line_layout_num_rows - 1) {
-      const buffer_end = line_layouts.length
-      const curr_row_data_f32 = new Float32Array(line_layouts.slice(buffer_start, buffer_end).buffer)
-      gl.texSubImage2D(gl.TEXTURE_2D, level, 0, y_offset, line_layout_pixels % gTextureWidth, 1, format, type, curr_row_data_f32)
+  const object_array_pixels = object_array.length * pixels_per_object; // 2 pixels per line_layout.
+  const num_rows = Math.floor(object_array_pixels / gTextureWidth) + 1;
+  for (let curr_row = 0; curr_row < num_rows; curr_row++) {
+    const y_offset = from_top ? gTextureHeight - 1 - curr_row : curr_row;
+    
+    const buffer_start = curr_row * gTextureWidth / pixels_per_object;
+    if (curr_row == num_rows - 1) {
+      const buffer_end = object_array.length
+      const curr_row_data_f32 = new Float32Array(object_array.slice(buffer_start, buffer_end).buffer)
+      gl.texSubImage2D(gl.TEXTURE_2D, level, 0, y_offset, object_array_pixels % gTextureWidth, 1, format, type, curr_row_data_f32)
     }
     else {
-      const buffer_end = (curr_row + 1) * gTextureWidth / 2;
-      const curr_row_data_f32 = new Float32Array(line_layouts.slice(buffer_start, buffer_end).buffer)
+      const buffer_end = (curr_row + 1) * gTextureWidth / pixels_per_object;
+      const curr_row_data_f32 = new Float32Array(object_array.slice(buffer_start, buffer_end).buffer)
       gl.texSubImage2D(gl.TEXTURE_2D, level, 0, y_offset, gTextureWidth, 1, format, type, curr_row_data_f32)
     }
   }
-
-  // Set number of line layouts as a uniform.
-  if (gProgramInfo) {
-    const num_lines_location = gProgramInfo.uniformLocations.uNumLines;
-    gl.uniform1i(num_lines_location, line_layouts.length);
-  }
 }
 
-function InitTexture(gl) {
+export function InitTexture(gl) {
   // Init WebGL2 texture object.
   const texture = gl.createTexture()
   // Bind texture.

@@ -335,5 +335,6 @@ void main(void) {
 
   // Debug data output.
   print_arr[0] = float(num_texel_fetches);
+  print_arr[1] = float(texture(uGlyphLayoutTexture, vec2(0,0)).y);
   PrintDebugOutput(); // Uses print_arr.
 }
