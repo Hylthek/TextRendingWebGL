@@ -57,7 +57,7 @@ async function CalvasMain() {
   const fps_span_element = document.getElementById('fps');
 
   // Load a string into a texture.
-  const px_per_em = 70;
+  const px_per_em = 24;
   window.curr_glyph_data_texture = TextureFromString(gl, "\nTest=>Test\nWAVE", font_data_inter, px_per_em, programInfo);
 
   // Draw the scene repeatedly
@@ -69,7 +69,7 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  // setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
+  setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
 }
 CalvasMain()
 
