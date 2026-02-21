@@ -54,7 +54,8 @@ export function ShapeText(hb, hbFont, text) {
   buffer.guessSegmentProperties();
 
   // Shape (this applies kerning automatically!)
-  hb.shape(hbFont, buffer);
+  const features = "+kern,+calt" // kerning and ligatures.
+  hb.shape(hbFont, buffer, features);
 
   // Get results as JSON
   const result = buffer.json(hbFont);
