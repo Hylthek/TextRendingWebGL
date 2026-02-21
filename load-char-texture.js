@@ -1,4 +1,4 @@
-import { ShapeText, ShapedToLayout, TextToGlyphLayoutArray } from "./harfbuzz-helper.js";
+import { ShapeText, ShapedToLayout } from "./harfbuzz-helper.js";
 
 export class GlyphLayoutArray {
   constructor(length) {
@@ -56,12 +56,6 @@ export class GlyphLayoutArray {
       result[i - start] = this.get(i);
     }
     return result;
-  }
-
-  push(array_to_push) {
-    this.buffer.push(array_to_push.buffer)
-    this.length += array_to_push.length;
-    this.data_view = new DataView(this.buffer);
   }
 }
 
@@ -133,26 +127,22 @@ class LineLayoutArray {
  * @param {WebGL2RenderingContext} gl 
  * @param {WebGLBuffer} uniform_buffer_object 
  * @param {String} string_in 
- * @param {OpenTypeFont} font 
  * @param {Number} px_per_em The size of the text in ems.
  */
 function TextureFromString(gl, string_in, fontData, px_per_em, programInfo) {
-  const { hb, hbFont, openTypeFont } = fontData;
-
-  // Shape text with HarfBuzz.
+  const { openTypeFont } = fontData;
   const px_per_unit = px_per_em / openTypeFont.unitsPerEm;
-  const glyph_layouts = TextToGlyphLayoutArray(hb, hbFont, string_in, px_per_unit)
 
   // Get line layouts.
-  const { line_layouts } = StringToLayoutArrays(string_in, openTypeFont, px_per_unit, 0, 0);
+  const { glyph_layouts, line_layouts } = StringToLayoutArrays(string_in, fontData, px_per_unit, 0, 0);
 
   // Update texture.
-  LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts);
+  const texture = LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts);
 
   // Update uniform.
   gl.uniform1i(programInfo.uniformLocations.uNumLines, line_layouts.length);
 
-  return window.gCurrTexture
+  return texture;
 }
 
 // Texture dimension consts.
@@ -163,143 +153,102 @@ export const gTextureHeight = 2048;
  * 
  * @param {String} string_in
  */
-function StringToLayoutArrays(string_in, font, px_per_unit, x_offset, y_offset) {
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  const chars = string_in.split('')
-  // Each char needs 3 things, pos, index, size.
-  const opentype_indices = chars.map(char => font.charToGlyphIndex(char))
-  const px_per_unit_array = new Array(chars.length).fill(px_per_unit)
-  const { char_positions_px, line_layouts } = StringToPxPositionsAndLineLayouts(string_in, font, px_per_unit, x_offset, y_offset)
-  let glyph_layouts = new GlyphLayoutArray(chars.length);
-  for (let i = 0; i < chars.length; i++) {
-    glyph_layouts[i] = {
-      x: char_positions_px[i].x,
-      y: char_positions_px[i].y,
-      id: opentype_indices[i],
-      size: px_per_unit_array[i]
-    }
-    console.log("opentype char", glyph_layouts[i])
-  }
-  return { glyph_layouts, line_layouts };
-}
-
-/**
- * 
- * @param {String} string_in 
- * @param {OpenTypeFont} font 
- * @param {Number} px_per_em 
- */
-function StringToPxPositionsAndLineLayouts(string_in, font, px_per_unit, x_offset_px, y_offset_px) {
-  // Get line height in px.
-  const line_height_px = GetLineHeightUnits(font) * px_per_unit;
+function StringToLayoutArrays(string_in, fontData, px_per_unit, x_offset, y_offset) {
+  // Get fonts.
+  const { hb, hbFont, openTypeFont: opentype_font } = fontData;
+  // Get max distance a glyph reaches away from its origin.
+  const glyph_radius_px = GetGlyphBoundingRadiusUnits(opentype_font) * px_per_unit;
 
   // Get an array of strings for each line, doesn't reduce total char count.
   const lines = string_in.split(/(?<=\n)/);
 
-  // Output arrays.
-  const char_positions_px = [];
-  const line_layouts = new LineLayoutArray(lines.length);
 
   // Iterate over lines.
+  const glyph_layout_js_array = []
+  const line_layout_js_array = [];
+  const line_height_px = GetLineHeightUnits(opentype_font) * px_per_unit;
   for (let i_line = 0; i_line < lines.length; i_line++) {
-    // Get chars for this line.
-    const line_chars = lines[i_line].split('');
+    const curr_line = lines[i_line];
 
-    // Vars for line layouts.
-    let line_x1;
-    let line_x2;
-    let line_y1;
-    let line_y2;
-    const glyph_radius_px = GetGlyphBoundingRadiusUnits(font) * px_per_unit;
+    // The GlyphLayoutArray index of the line's first glyph.
+    const buffer_offset = glyph_layout_js_array.length;
 
-    // Init array of positions for this line. Set the y-vals via line height.
-    const curr_line_char_positions_px = Array.from({ length: line_chars.length }, () => (
-      { x: x_offset_px, y: -i_line * line_height_px + y_offset_px }
-    ));
-    for (let i_char = 0; i_char < curr_line_char_positions_px.length; i_char++) {
-      // Get advance width in px.
-      const advance_width_px = font.charToGlyph(line_chars[i_char]).advanceWidth * px_per_unit;
+    // Shape text.
+    const shaped_text = ShapeText(hb, hbFont, curr_line);
+    // Push glyph layouts to the js array.
+    const hb_layout = ShapedToLayout(shaped_text, px_per_unit, 0, -i_line * line_height_px)
+    glyph_layout_js_array.push(...hb_layout);
 
-      // Alter next idx.
-      if (i_char != curr_line_char_positions_px.length - 1)
-        curr_line_char_positions_px[i_char + 1].x = curr_line_char_positions_px[i_char].x + advance_width_px;
-
-      // Save certain positions for line layouts.
-      if (i_char == 0) {
-        line_x1 = curr_line_char_positions_px[i_char].x - glyph_radius_px;
-        line_y1 = curr_line_char_positions_px[i_char].y - glyph_radius_px;
-        line_y2 = curr_line_char_positions_px[i_char].y + glyph_radius_px;
-      }
-      if (i_char == curr_line_char_positions_px.length - 1)
-        line_x2 = curr_line_char_positions_px[i_char].x + glyph_radius_px;
-
-      // Don't render newlines.
-      if (line_chars[i_char] === '\n' || line_chars[i_char] === '\r') {
-        curr_line_char_positions_px[i_char].x = Infinity;
-        curr_line_char_positions_px[i_char].y = Infinity;
-      }
-    }
-
-    // Create entry for LineLayoutArray.
-    const line_buffer_offset = char_positions_px.length;
-    const line_num_chars = line_chars.length
-    line_layouts[i_line] = {
-      x1: line_x1,
-      x2: line_x2,
-      y1: line_y1,
-      y2: line_y2,
-      buffer_offset: line_buffer_offset,
-      num_chars: line_num_chars
-    };
-
-    // Append positions from current line to the universal set.
-    char_positions_px.push(...curr_line_char_positions_px)
+    // Calc line layout data and push to js array.
+    line_layout_js_array.push({
+      x1: hb_layout[0].x - glyph_radius_px,
+      x2: hb_layout[hb_layout.length - 1].x + glyph_radius_px,
+      y1: hb_layout[0].y - glyph_radius_px,
+      y2: hb_layout[0].y + glyph_radius_px,
+      buffer_offset: buffer_offset,
+      num_chars: hb_layout.length
+    })
   }
-  return { char_positions_px, line_layouts }
+
+  // Convert js array into GlyphLayoutArray.
+  const glyph_layouts_out = new GlyphLayoutArray(glyph_layout_js_array.length);
+  glyph_layout_js_array.forEach((item, i) => {
+    // Don't render 'no glyph' glyph.
+    if (item.glyphId === 0)
+      glyph_layouts_out[i] = {
+        x: Infinity,
+        y: Infinity,
+        id: item.glyphId,
+        size: px_per_unit
+      };
+    else
+      glyph_layouts_out[i] = {
+        x: item.x,
+        y: item.y,
+        id: item.glyphId,
+        size: px_per_unit
+      };
+  });
+  // Convert js array into LineLayoutArray.
+  const line_layouts_out = new LineLayoutArray(lines.length);
+  line_layout_js_array.forEach((item, i) => {
+    line_layouts_out[i] = item;
+  });
+
+  return {
+    glyph_layouts: glyph_layouts_out,
+    line_layouts: line_layouts_out
+  };
 }
 
-function GetGlyphBoundingRadiusUnits(font) {
-  const head = font.tables.head;
+function GetGlyphBoundingRadiusUnits(opentype_font) {
+  const head = opentype_font.tables.head;
   const horz = Math.max(head.xMax, -head.xMin);
   const vert = Math.max(head.yMax, -head.yMin);
   const boundingRadius = Math.sqrt((horz) ** 2 + (vert) ** 2);
   return boundingRadius;
 }
 
-function GetLineHeightUnits(font) {
+function GetLineHeightUnits(opentype_font) {
   // Check which metrics to use
-  const useTypoMetrics = font.tables.os2.fsSelection & (1 << 7);
+  const useTypoMetrics = opentype_font.tables.os2.fsSelection & (1 << 7);
   // Get metrics.
   let ascender, descender, lineGap;
   if (useTypoMetrics) {
-    ascender = font.tables.os2.sTypoAscender;
-    descender = font.tables.os2.sTypoDescender;
-    lineGap = font.tables.os2.sTypoLineGap;
+    ascender = opentype_font.tables.os2.sTypoAscender;
+    descender = opentype_font.tables.os2.sTypoDescender;
+    lineGap = opentype_font.tables.os2.sTypoLineGap;
   } else {
-    ascender = font.tables.hhea.ascender;
-    descender = font.tables.hhea.descender;
-    lineGap = font.tables.hhea.lineGap;
+    ascender = opentype_font.tables.hhea.ascender;
+    descender = opentype_font.tables.hhea.descender;
+    lineGap = opentype_font.tables.hhea.lineGap;
   }
   // Calc and return line height.
   const line_height_units = ascender - descender + lineGap;
   return line_height_units
 }
 
-let gPrevTextureWidth;
-let gPrevTextureHeight;
 /**
- * 
  * @param {WebGL2RenderingContext} gl 
  * @param {GlyphLayoutArray} glyph_layouts 
  * @param {LineLayoutArray} line_layouts 
@@ -307,33 +256,42 @@ let gPrevTextureHeight;
 function LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts) {
   // Init texture if not done yet.
   if (!window.gCurrTexture)
-    InitTexture(gl);
+    window.gCurrTexture = InitTexture(gl);
 
   // Fill texture with glyph and line layouts.
-  FillDataTexture(gl, window.gCurrTexture, glyph_layouts, 1, false);
-  FillDataTexture(gl, window.gCurrTexture, line_layouts, 2, true);
+  FillDataTexture(gl, window.gCurrTexture, glyph_layouts, false);
+  FillDataTexture(gl, window.gCurrTexture, line_layouts, true);
+
+  return window.gCurrTexture;
 }
 
-function FillDataTexture(gl, texture, object_array, pixels_per_object, from_top) {
+/**
+ * @param {WebGL2RenderingContext} gl 
+ * @param {WebGLTexture} texture 
+ * @param {GlyphLayoutArray} layout_array 
+ * @param {boolean} from_top 
+ */
+function FillDataTexture(gl, texture, layout_array, from_top) {
+  const pixels_per_object = layout_array.structSize / 16;
   gl.bindTexture(gl.TEXTURE_2D, texture);
   const format = gl.RGBA;
   const type = gl.FLOAT;
   const level = 0; // mipmap thing, keep 0 for "NPOT" textures.
 
-  const object_array_pixels = object_array.length * pixels_per_object; // 2 pixels per line_layout.
+  const object_array_pixels = layout_array.length * pixels_per_object; // 2 pixels per line_layout.
   const num_rows = Math.floor(object_array_pixels / gTextureWidth) + 1;
   for (let curr_row = 0; curr_row < num_rows; curr_row++) {
     const y_offset = from_top ? gTextureHeight - 1 - curr_row : curr_row;
 
     const buffer_start = curr_row * gTextureWidth / pixels_per_object;
     if (curr_row == num_rows - 1) {
-      const buffer_end = object_array.length
-      const curr_row_data_f32 = new Float32Array(object_array.slice(buffer_start, buffer_end).buffer)
+      const buffer_end = layout_array.length
+      const curr_row_data_f32 = new Float32Array(layout_array.slice(buffer_start, buffer_end).buffer)
       gl.texSubImage2D(gl.TEXTURE_2D, level, 0, y_offset, object_array_pixels % gTextureWidth, 1, format, type, curr_row_data_f32)
     }
     else {
       const buffer_end = (curr_row + 1) * gTextureWidth / pixels_per_object;
-      const curr_row_data_f32 = new Float32Array(object_array.slice(buffer_start, buffer_end).buffer)
+      const curr_row_data_f32 = new Float32Array(layout_array.slice(buffer_start, buffer_end).buffer)
       gl.texSubImage2D(gl.TEXTURE_2D, level, 0, y_offset, gTextureWidth, 1, format, type, curr_row_data_f32)
     }
   }
@@ -364,7 +322,7 @@ export function InitTexture(gl) {
   const zeroes = new Float32Array(gTextureWidth * gTextureHeight * 4);
   gl.texImage2D(gl.TEXTURE_2D, level, internal_format, gTextureWidth, gTextureHeight, border, format, type, zeroes);
 
-  window.gCurrTexture = texture;
+  return texture;
 }
 
 export { TextureFromString }

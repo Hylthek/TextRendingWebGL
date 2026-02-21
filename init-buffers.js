@@ -143,7 +143,7 @@ function InitTextCanvasBuffer(gl) {
 
   const scale = 1000;
   const p1 = { x: 0, y: -scale * gCubeHeight }
-  const p2 = { x: scale, y: 200 }
+  const p2 = { x: scale, y: 0 }
 
   const canvas_coords = [ // Two floats per vertex.
     // Front idx 0
