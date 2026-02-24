@@ -1,10 +1,12 @@
 /** 
  * @returns {WebGL2RenderingContext} WebGL context.
  */
-function CanvasInit() {
+function CanvasInit(resolution_scalar = 1) {
+  if (resolution_scalar > 5)
+    throw new Error("Resolution should not be too high");
   const canvas = document.getElementById("cal-vas")
-  canvas.width = canvas.clientWidth; // Resolution
-  canvas.height = canvas.clientHeight; // Resolution
+  canvas.width = canvas.clientWidth * resolution_scalar; // Resolution
+  canvas.height = canvas.clientHeight * resolution_scalar; // Resolution
   return canvas.getContext("webgl2")
 }
 

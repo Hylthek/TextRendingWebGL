@@ -12,7 +12,7 @@ import { LoadHBFont } from './harfbuzz-helper.js'; // Import helper
 
 async function CalvasMain() {
   // Init WebGL canvas.
-  const gl = CanvasInit()
+  const gl = CanvasInit(0.5)
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
