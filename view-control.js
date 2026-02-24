@@ -21,10 +21,18 @@ class ViewControl {
       const zoomSensitivity = 0.003 / (Math.min(canvasWidth, canvasHeight) / 500); // Adjust sensitivity based on canvas size
       this.camera_pos.zoom *= 1 - event.deltaY * zoomSensitivity;
 
-      // // Prevent zoom level from becoming too small or too large
+      // Prevent zoom level from becoming too small or too large
       const min_zoom = 0.01;
       const max_zoom = 1000;
       this.camera_pos.zoom = Math.max(min_zoom, Math.min(max_zoom, this.camera_pos.zoom));
+
+      // Alter pan to make scene zoom in at cursor
+      const rect = canvas.getBoundingClientRect();
+      const cursorX = (event.clientX - rect.left) / canvasWidth * 2 - 1;
+      const cursorY = -((event.clientY - rect.top) / canvasHeight * 2 - 1);
+      const y_zoompan_scale_empirical = 0.56;
+      this.pan.x += cursorX * event.deltaY * zoomSensitivity / this.camera_pos.zoom;
+      this.pan.y += cursorY * event.deltaY * zoomSensitivity / this.camera_pos.zoom * y_zoompan_scale_empirical;
 
       event.preventDefault();
     }, { passive: false });
