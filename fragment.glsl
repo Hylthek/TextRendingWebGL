@@ -62,7 +62,7 @@ flat in int fFaceIndex;
 // For div by 0 edge cases.
 const float kSmallNumberCutoff = 0.0001f;
 
-// A multiplier for anti-aliasing effect.
+// A size multiplier for anti-aliasing effect.
 const float kAntiAliasingMult = 1.5f;
 
 // Draws pixel data onto the screen at certain spots
@@ -112,8 +112,8 @@ int QuadraticNumSols(float a, float b, float c) {
 // Solve a quadratic equation.
 // lesser_sol used for plus or minus in quadratic equation.
 // Doesn't handle a == 0 case.
-float SolveQuadratic(float a, float b, float c, bool lesser_sol) {
-  if(lesser_sol)
+float SolveQuadratic(float a, float b, float c, bool get_lesser_sol) {
+  if(get_lesser_sol)
     return (-b - sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
   return (-b + sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
 }
@@ -313,7 +313,8 @@ void main(void) {
   }
 
   // Combine vertical and horizontal intersection counts.
-  // Number closer to 0.5f takes over. 0f takes over 1f.
+  // For anti-aliasing, number closer to 0.49f takes over.
+  // 0.49f is an arbitrary number that assures 0.0f beats 1.0f.
   float x_intersection_dist = abs(intersection_count_x - 0.49f);
   float y_intersection_dist = abs(intersection_count_y - 0.49f);
   float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_intersection_dist, x_intersection_dist));

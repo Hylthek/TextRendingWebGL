@@ -18,21 +18,30 @@ class ViewControl {
       const canvasWidth = canvas.clientWidth;
       const canvasHeight = canvas.clientHeight;
 
-      const zoomSensitivity = 0.003 / (Math.min(canvasWidth, canvasHeight) / 500); // Adjust sensitivity based on canvas size
-      this.camera_pos.zoom *= 1 - event.deltaY * zoomSensitivity;
-
       // Prevent zoom level from becoming too small or too large
       const min_zoom = 0.01;
       const max_zoom = 1000;
-      this.camera_pos.zoom = Math.max(min_zoom, Math.min(max_zoom, this.camera_pos.zoom));
+      const zoom_maxed = this.camera_pos.zoom > max_zoom;
+      const zoom_mined = this.camera_pos.zoom < min_zoom;
+
+      // Change zoom.
+      const empirical_zoom_scalar = 0.002;
+      const zoomSensitivity = 0.003 / (Math.min(canvasWidth, canvasHeight) * empirical_zoom_scalar);
+      const is_zooming_out = event.deltaY > 0
+      const dont_change_zoom = zoom_mined && is_zooming_out || zoom_maxed && !is_zooming_out;
+      if (!dont_change_zoom)
+        this.camera_pos.zoom *= 1 - event.deltaY * zoomSensitivity;
 
       // Alter pan to make scene zoom in at cursor
+      // Only if zoom isn't limited.
       const rect = canvas.getBoundingClientRect();
       const cursorX = (event.clientX - rect.left) / canvasWidth * 2 - 1;
       const cursorY = -((event.clientY - rect.top) / canvasHeight * 2 - 1);
       const y_zoompan_scale_empirical = 0.56;
-      this.pan.x += cursorX * event.deltaY * zoomSensitivity / this.camera_pos.zoom;
-      this.pan.y += cursorY * event.deltaY * zoomSensitivity / this.camera_pos.zoom * y_zoompan_scale_empirical;
+      if (!dont_change_zoom) {
+        this.pan.x += cursorX * event.deltaY * zoomSensitivity / this.camera_pos.zoom;
+        this.pan.y += cursorY * event.deltaY * zoomSensitivity / this.camera_pos.zoom * y_zoompan_scale_empirical;
+      }
 
       event.preventDefault();
     }, { passive: false });
@@ -52,7 +61,7 @@ class ViewControl {
         const normalization_factor = canvas.clientWidth;
         const deltaX = (event.clientX - this.previousMousePosition.x) / this.camera_pos.zoom / normalization_factor
         const deltaY = (event.clientY - this.previousMousePosition.y) / this.camera_pos.zoom / normalization_factor
-  
+
         const scale = 2;
         this.pan.x += deltaX * scale;
         this.pan.y -= deltaY * scale;
@@ -60,14 +69,14 @@ class ViewControl {
       if (this.is_rotating) {
         // const canvas = document.getElementById("cal-vas");
         // const normalization_factor = canvas.clientWidth;
-  
+
         // const deltaX = (event.clientX - this.previousMousePosition.x) / normalization_factor / this.camera_pos.zoom;
         // const deltaY = (event.clientY - this.previousMousePosition.y) / normalization_factor / this.camera_pos.zoom;
-  
+
         // const scale = 50;
         // this.sphere_coords.theta_deg += deltaX * scale;
         // this.sphere_coords.phi_deg += deltaY * scale;
-  
+
         // // Clamp phi_deg to avoid flipping
         // this.sphere_coords.phi_deg = Math.max(-89, Math.min(89, this.sphere_coords.phi_deg));
       }
