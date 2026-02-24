@@ -46,6 +46,8 @@ export async function LoadHBFont(fontUrl) {
 }
 
 export function ShapeText(hb, hbFont, text) {
+  if (text === "") throw new Error("Cant shape empty string.")
+
   if (!hb) throw new Error('HarfBuzz not initialized. Call InitHarfBuzz() first.');
 
   // Create buffer

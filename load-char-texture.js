@@ -132,9 +132,11 @@ class LineLayoutArray {
 function TextureFromString(gl, string_in, fontData, px_per_em, programInfo) {
   const { openTypeFont } = fontData;
   const px_per_unit = px_per_em / openTypeFont.unitsPerEm;
-
+  
   // Get line layouts.
-  const { glyph_layouts, line_layouts } = StringToLayoutArrays(string_in, fontData, px_per_unit, 0, 0);
+  const x_offset_px = 1 * px_per_em; // Insert an indent.
+  const y_offset_px = 0;
+  const { glyph_layouts, line_layouts } = StringToLayoutArrays(string_in, fontData, px_per_unit, x_offset_px, y_offset_px);
 
   // Update texture.
   const texture = LoadTextureFromLayoutArray(gl, glyph_layouts, line_layouts);
@@ -153,7 +155,7 @@ export const gTextureHeight = 2048;
  * 
  * @param {String} string_in
  */
-function StringToLayoutArrays(string_in, fontData, px_per_unit, x_offset, y_offset) {
+function StringToLayoutArrays(string_in, fontData, px_per_unit, x_offset_px = 0, y_offset_px = 0) {
   // Get fonts.
   const { hb, hbFont, openTypeFont: opentype_font } = fontData;
   // Get max distance a glyph reaches away from its origin.
@@ -161,7 +163,6 @@ function StringToLayoutArrays(string_in, fontData, px_per_unit, x_offset, y_offs
 
   // Get an array of strings for each line, doesn't reduce total char count.
   const lines = string_in.split(/(?<=\n)/);
-
 
   // Iterate over lines.
   const glyph_layout_js_array = []
@@ -176,7 +177,7 @@ function StringToLayoutArrays(string_in, fontData, px_per_unit, x_offset, y_offs
     // Shape text.
     const shaped_text = ShapeText(hb, hbFont, curr_line);
     // Push glyph layouts to the js array.
-    const hb_layout = ShapedToLayout(shaped_text, px_per_unit, 0, -i_line * line_height_px)
+    const hb_layout = ShapedToLayout(shaped_text, px_per_unit, x_offset_px, y_offset_px - i_line * line_height_px)
     glyph_layout_js_array.push(...hb_layout);
 
     // Calc line layout data and push to js array.

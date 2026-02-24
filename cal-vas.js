@@ -36,7 +36,7 @@ async function CalvasMain() {
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
-  } = await FontToTexture(gl, font_data_inter.openTypeFont)
+  } = await FontToTexture(gl, font_data_jetbrains_mono.openTypeFont)
 
   // Init char texture.
   InitTexture(gl);
@@ -46,7 +46,7 @@ async function CalvasMain() {
     width: gTextureWidth,
     height: gTextureHeight
   }
-  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_data_inter.openTypeFont, war_and_peace_trunc_txt.length);
+  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_data_jetbrains_mono.openTypeFont, war_and_peace_trunc_txt.length);
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
@@ -57,19 +57,19 @@ async function CalvasMain() {
   const fps_span_element = document.getElementById('fps');
 
   // Load a string into a texture.
-  const px_per_em = 24;
-  window.curr_glyph_data_texture = TextureFromString(gl, "\nTest=>Test\nWAVE", font_data_inter, px_per_em, programInfo);
+  const px_per_em = 20;
+  window.curr_glyph_data_texture = TextureFromString(gl, "\nLOADING WAR AND PEACE...", font_data_jetbrains_mono, px_per_em, programInfo);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
     if (window.curr_glyph_data_texture)
       DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
-    PrintCenterPixelInt32(gl, 8);
+    // PrintCenterPixelInt32(gl, 8);
     requestAnimationFrame(RenderScene);
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
+  setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_jetbrains_mono, px_per_em, programInfo]);
 }
 CalvasMain()
 
@@ -95,8 +95,8 @@ function UpdateFps(now, fps_span_element) {
   // Update text.
   const fps_rounded = Math.round(fps * 10) / 10;
   const fpsString = fps_rounded.toFixed(1).padStart(4, ' ');
-  const 你的 = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
-  fps_span_element.textContent = fpsString + 你的;
+  const fps_bar_string = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
+  fps_span_element.textContent = fpsString + fps_bar_string;
 }
 
 /**
@@ -104,11 +104,17 @@ function UpdateFps(now, fps_span_element) {
  * @param {WebGL2RenderingContext} gl 
  * @param {String} string_in 
  */
-
 function LoadScrollingText(gl, string_in, font, px_per_em, programInfo) {
+  if (!window.load_scrolling_text_start_time_ms)
+    window.load_scrolling_text_start_time_ms = performance.now()
+  const now_since_start = performance.now() - window.load_scrolling_text_start_time_ms;
   const chars_per_sec = 500;
-  const num_chars = performance.now() / 1000 * chars_per_sec % string_in.length;
+  const num_chars = now_since_start / 1000 * chars_per_sec % string_in.length;
   const string_sub = string_in.slice(0, num_chars)
-  const texture = TextureFromString(gl, string_sub, font, px_per_em, programInfo);
-  window.curr_glyph_data_texture = texture;
+  try {
+    const texture = TextureFromString(gl, string_sub, font, px_per_em, programInfo);
+    window.curr_glyph_data_texture = texture;
+  } catch (error) {
+    // Do nothing, empty strings are fine..
+  }
 }

@@ -48,6 +48,9 @@ const float kGlyphBoundingRadius = --GLYPH_BOUNDING_RADIUS--;
 // The number of lines contained in the data texture.
 uniform int uNumLines;
 
+// If the amount of texture fetches for the pixel should be rendered. 0=false 1=true.
+uniform int uRenderTextureFetchAmount;
+
 // Consts from JS.
 uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
@@ -257,7 +260,7 @@ void main(void) {
     for(int i_glyph_gpu_stable = 0; i_glyph_gpu_stable < kGlyphBufferLength; i_glyph_gpu_stable++) {
       int i_glyph = i_glyph_gpu_stable + idx_start;
       // Break if number of glyphs reached
-      if (i_glyph >= idx_end)
+      if(i_glyph >= idx_end)
         break;
 
       // Fetch GlyphLayout texel.
@@ -331,10 +334,11 @@ void main(void) {
   vec4 highlight_color = vec4(hsv2rgb(vec3(num_tex_fet_clamped, 1, 1)), 1);
   if(num_tex_fet_clamped > 1.0f)
     highlight_color = vec4(1, 1, 1, 1);
-  // fragColor = mix(fragColor, highlight_color, 0.5f);
+  if(uRenderTextureFetchAmount == 1)
+    fragColor = mix(fragColor, highlight_color, 0.5f);
 
   // Debug data output.
   print_arr[0] = float(num_texel_fetches);
-  print_arr[1] = float(texture(uGlyphLayoutTexture, vec2(0,0)).y);
-  PrintDebugOutput(); // Uses print_arr.
+  print_arr[1] = float(texture(uGlyphLayoutTexture, vec2(0, 0)).y);
+  // PrintDebugOutput(); // Uses print_arr.
 }
