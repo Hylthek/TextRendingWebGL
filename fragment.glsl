@@ -313,9 +313,10 @@ void main(void) {
   }
 
   // Combine vertical and horizontal intersection counts.
-  float x_dist = abs(intersection_count_x - 0.5f);
-  float y_dist = abs(intersection_count_y - 0.5f);
-  float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_dist, x_dist));
+  // Number closer to 0.5f takes over. 0f takes over 1f.
+  float x_intersection_dist = abs(intersection_count_x - 0.49f);
+  float y_intersection_dist = abs(intersection_count_y - 0.49f);
+  float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_intersection_dist, x_intersection_dist));
 
   // Text color.
   vec4 black = vec4(0, 0, 0, 1);
