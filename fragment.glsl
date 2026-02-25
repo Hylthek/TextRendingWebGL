@@ -129,39 +129,46 @@ vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
 // "intersection number" increases if ray leaves a TrueType font contour
 // and decreases if it enters. Antialiasing allows for fractional values if
 // the intersection is near the current fragment.
-float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width, bool xy_flip) {
-  vec2 p0, p1, p2;
+float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool xy_flip) {
   if(xy_flip) {
-    p0 = vec2(p0_in.y, p0_in.x);
-    p1 = vec2(p1_in.y, p1_in.x);
-    p2 = vec2(p2_in.y, p2_in.x);
-  } else {
-    p0 = p0_in;
-    p1 = p1_in;
-    p2 = p2_in;
+    p0 = p0.yx;
+    p1 = p1.yx;
+    p2 = p2.yx;
   }
+
+  // Calculate coefficients for quadratic equation describing
+  // vertical motion of the curve, relative to the active canvas coord.
   float a = p0.y - 2.0f * p1.y + p2.y;
   float b = -2.0f * (p0.y - p1.y);
   float c = p0.y;
+
+  // No intersections if no zeroes.
   if(QuadraticNumSols(a, b, c) == 0)
     return 0.0f;
 
   // How much the canvas coordinate changes between neighboring fragments.
-  // dFd[xy] can't be called in the dynamic loop because of
-  // shader language shenanigans, so it's called here.
-  float px_width = (xy_flip ? frag_width.y : frag_width.x) * kAntiAliasingMult;
+  float active_frag_width = (xy_flip ? frag_width.y : frag_width.x) * kAntiAliasingMult;
 
   // Linear case.
   if(QuadraticIsLinear(a, b, c)) {
-    // Calc vars.
+    // Parameter value at the zero.
     float t = -c / b;
+
+    // Curve value at the parameter.
     vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    float entry_exit_multiplier = (b > 0.0f ^^ xy_flip) ? -1.0f : 1.0f;
-    // Return intersection change.
-    if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
+
+    // Return 0 if the parameter at intersection isn't valid,
+    // or if the intersection is fully behind the intersection ray's origin.
+    if(t < 0.0f || t >= 1.0f || point_at_t.x < -active_frag_width / 2.0f)
       return 0.0f;
-    if(point_at_t.x > -px_width / 2.0f && point_at_t.x < px_width / 2.0f)
-      return ((point_at_t.x / px_width) + 0.5f) * entry_exit_multiplier;
+
+    // Sign of the intersection. +1.0f for upwards slope and -1.0f for downward.
+    // xy_flip mirrors the plane, so it also flips the bool via a XOR.
+    float entry_exit_multiplier = (b > 0.0f ^^ xy_flip) ? -1.0f : 1.0f;
+
+    // Return intersection change. Antialiasing case then normal case.
+    if(point_at_t.x > -active_frag_width / 2.0f && point_at_t.x < active_frag_width / 2.0f)
+      return ((point_at_t.x / active_frag_width) + 0.5f) * entry_exit_multiplier;
     else
       return entry_exit_multiplier;
   }
@@ -176,10 +183,10 @@ float CalcIntersectionChange(vec2 p0_in, vec2 p1_in, vec2 p2_in, vec2 frag_width
     vec2 point_at_t = EvalQuad(p0, p1, p2, t);
     float entry_exit_multiplier = (!is_minus_sol) ^^ xy_flip ? -1.0f : 1.0f;
     // Add intersection change.
-    if(t < 0.0f || t >= 1.0f || point_at_t.x < -px_width / 2.0f)
+    if(t < 0.0f || t >= 1.0f || point_at_t.x < -active_frag_width / 2.0f)
       change += 0.0f;
-    else if(point_at_t.x > -px_width / 2.0f && point_at_t.x < px_width / 2.0f)
-      change += ((point_at_t.x / px_width) + 0.5f) * entry_exit_multiplier;
+    else if(point_at_t.x > -active_frag_width / 2.0f && point_at_t.x < active_frag_width / 2.0f)
+      change += ((point_at_t.x / active_frag_width) + 0.5f) * entry_exit_multiplier;
     else
       change += entry_exit_multiplier;
   }

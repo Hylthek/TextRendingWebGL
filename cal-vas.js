@@ -36,7 +36,7 @@ async function CalvasMain() {
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
-  } = await FontToTexture(gl, font_data_jetbrains_mono.openTypeFont)
+  } = await FontToTexture(gl, font_data_inter.openTypeFont)
 
   // Init char texture.
   InitTexture(gl);
@@ -46,7 +46,7 @@ async function CalvasMain() {
     width: gTextureWidth,
     height: gTextureHeight
   }
-  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_data_jetbrains_mono.openTypeFont, war_and_peace_trunc_txt.length);
+  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_data_inter.openTypeFont, war_and_peace_trunc_txt.length);
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
@@ -58,7 +58,7 @@ async function CalvasMain() {
 
   // Load a string into a texture.
   const px_per_em = 20;
-  window.curr_glyph_data_texture = TextureFromString(gl, "\nLOADING WAR AND PEACE...", font_data_jetbrains_mono, px_per_em, programInfo);
+  window.curr_glyph_data_texture = TextureFromString(gl, "\nLOADING WAR AND PEACE...", font_data_inter, px_per_em, programInfo);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
@@ -69,7 +69,7 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_jetbrains_mono, px_per_em, programInfo]);
+  setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
 }
 CalvasMain()
 
