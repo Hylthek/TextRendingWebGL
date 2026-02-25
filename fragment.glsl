@@ -166,11 +166,11 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool xy
     // xy_flip mirrors the plane, so it also flips the bool via a XOR.
     float entry_exit_multiplier = (b > 0.0f ^^ xy_flip) ? -1.0f : 1.0f;
 
-    // Return intersection change. Antialiasing case then normal case.
-    if(point_at_t.x > -active_frag_width / 2.0f && point_at_t.x < active_frag_width / 2.0f)
-      return ((point_at_t.x / active_frag_width) + 0.5f) * entry_exit_multiplier;
-    else
-      return entry_exit_multiplier;
+    // Return intersection change. Antialiasing case and normal case.
+    float ret_val_anti_aliasing = ((point_at_t.x / active_frag_width) + 0.5f) * entry_exit_multiplier;
+    float ret_val_normal = entry_exit_multiplier;
+    bool use_anti_aliasing = point_at_t.x > -active_frag_width / 2.0f && point_at_t.x < active_frag_width / 2.0f;
+    return mix(ret_val_normal, ret_val_anti_aliasing, use_anti_aliasing);
   }
 
   // Quadratic case.
