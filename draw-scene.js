@@ -1,14 +1,15 @@
 import { mat4 } from "./node_modules/gl-matrix/esm/index.js"
+import { VertexAttributeHandler } from "./vertex-attribute-handler.js";
 
 /**
  * 
  * @param {WebGL2RenderingContext} gl 
  * @param {*} programInfo 
- * @param {*} buffers 
+ * @param {VertexAttributeHandler} attrib_handler
  * @param {*} image_texture
  * @param {*} font_data_texture 
  */
-function DrawScene(gl, programInfo, buffers, view, image_texture, font_data_texture, glyph_data_texture) {
+export function DrawScene(gl, programInfo, attrib_handler, view, image_texture, font_data_texture, glyph_data_texture) {
   // Clear the canvas before we start drawing on it.
   gl.clearColor(0, 0, 0, 1);
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -54,12 +55,6 @@ function DrawScene(gl, programInfo, buffers, view, image_texture, font_data_text
     );
   }
 
-  // Set the shader attribute buffers.
-  SetPositionAttribute(gl, buffers, programInfo);
-  SetTextureAttribute(gl, buffers, programInfo);
-  SetCanvasAttribute(gl, buffers, programInfo);
-  SetFaceIndexAttribute(gl, buffers, programInfo);
-
   // GL one-time Setup.
   // Program
   gl.useProgram(programInfo.program);
@@ -85,96 +80,12 @@ function DrawScene(gl, programInfo, buffers, view, image_texture, font_data_text
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
   // Draw elements, using a different texture per 2 elements (ie 1 cube face).
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.elementIndices)
-  const vertexCount = 6 * 6; // 6 vertices per face.
-  const type = gl.UNSIGNED_SHORT // 2 bytes.
-  const offset = 0 // each face contains 12 bytes of data.
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, attrib_handler.gl_indices_buffer)
+  const vertexCount = attrib_handler.num_triangles * 3;
+  const type = gl.UNSIGNED_SHORT
+  const offset = 0
 
   // Draw triangles.
   // Note, buffers don't get used up, they persist and an offset picks new data.
   gl.drawElements(gl.TRIANGLES, vertexCount, type, offset) // This function directly accesses the gl.ELEMENT_ARRAY_BUFFER.
 }
-
-// Tell WebGL how to pull out the positions from the position
-// buffer into the vertexPosition attribute.
-function SetPositionAttribute(gl, buffers, programInfo) {
-  const numComponents = 3; // pull out 3 values per iteration
-  const type = gl.FLOAT; // the data in the buffer is 32bit floats
-  const normalize = false; // don't normalize
-  const stride = 0; // how many bytes to get from one set of values to the next. 0 = use type and numComponents above
-  const offset = 0; // how many bytes inside the buffer to start from
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-  gl.vertexAttribPointer(
-    programInfo.attribLocations.vertexPosition,
-    numComponents,
-    type,
-    normalize,
-    stride,
-    offset,
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-}
-
-/**
- * Tell webgl how to pull out the texture coordinates from buffer
- * @param {WebGL2RenderingContext} gl 
- */
-function SetTextureAttribute(gl, buffers, programInfo) {
-  const num = 2; // every coordinate composed of 2 values
-  const type = gl.FLOAT; // the data in the buffer is 32-bit float
-  const normalize = false; // don't normalize
-  const stride = 0; // how many bytes to get from one set to the next
-  const offset = 0; // how many bytes inside the buffer to start from
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
-  gl.vertexAttribPointer(
-    programInfo.attribLocations.textureCoord,
-    num,
-    type,
-    normalize,
-    stride,
-    offset,
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
-}
-function SetCanvasAttribute(gl, buffers, programInfo) {
-  const num = 2; // every coordinate composed of 2 values
-  const type = gl.FLOAT; // the data in the buffer is 32-bit float
-  const normalize = false; // don't normalize
-  const stride = 0; // how many bytes to get from one set to the next
-  const offset = 0; // how many bytes inside the buffer to start from
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.canvasCoord);
-  gl.vertexAttribPointer(
-    programInfo.attribLocations.canvasCoord,
-    num,
-    type,
-    normalize,
-    stride,
-    offset,
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.canvasCoord);
-}
-
-/**
- * @param {WebGL2RenderingContext} gl 
- */
-function SetFaceIndexAttribute(gl, buffers, programInfo) {
-  const num = 1; // one uint32 per vertex. glsl only works in multiples of 32bits?
-  const type = gl.INT;
-  const stride = 0; // 0 means tightly packed, not interleaved.
-  const offset = 0;
-
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.faceIndex)
-  gl.vertexAttribIPointer( // This ridiculous function name has a random I in it to declare integer attributes.
-    programInfo.attribLocations.faceIndex,
-    num,
-    type,
-    stride,
-    offset,
-  );
-  gl.enableVertexAttribArray(programInfo.attribLocations.faceIndex);
-}
-
-export { DrawScene };

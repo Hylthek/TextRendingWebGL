@@ -56,7 +56,7 @@ uniform int uScreenWidthPx;
 uniform int uScreenHeightPx;
 
 // Is constant across a WebGL element.
-flat in int fFaceIndex;
+flat in float fFaceIndex;
 
 // Number that is close enough to 0 to be considered 0.
 // For div by 0 edge cases.
@@ -353,7 +353,5 @@ void main(void) {
     fragColor = mix(fragColor, highlight_color, 0.5f);
 
   // Debug data output.
-  print_arr[0] = float(num_texel_fetches);
-  print_arr[1] = float(texture(uGlyphLayoutTexture, vec2(0, 0)).y);
   // PrintDebugOutput(); // Uses print_arr.
 }

@@ -9,6 +9,7 @@ import { FontToTexture } from './load-font-texture.js';
 import { GetJsConstValues } from './get-js-consts.js';
 import { TextureFromString, gTextureWidth, gTextureHeight, InitTexture } from './load-char-texture.js';
 import { LoadHBFont } from './harfbuzz-helper.js'; // Import helper
+import { VertexAttributeHandler } from './vertex-attribute-handler.js'
 
 async function CalvasMain() {
   // Init WebGL canvas.
@@ -19,6 +20,39 @@ async function CalvasMain() {
 
   // Load static vertex attribute data.
   const vertex_buffers = InitVertexBuffers(gl);
+
+  // Load attribute handler object.
+  const attrib_handler = new VertexAttributeHandler(gl);
+  {
+    attrib_handler.InitBuffers(8, 4);
+    attrib_handler.InitMiscAttrib("texture_coord", 2);
+    attrib_handler.InitMiscAttrib("canvas_coord", 2);
+    attrib_handler.InitMiscAttrib("face_index", 1);
+
+    attrib_handler.AddPosition({ x: 0, y: 1, z: 0 })
+    attrib_handler.AddMiscAttrib("texture_coord", [0, 1])
+    attrib_handler.AddMiscAttrib("canvas_coord", [0, 0])
+    attrib_handler.AddMiscAttrib("face_index", [0])
+
+    attrib_handler.AddPosition({ x: 0, y: 0, z: 0 })
+    attrib_handler.AddMiscAttrib("texture_coord", [0, 0])
+    attrib_handler.AddMiscAttrib("canvas_coord", [0, -1000])
+    attrib_handler.AddMiscAttrib("face_index", [0])
+
+    attrib_handler.AddPosition({ x: 1, y: 1, z: 0 })
+    attrib_handler.AddMiscAttrib("texture_coord", [1, 1])
+    attrib_handler.AddMiscAttrib("canvas_coord", [1000, 0])
+    attrib_handler.AddMiscAttrib("face_index", [0])
+
+    attrib_handler.AddTriangle()
+
+    attrib_handler.AddPosition({ x: 1, y: 0, z: 0 })
+    attrib_handler.AddMiscAttrib("texture_coord", [1, 0])
+    attrib_handler.AddMiscAttrib("canvas_coord", [1000, -1000])
+    attrib_handler.AddMiscAttrib("face_index", [0])
+
+    attrib_handler.AddTriangle()
+  }
 
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
@@ -51,8 +85,16 @@ async function CalvasMain() {
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
   gl.useProgram(shaderProgram)
+
+  // Link attributes in program.
+  attrib_handler.LoadPositionAttrib(programInfo.attribLocations.vertexPosition)
+  attrib_handler.LoadMiscAttrib('texture_coord', 2, programInfo.attribLocations.textureCoord)
+  attrib_handler.LoadMiscAttrib('canvas_coord', 2, programInfo.attribLocations.canvasCoord)
+  attrib_handler.LoadMiscAttrib('face_index', 1, programInfo.attribLocations.faceIndex)
+
   // Init panning, zooming, etc.
   const view = new ViewControl();
+
   // Get fps html span element.
   const fps_span_element = document.getElementById('fps');
 
@@ -63,7 +105,7 @@ async function CalvasMain() {
   // Draw the scene repeatedly
   function RenderScene(now) {
     if (window.curr_glyph_data_texture)
-      DrawScene(gl, programInfo, vertex_buffers, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
+      DrawScene(gl, programInfo, attrib_handler, view, image_texture, font_data_texture, window.curr_glyph_data_texture);
     // PrintCenterPixelInt32(gl, 8);
     requestAnimationFrame(RenderScene);
     UpdateFps(now, fps_span_element);
@@ -117,4 +159,44 @@ function LoadScrollingText(gl, string_in, font, px_per_em, programInfo) {
   } catch (error) {
     // Do nothing, empty strings are fine..
   }
+}
+
+/** 
+ * Read all float values from an ARRAY_BUFFER
+ * @param {WebGL2RenderingContext} gl 
+ * @param {WebGLBuffer} buffer 
+ * @param {Number} floatCount 
+ */
+function dumpArrayBuffer(gl, buffer, floatCount) {
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+
+  const out = new Float32Array(floatCount);
+  gl.getBufferSubData(
+    gl.ARRAY_BUFFER, // target
+    0,               // src byte offset in GPU buffer
+    out              // destination typed array
+  );
+
+  console.log("dumpArrayBuffer() => ", out);
+  return out;
+}
+
+/** 
+ * Read all float values from an ELEMENT_ARRAY_BUFFER
+ * @param {WebGL2RenderingContext} gl 
+ * @param {WebGLBuffer} buffer 
+ * @param {Number} floatCount 
+ */
+function dumpElementArrayBuffer(gl, buffer, floatCount) {
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
+
+  const out = new Uint16Array(floatCount);
+  gl.getBufferSubData(
+    gl.ELEMENT_ARRAY_BUFFER, // target
+    0,               // src byte offset in GPU buffer
+    out              // destination typed array
+  );
+
+  console.log("dumpElementArrayBuffer() => ", out);
+  return out;
 }

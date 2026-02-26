@@ -1,12 +1,12 @@
 class ViewControl {
   sphere_coords = {
-    theta_deg: 90,
+    theta_deg: 0,
     phi_deg: 0
   }
   camera_pos = {
     zoom: 1.5,
   }
-  pan = { x: 0, y: 0.3 }
+  pan = { x: 0, y: 0 }
   is_panning = false;
   is_rotating = false;
   previousMousePosition = { x: 0, y: 0 };
@@ -19,7 +19,7 @@ class ViewControl {
       const canvasHeight = canvas.clientHeight;
 
       // Prevent zoom level from becoming too small or too large
-      const min_zoom = 0.01;
+      const min_zoom = 0.0001;
       const max_zoom = 1000;
       const zoom_maxed = this.camera_pos.zoom > max_zoom;
       const zoom_mined = this.camera_pos.zoom < min_zoom;
@@ -67,18 +67,18 @@ class ViewControl {
         this.pan.y -= deltaY * scale;
       }
       if (this.is_rotating) {
-        // const canvas = document.getElementById("cal-vas");
-        // const normalization_factor = canvas.clientWidth;
+        const canvas = document.getElementById("cal-vas");
+        const normalization_factor = canvas.clientWidth;
 
-        // const deltaX = (event.clientX - this.previousMousePosition.x) / normalization_factor / this.camera_pos.zoom;
-        // const deltaY = (event.clientY - this.previousMousePosition.y) / normalization_factor / this.camera_pos.zoom;
+        const deltaX = (event.clientX - this.previousMousePosition.x) / normalization_factor / this.camera_pos.zoom;
+        const deltaY = (event.clientY - this.previousMousePosition.y) / normalization_factor / this.camera_pos.zoom;
 
-        // const scale = 50;
-        // this.sphere_coords.theta_deg += deltaX * scale;
-        // this.sphere_coords.phi_deg += deltaY * scale;
+        const scale = 50;
+        this.sphere_coords.theta_deg += deltaX * scale;
+        this.sphere_coords.phi_deg += deltaY * scale;
 
-        // // Clamp phi_deg to avoid flipping
-        // this.sphere_coords.phi_deg = Math.max(-89, Math.min(89, this.sphere_coords.phi_deg));
+        // Clamp phi_deg to avoid flipping
+        this.sphere_coords.phi_deg = Math.max(-89, Math.min(89, this.sphere_coords.phi_deg));
       }
       this.previousMousePosition = { x: event.clientX, y: event.clientY };
     });
