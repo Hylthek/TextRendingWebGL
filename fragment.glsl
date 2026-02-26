@@ -112,14 +112,14 @@ int QuadraticNumSols(float a, float b, float c) {
 // Solve a quadratic equation.
 // lesser_sol used for plus or minus in quadratic equation.
 // Doesn't handle a == 0 case.
-float SolveQuadratic(float a, float b, float c, bool get_lesser_sol) {
-  if(get_lesser_sol)
+float SolveQuadratic(float a, float b, float c, bool get_minus_solution) {
+  if(get_minus_solution)
     return (-b - sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
   return (-b + sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
 }
 
 // Evaluate a quadratic curve given control points and a t value.
-vec2 EvalQuad(vec2 p0, vec2 p1, vec2 p2, float t) {
+vec2 EvalQuadCurve(vec2 p0, vec2 p1, vec2 p2, float t) {
   float u = 1.0f - t;
   return u * u * p0 + 2.0f * u * t * p1 + t * t * p2;
 }
@@ -155,7 +155,7 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool xy
     float t = -c / b;
 
     // Curve value at the parameter.
-    vec2 point_at_t = EvalQuad(p0, p1, p2, t);
+    vec2 point_at_t = EvalQuadCurve(p0, p1, p2, t);
 
     // Return 0 if the parameter at intersection isn't valid,
     // or if the intersection is fully behind the intersection ray's origin.
@@ -178,10 +178,16 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool xy
   for(int i = 0; i < 2; i++) {
     // If we are currently processing the lower solution.
     bool is_minus_sol = (i == 0);
+
     // Calc vars.
     float t = SolveQuadratic(a, b, c, is_minus_sol);
-    vec2 point_at_t = EvalQuad(p0, p1, p2, t);
-    float entry_exit_multiplier = (!is_minus_sol) ^^ xy_flip ? -1.0f : 1.0f;
+    vec2 point_at_t = EvalQuadCurve(p0, p1, p2, t);
+
+    // +1.0f if upward slope at intersection, -1.0f otherwise.
+    // Using math, we find the '-' version of the quadratic equation is always the upward sloping one.
+    // xy_flip still XORs the bool.
+    float entry_exit_multiplier = !is_minus_sol ^^ xy_flip ? -1.0f : 1.0f;
+
     // Add intersection change.
     if(t < 0.0f || t >= 1.0f || point_at_t.x < -active_frag_width / 2.0f)
       change += 0.0f;
