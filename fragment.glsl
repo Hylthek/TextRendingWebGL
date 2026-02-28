@@ -60,7 +60,8 @@ flat in float fFaceIndex;
 
 // Number that is close enough to 0 to be considered 0.
 // For div by 0 edge cases.
-const float kSmallNumberCutoff = 0.0001f;
+// Increase if glitching, decrease if curves are being rendered as straight lines.
+const float kSmallNumberCutoff = 1e-3f;
 
 // A size multiplier for anti-aliasing effect.
 const float kAntiAliasingMult = 1.5f;
@@ -88,125 +89,77 @@ void PrintDebugOutput() {
   }
 }
 
-// Find if a quadratic equation is actually a line.
-bool QuadraticIsLinear(float a, float b, float c) {
-  return abs(a) < kSmallNumberCutoff;
-}
-
-// Find if a quadratic equation is actually a horizontal line.
-bool QuadraticIsHorizontalLinear(float a, float b, float c) {
-  return QuadraticIsLinear(a, b, c) && abs(b) < kSmallNumberCutoff;
-}
-
-// Find the number of solutions in a quadratic equation.
-// Note, 1 solution with multiplicity 2 is equivalent to 0 solutions.
-int QuadraticNumSols(float a, float b, float c) {
-  float discriminant = b * b - 4.0f * a * c;
-  if(discriminant <= 0.0f || QuadraticIsHorizontalLinear(a, b, c))
-    return 0;
-  if(QuadraticIsLinear(a, b, c))
-    return 1;
-  return 2;
-}
-
-// Solve a quadratic equation.
-// lesser_sol used for plus or minus in quadratic equation.
-// Doesn't handle a == 0 case.
-float SolveQuadratic(float a, float b, float c, bool get_minus_solution) {
-  if(get_minus_solution)
-    return (-b - sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
-  return (-b + sqrt(b * b - 4.0f * a * c)) / (2.0f * a);
-}
-
-// Evaluate a quadratic curve given control points and a t value.
-vec2 EvalQuadCurve(vec2 p0, vec2 p1, vec2 p2, float t) {
-  float u = 1.0f - t;
-  return u * u * p0 + 2.0f * u * t * p1 + t * t * p2;
-}
-
 // Given three quadratic curve control points, calculate the
 // "intersection number" of a ray starting at the origin, point towards +x.
 // "intersection number" increases if ray leaves a TrueType font contour
 // and decreases if it enters. Antialiasing allows for fractional values if
 // the intersection is near the current fragment.
-float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool xy_flip) {
-  if(xy_flip) {
+float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool rotate_points) {
+  // If specified, rotate points clockwise to simulate a vertical ray instead of a horizontal.
+  if(rotate_points) {
     p0 = p0.yx;
+    p0.y *= -1.0f;
     p1 = p1.yx;
+    p1.y *= -1.0f;
     p2 = p2.yx;
+    p2.y *= -1.0f;
   }
+  float active_frag_width = (rotate_points ? frag_width.y : frag_width.x) * kAntiAliasingMult;
+
+  // Early return for performance.
+  if(p0.y > 0.0f && p1.y > 0.0f && p2.y > 0.0f)
+    return 0.0f;
+  if(p0.y < 0.0f && p1.y < 0.0f && p2.y < 0.0f)
+    return 0.0f;
 
   // Calculate coefficients for quadratic equation describing
   // vertical motion of the curve, relative to the active canvas coord.
-  float a = p0.y - 2.0f * p1.y + p2.y;
-  float b = -2.0f * (p0.y - p1.y);
-  float c = p0.y;
+  vec2 a = p0 - 2.0f * p1 + p2;
+  vec2 b = -2.0f * (p0 - p1);
+  vec2 c = p0;
 
-  // No intersections if no zeroes.
-  if(QuadraticNumSols(a, b, c) == 0)
-    return 0.0f;
+  // Values of the parameter at intersections.
+  float t0, t1;
 
-  // How much the canvas coordinate changes between neighboring fragments.
-  float active_frag_width = (xy_flip ? frag_width.y : frag_width.x) * kAntiAliasingMult;
+  // Branch based on quadratic or linear curve.
+  if(abs(a.y) >= kSmallNumberCutoff) {
+    // Quadratic segment, solve abc formula to find roots.
+    float radicand = b.y * b.y - 4.0f * a.y * c.y;
 
-  // Linear case.
-  if(QuadraticIsLinear(a, b, c)) {
-    // Parameter value at the zero.
-    float t = -c / b;
-
-    // Curve value at the parameter.
-    vec2 point_at_t = EvalQuadCurve(p0, p1, p2, t);
-
-    // Return 0 if the parameter at intersection isn't valid,
-    // or if the intersection is fully behind the intersection ray's origin.
-    if(t < 0.0f || t >= 1.0f || point_at_t.x < -active_frag_width / 2.0f)
+    // Return early if none or one solution.
+    if(radicand <= 0.0f)
       return 0.0f;
 
-    // Sign of the intersection. +1.0f for upwards slope and -1.0f for downward.
-    // xy_flip mirrors the plane, so it also flips the bool via a XOR.
-    float entry_exit_multiplier = (b > 0.0f ^^ xy_flip) ? -1.0f : 1.0f;
-
-    // Return intersection change. Antialiasing case and normal case.
-    float ret_val_anti_aliasing = ((point_at_t.x / active_frag_width) + 0.5f) * entry_exit_multiplier;
-    float ret_val_normal = entry_exit_multiplier;
-    bool use_anti_aliasing = point_at_t.x > -active_frag_width / 2.0f && point_at_t.x < active_frag_width / 2.0f;
-    return mix(ret_val_normal, ret_val_anti_aliasing, use_anti_aliasing);
+    // Solve for roots.
+    float square_root = sqrt(radicand);
+    t0 = (-b.y - square_root) / (2.0f * a.y);
+    t1 = (-b.y + square_root) / (2.0f * a.y);
+  } else {
+    // Find the zero of the linear equation.
+    float t = p0.y / (p0.y - p2.y);
+    if(p0.y < p2.y) {
+      t0 = -1e10f;
+      t1 = t;
+    } else {
+      t0 = t;
+      t1 = -1e10f;
+    }
   }
 
-  // Quadratic case.
-  float change = 0.0f;
-  for(int i = 0; i < 2; i++) {
-    // If we are currently processing the lower solution.
-    bool is_minus_sol = (i == 0);
+  // Return value.
+  float alpha = 0.0f;
 
-    // Calc vars.
-    float t = SolveQuadratic(a, b, c, is_minus_sol);
-    vec2 point_at_t = EvalQuadCurve(p0, p1, p2, t);
-
-    // +1.0f if upward slope at intersection, -1.0f otherwise.
-    // Using math, we find the '-' version of the quadratic equation is always the upward sloping one.
-    // xy_flip still XORs the bool.
-    float entry_exit_multiplier = !is_minus_sol ^^ xy_flip ? -1.0f : 1.0f;
-
-    // Add intersection change.
-    if(t < 0.0f || t >= 1.0f || point_at_t.x < -active_frag_width / 2.0f)
-      change += 0.0f;
-    else if(point_at_t.x > -active_frag_width / 2.0f && point_at_t.x < active_frag_width / 2.0f)
-      change += ((point_at_t.x / active_frag_width) + 0.5f) * entry_exit_multiplier;
-    else
-      change += entry_exit_multiplier;
+  if(t0 >= 0.0f && t0 < 1.0f) {
+    float x = (a.x * t0 + b.x) * t0 + c.x;
+    alpha += clamp(x / active_frag_width + 0.5f, 0.0f, 1.0f);
   }
-  return change;
-}
 
-vec3 rgb2hsv(vec3 c) {
-  vec4 K = vec4(0.0f, -1.0f / 3.0f, 2.0f / 3.0f, -1.0f);
-  vec4 p = mix(vec4(c.bg, K.wz), vec4(c.gb, K.xy), step(c.b, c.g));
-  vec4 q = mix(vec4(p.xyw, c.r), vec4(c.r, p.yzx), step(p.x, c.r));
+  if(t1 >= 0.0f && t1 < 1.0f) {
+    float x = (a.x * t1 + b.x) * t1 + c.x;
+    alpha -= clamp(x / active_frag_width + 0.5f, 0.0f, 1.0f);
+  }
 
-  float d = q.x - min(q.w, q.y);
-  float e = 1.0e-10f;
-  return vec3(abs(q.z + (q.w - q.y) / (6.0f * d + e)), d / (q.x + e), q.x);
+  return alpha;
 }
 
 // All components are in the range [0…1], including hue.
