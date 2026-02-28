@@ -4,12 +4,20 @@ class ViewControl {
     phi_deg: 0
   }
   camera_pos = {
-    zoom: 1.5,
+    zoom: 0.17,
   }
-  pan = { x: 0, y: 0 }
+  pan = { x: -0.6, y: 2 }
   is_panning = false;
   is_rotating = false;
   previousMousePosition = { x: 0, y: 0 };
+
+  pan_dom = document.getElementById('pan');
+  zoom_dom = document.getElementById('zoom');
+
+  UpdateHtml() {
+    this.pan_dom.textContent = '(' + this.pan.x.toFixed(2) + ', ' + this.pan.y.toFixed(2) + ')'
+    this.zoom_dom.textContent = '(' + this.camera_pos.zoom.toFixed(2) + ')'
+  }
 
   constructor() {
     // Add event listener for trackpad scrolling to smoothly change zoom level

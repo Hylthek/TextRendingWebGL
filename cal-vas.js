@@ -119,6 +119,7 @@ async function CalvasMain() {
 
   // Init panning, zooming, etc.
   const view = new ViewControl();
+  setInterval(() => view.UpdateHtml(), 100);
 
   // Get fps html span element.
   const fps_span_element = document.getElementById('fps');

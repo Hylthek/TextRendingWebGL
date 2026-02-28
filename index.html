@@ -35,13 +35,26 @@
 
   .fps-div {
     position: fixed;
+    transform: translate(-50%, -50%);
     top: calc((100vh - min(90vh, calc(90vw * 9 / 16)))/4);
-    transform: translate(0, -50%);
-    left: calc((100vw - min(90vw, calc(90vh * 16 / 9)))/2);
+    left: calc(50vw);
     font-family: Terminal;
     font-size: min(2.044vw, calc(2.044vh * 16 / 9));
     color: #00FF41;
     display: inline-block;
+    white-space: nowrap;
+  }
+
+  .view-div {
+    position: fixed;
+    transform: translate(-50%, +50%);
+    bottom: calc((100vh - min(90vh, calc(90vw * 9 / 16))) / 4);
+    left: calc(50vw);
+    font-family: Terminal;
+    font-size: min(2.044vw, calc(2.044vh * 16 / 9));
+    color: #00FF41;
+    display: inline-block;
+    white-space: nowrap;
   }
 </style>
 
@@ -49,7 +62,14 @@
   <canvas id="cal-vas"></canvas>
   <canvas id="debug-canvas"></canvas>
   <div class="fps-div">
-    <span>FPS: </span><span id="fps">[]</span>
+    <span>FPS: </span>
+    <span id="fps">[]</span>
+  </div>
+  <div class="view-div">
+    <span>Zoom: </span>
+    <span id="zoom">[]</span>
+    <span>Pan: </span>
+    <span id="pan">[]</span>
   </div>
 </body>
 
