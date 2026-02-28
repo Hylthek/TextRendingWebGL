@@ -24,7 +24,7 @@ async function CalvasMain() {
   // Load attribute handler object.
   const attrib_handler = new VertexAttributeHandler(gl);
   {
-    attrib_handler.InitBuffers(8, 4);
+    attrib_handler.InitBuffers(4 * 10, 2 * 10);
     attrib_handler.InitMiscAttrib("texture_coord", 2);
     attrib_handler.InitMiscAttrib("canvas_coord", 2);
     attrib_handler.InitMiscAttrib("face_index", 1);
@@ -52,15 +52,40 @@ async function CalvasMain() {
     attrib_handler.AddMiscAttrib("face_index", [0])
 
     attrib_handler.AddTriangle()
+
+    for (let i = 0; i < 6; i++) {
+      attrib_handler.AddPosition({ x: 0, y: 1 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [0, 1])
+      attrib_handler.AddMiscAttrib("canvas_coord", [0, 0 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [0])
+
+      attrib_handler.AddPosition({ x: 0, y: 0 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [0, 0])
+      attrib_handler.AddMiscAttrib("canvas_coord", [0, -1000 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [0])
+
+      attrib_handler.AddPosition({ x: 1, y: 1 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [1, 1])
+      attrib_handler.AddMiscAttrib("canvas_coord", [1000, 0 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [0])
+
+      attrib_handler.AddTriangle()
+
+      attrib_handler.AddPosition({ x: 1, y: 0 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [1, 0])
+      attrib_handler.AddMiscAttrib("canvas_coord", [1000, -1000 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [0])
+
+      attrib_handler.AddTriangle()
+    }
   }
 
   // Load a basic image texture.
   const image_texture = LoadImageTexture(gl, "wooden-crate.webp")
 
   // Load War and Peace.
-  const text_length = 15000;
   const war_and_peace_txt = await (await fetch("WarAndPeace.txt")).text()
-  const war_and_peace_trunc_txt = '\n' + war_and_peace_txt.slice(0, text_length);
+  const war_and_peace_trunc_txt = '\n' + war_and_peace_txt.slice(0);
 
   // Load font objects.
   const font_data_jetbrains_mono = await LoadHBFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
@@ -111,7 +136,8 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
+  // setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
+  LoadScrollingText(gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo);
 }
 CalvasMain()
 
@@ -147,56 +173,21 @@ function UpdateFps(now, fps_span_element) {
  * @param {String} string_in 
  */
 function LoadScrollingText(gl, string_in, font, px_per_em, programInfo) {
-  if (!window.load_scrolling_text_start_time_ms)
-    window.load_scrolling_text_start_time_ms = performance.now()
-  const now_since_start = performance.now() - window.load_scrolling_text_start_time_ms;
-  const chars_per_sec = 500;
-  const num_chars = now_since_start / 1000 * chars_per_sec % string_in.length;
-  const string_sub = string_in.slice(0, num_chars)
-  try {
-    const texture = TextureFromString(gl, string_sub, font, px_per_em, programInfo);
-    window.curr_glyph_data_texture = texture;
-  } catch (error) {
-    // Do nothing, empty strings are fine..
+  function UpdateText() {
+    if (!window.load_scrolling_text_start_time_ms)
+      window.load_scrolling_text_start_time_ms = performance.now()
+    const now_since_start = performance.now() - window.load_scrolling_text_start_time_ms;
+    const chars_per_sec = 1500;
+    const num_chars = Math.min(now_since_start / 1000 * chars_per_sec, string_in.length - 1);
+    const string_sub = string_in.slice(0, num_chars)
+    try {
+      const texture = TextureFromString(gl, string_sub, font, px_per_em, programInfo);
+      window.curr_glyph_data_texture = texture;
+    } catch (error) {
+      // Do nothing, empty strings are fine..
+    }
+    if (num_chars < string_in.length - 1)
+      setTimeout(() => UpdateText(), 10)
   }
-}
-
-/** 
- * Read all float values from an ARRAY_BUFFER
- * @param {WebGL2RenderingContext} gl 
- * @param {WebGLBuffer} buffer 
- * @param {Number} floatCount 
- */
-function dumpArrayBuffer(gl, buffer, floatCount) {
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-
-  const out = new Float32Array(floatCount);
-  gl.getBufferSubData(
-    gl.ARRAY_BUFFER, // target
-    0,               // src byte offset in GPU buffer
-    out              // destination typed array
-  );
-
-  console.log("dumpArrayBuffer() => ", out);
-  return out;
-}
-
-/** 
- * Read all float values from an ELEMENT_ARRAY_BUFFER
- * @param {WebGL2RenderingContext} gl 
- * @param {WebGLBuffer} buffer 
- * @param {Number} floatCount 
- */
-function dumpElementArrayBuffer(gl, buffer, floatCount) {
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffer);
-
-  const out = new Uint16Array(floatCount);
-  gl.getBufferSubData(
-    gl.ELEMENT_ARRAY_BUFFER, // target
-    0,               // src byte offset in GPU buffer
-    out              // destination typed array
-  );
-
-  console.log("dumpElementArrayBuffer() => ", out);
-  return out;
+  UpdateText()
 }
