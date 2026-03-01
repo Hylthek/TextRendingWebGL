@@ -53,6 +53,7 @@ uniform int uRenderTextureFetchAmount;
 uniform int uRenderTextureFetchAmountMax;
 
 uniform int uRenderControlPoints;
+const float kControlPointSize = 3.0f;
 
 // Consts from JS.
 uniform int uScreenWidthPx;
@@ -120,12 +121,13 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool ro
   vec2 a = p0 - 2.0f * p1 + p2;
   vec2 b = -2.0f * (p0 - p1);
   vec2 c = p0;
+  bool use_quadratic_algorithm = abs(a.y) >= kSmallNumberCutoff;
 
   // Values of the parameter at intersections.
   float t0, t1;
 
   // Branch based on quadratic or linear curve.
-  if(abs(a.y) >= kSmallNumberCutoff) {
+  if(use_quadratic_algorithm) {
     // Quadratic segment, solve abc formula to find roots.
     float radicand = b.y * b.y - 4.0f * a.y * c.y;
 
@@ -139,7 +141,8 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool ro
     t1 = (-b.y + square_root) / (2.0f * a.y);
   } else {
     // Find the zero of the linear equation.
-    float t = p0.y / (p0.y - p2.y);
+    // float t = p0.y / (p0.y - p2.y);
+    float t = -c.y / b.y;
     if(p0.y < p2.y) {
       t0 = -1e10f;
       t1 = t;
@@ -153,12 +156,12 @@ float CalcIntersectionChange(vec2 p0, vec2 p1, vec2 p2, vec2 frag_width, bool ro
   float alpha = 0.0f;
 
   if(t0 >= 0.0f && t0 < 1.0f) {
-    float x = (a.x * t0 + b.x) * t0 + c.x;
+    float x = a.x * t0 * t0 + b.x * t0 + c.x;
     alpha += clamp(x / active_frag_width + 0.5f, 0.0f, 1.0f);
   }
 
   if(t1 >= 0.0f && t1 < 1.0f) {
-    float x = (a.x * t1 + b.x) * t1 + c.x;
+    float x = a.x * t1 * t1 + b.x * t1 + c.x;
     alpha -= clamp(x / active_frag_width + 0.5f, 0.0f, 1.0f);
   }
 
@@ -184,6 +187,7 @@ vec2 IdxToUV(int idx, int tex_width, int tex_height) {
 
 void main(void) {
   int num_texel_fetches = 0;
+  vec4 control_point_color = vec4(0, 0, 0, 0);
 
   // How much the canvas coordinate changes between neighboring fragments.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
@@ -268,11 +272,21 @@ void main(void) {
         if(quad_rgba_l == vec4(0.0f) && quad_rgba_r == vec4(0.0f))
           break;
 
-        // Quad curve control points in reference frame where current fragment is the origin.
+        // Quad curve control points relative to current fragment's canvas coordinates.
         vec2 origin = vCanvasCoord;
         vec2 p0 = (quad_rgba_l.rg * curr_glyph.size) - origin + curr_glyph.pos;
         vec2 p1 = (quad_rgba_l.ba * curr_glyph.size) - origin + curr_glyph.pos;
         vec2 p2 = (quad_rgba_r.rg * curr_glyph.size) - origin + curr_glyph.pos;
+
+        // Draw control point locations if set.
+        if(uRenderControlPoints == 1) {
+          float p0_dist = distance(p0, vec2(0, 0));
+          float p1_dist = distance(p1, vec2(0, 0));
+          if(p0_dist <= kControlPointSize * canvas_coord_fwidth.x)
+            control_point_color = vec4(1, 0, 0, 0.5f);
+          if(p1_dist <= kControlPointSize * canvas_coord_fwidth.x)
+            control_point_color = vec4(0, 1, 0, 0.5f);
+        }
 
         // Calculate signed intersections along +x and +y axes.
         intersection_count_x += CalcIntersectionChange(p0, p1, p2, canvas_coord_fwidth, false);
@@ -284,10 +298,10 @@ void main(void) {
   // Combine vertical and horizontal intersection counts.
   // For anti-aliasing, number closer to 0.49f takes over.
   // 0.49f is an arbitrary number that assures 0.0f beats 1.0f.
+  // This confines the large amount of artifacts to the insides of the glyphs.
   float x_intersection_dist = abs(intersection_count_x - 0.49f);
   float y_intersection_dist = abs(intersection_count_y - 0.49f);
-  // float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_intersection_dist, x_intersection_dist));
-  float intersection_count = intersection_count_y;
+  float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_intersection_dist, x_intersection_dist));
 
   // Text color.
   vec4 black = vec4(0, 0, 0, 1);
@@ -308,6 +322,10 @@ void main(void) {
     highlight_color = vec4(1, 1, 1, 1);
   if(uRenderTextureFetchAmount == 1)
     fragColor = mix(fragColor, highlight_color, 0.5f);
+  // Control point highlighting.
+  if(uRenderControlPoints == 1) {
+    fragColor = mix(fragColor, control_point_color, control_point_color.a);
+  }
 
   // Debug data output.
   // PrintDebugOutput(); // Uses print_arr.

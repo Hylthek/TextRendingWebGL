@@ -90,12 +90,13 @@ async function CalvasMain() {
   // Load font objects.
   const font_data_jetbrains_mono = await LoadHBFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   const font_data_inter = await LoadHBFont('inter_ttf/Inter_18pt-Regular.ttf')
+  const active_font = font_data_jetbrains_mono;
 
   // Load a font's entire set of glyph paths as a data texture.
   const {
     texture: font_data_texture,
     dimensions: font_data_texture_dims
-  } = await FontToTexture(gl, font_data_inter.openTypeFont)
+  } = await FontToTexture(gl, active_font.openTypeFont)
 
   // Init char texture.
   InitTexture(gl);
@@ -105,7 +106,7 @@ async function CalvasMain() {
     width: gTextureWidth,
     height: gTextureHeight
   }
-  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, font_data_inter.openTypeFont, war_and_peace_trunc_txt.length);
+  const js_consts = GetJsConstValues(gl, font_data_texture_dims, glyph_data_texture_dims, active_font.openTypeFont, war_and_peace_trunc_txt.length);
   // Compile program and get pointers.
   const shaderProgram = await InitShaderProgram(gl, "./vertex.glsl", "./fragment.glsl", js_consts);
   const programInfo = GetProgramInfo(gl, shaderProgram);
@@ -126,7 +127,12 @@ async function CalvasMain() {
 
   // Load a string into a texture.
   const px_per_em = 20;
-  window.curr_glyph_data_texture = TextureFromString(gl, "\nLOADING WAR AND PEACE...", font_data_inter, px_per_em, programInfo);
+  window.curr_glyph_data_texture = TextureFromString(gl, "\nLOADING WAR AND PEACE...", active_font, px_per_em, programInfo);
+
+  // Set view options.
+  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderTextureFetchAmount"), 0);
+  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderTextureFetchAmountMax"), 3000);
+  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderControlPoints"), 1);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
@@ -137,8 +143,8 @@ async function CalvasMain() {
     UpdateFps(now, fps_span_element);
   }
   requestAnimationFrame(RenderScene);
-  // setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo]);
-  LoadScrollingText(gl, war_and_peace_trunc_txt, font_data_inter, px_per_em, programInfo);
+  // setInterval(LoadScrollingText, 1000 / 30, ...[gl, war_and_peace_trunc_txt, active_font, px_per_em, programInfo]);
+  LoadScrollingText(gl, war_and_peace_trunc_txt, active_font, px_per_em, programInfo);
 }
 CalvasMain()
 
