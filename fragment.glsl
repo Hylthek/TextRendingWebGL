@@ -50,6 +50,9 @@ uniform int uNumLines;
 
 // If the amount of texture fetches for the pixel should be rendered. 0=false 1=true.
 uniform int uRenderTextureFetchAmount;
+uniform int uRenderTextureFetchAmountMax;
+
+uniform int uRenderControlPoints;
 
 // Consts from JS.
 uniform int uScreenWidthPx;
@@ -180,7 +183,7 @@ vec2 IdxToUV(int idx, int tex_width, int tex_height) {
 }
 
 void main(void) {
-  float num_texel_fetches = 0.0f;
+  int num_texel_fetches = 0;
 
   // How much the canvas coordinate changes between neighboring fragments.
   vec2 canvas_coord_fwidth = fwidth(vCanvasCoord);
@@ -283,7 +286,8 @@ void main(void) {
   // 0.49f is an arbitrary number that assures 0.0f beats 1.0f.
   float x_intersection_dist = abs(intersection_count_x - 0.49f);
   float y_intersection_dist = abs(intersection_count_y - 0.49f);
-  float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_intersection_dist, x_intersection_dist));
+  // float intersection_count = mix(intersection_count_x, intersection_count_y, step(y_intersection_dist, x_intersection_dist));
+  float intersection_count = intersection_count_y;
 
   // Text color.
   vec4 black = vec4(0, 0, 0, 1);
@@ -298,9 +302,9 @@ void main(void) {
   float is_pos = step(0.0f, intersection_count);
   fragColor = mix(error_col, fragColor, is_pos);
   // Highlighting, number of texture() calls.
-  float num_tex_fet_clamped = float(num_texel_fetches) / 1500.0f;
-  vec4 highlight_color = vec4(hsv2rgb(vec3(num_tex_fet_clamped, 1, 1)), 1);
-  if(num_tex_fet_clamped > 1.0f)
+  float num_tex_fet_normalized = float(num_texel_fetches) / float(uRenderTextureFetchAmountMax);
+  vec4 highlight_color = vec4(hsv2rgb(vec3(num_tex_fet_normalized, 1, 1)), 1);
+  if(num_tex_fet_normalized > 1.0f)
     highlight_color = vec4(1, 1, 1, 1);
   if(uRenderTextureFetchAmount == 1)
     fragColor = mix(fragColor, highlight_color, 0.5f);

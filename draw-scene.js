@@ -79,6 +79,11 @@ export function DrawScene(gl, programInfo, attrib_handler, view, image_texture, 
   gl.uniformMatrix4fv(programInfo.uniformLocations.projectionMatrix, false, projectionMatrix);
   gl.uniformMatrix4fv(programInfo.uniformLocations.modelViewMatrix, false, modelViewMatrix);
 
+  // Set view options.
+  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderTextureFetchAmount"), 0);
+  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderTextureFetchAmountMax"), 3000);
+  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderControlPoints"), 1);
+
   // Draw elements, using a different texture per 2 elements (ie 1 cube face).
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, attrib_handler.gl_indices_buffer)
   const vertexCount = attrib_handler.num_triangles * 3;
