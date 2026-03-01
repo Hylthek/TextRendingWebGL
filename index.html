@@ -41,7 +41,8 @@
     font-family: Terminal;
     font-size: min(2.044vw, calc(2.044vh * 16 / 9));
     color: #00FF41;
-    display: inline-block;
+    display: flex;
+    gap: 0.5rem;
     white-space: nowrap;
   }
 
@@ -53,7 +54,8 @@
     font-family: Terminal;
     font-size: min(2.044vw, calc(2.044vh * 16 / 9));
     color: #00FF41;
-    display: inline-block;
+    display: flex;
+    gap: 0.5rem;
     white-space: nowrap;
   }
 </style>
@@ -70,6 +72,17 @@
     <span id="zoom">[]</span>
     <span>Pan: </span>
     <span id="pan">[]</span>
+    <div>
+      <label style="font-size: 50%;"><input type="checkbox" id="enable-render-control-points">
+        Render Glyph Control Points
+      </label>
+      <label style="font-size: 50%;"><input type="checkbox" id="enable-render-texture-fetches">
+        Render Shader Texture Fetches
+      </label>
+      <label style="font-size: 50%;"><input type="number" id="texture-amount-max" value="0" step="100">
+        Texture Fetch Saturation
+      </label>
+    </div>
   </div>
 </body>
 

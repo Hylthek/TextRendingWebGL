@@ -130,9 +130,8 @@ async function CalvasMain() {
   window.curr_glyph_data_texture = TextureFromString(gl, "\nLOADING WAR AND PEACE...", active_font, px_per_em, programInfo);
 
   // Set view options.
-  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderTextureFetchAmount"), 0);
   gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderTextureFetchAmountMax"), 3000);
-  gl.uniform1i(gl.getUniformLocation(programInfo.program, "uRenderControlPoints"), 1);
+  setInterval(() => UpdateRenderOptions(gl, programInfo), 100);
 
   // Draw the scene repeatedly
   function RenderScene(now) {
@@ -172,6 +171,23 @@ function UpdateFps(now, fps_span_element) {
   const fpsString = fps_rounded.toFixed(1).padStart(4, ' ');
   const fps_bar_string = ' ' + '[' + '='.repeat(fps_rounded | 0) + '_'.repeat(70 - (fps_rounded | 0)) + ']'
   fps_span_element.textContent = fpsString + fps_bar_string;
+}
+
+/**
+ * 
+ * @param {WebGL2RenderingContext} gl 
+ */
+function UpdateRenderOptions(gl, program_info) {
+  const render_control_points_dom = document.getElementById('enable-render-control-points')
+  const render_texture_fetches_dom = document.getElementById('enable-render-texture-fetches')
+  const render_control_points = render_control_points_dom.checked;
+  const render_texture_fetches = render_texture_fetches_dom.checked;
+  const render_texture_fetch_amount_max_dom = document.getElementById('texture-amount-max')
+  const render_texture_fetch_amount_max = parseInt(render_texture_fetch_amount_max_dom.value);
+
+  gl.uniform1i(gl.getUniformLocation(program_info.program, "uRenderTextureFetchAmountMax"), render_texture_fetch_amount_max);
+  gl.uniform1i(gl.getUniformLocation(program_info.program, "uRenderControlPoints"), render_control_points ? 1 : 0);
+  gl.uniform1i(gl.getUniformLocation(program_info.program, "uRenderTextureFetchAmount"), render_texture_fetches ? 1 : 0);
 }
 
 /**
