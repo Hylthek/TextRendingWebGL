@@ -1,6 +1,5 @@
 import { CanvasInit } from './canvas-init.js'
 import { InitShaderProgram, GetProgramInfo } from "./init-shader-program.js";
-import { InitVertexBuffers } from "./init-buffers.js";
 import { DrawScene } from "./draw-scene.js";
 import { LoadImageTexture } from "./load-texture.js";
 import { PrintCenterPixelInt32 } from './shader-debug.js'
@@ -17,9 +16,6 @@ async function CalvasMain() {
   if (!gl) { console.error("WebGL not supported"); return; }
   gl.clearColor(255, 255, 255, 1.0)
   gl.clear(gl.COLOR_BUFFER_BIT);
-
-  // Load static vertex attribute data.
-  const vertex_buffers = InitVertexBuffers(gl);
 
   // Load attribute handler object.
   const attrib_handler = new VertexAttributeHandler(gl);
