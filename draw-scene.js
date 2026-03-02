@@ -1,5 +1,17 @@
-import { mat4 } from "./node_modules/gl-matrix/esm/index.js"
 import { VertexAttributeHandler } from "./vertex-attribute-handler.js";
+
+async function importWithFallback(primaryUrl, fallbackUrl) {
+  try {
+    return await import(primaryUrl);
+  } catch (err) {
+    console.warn(`Primary import failed: ${primaryUrl}`, err);
+    return await import(fallbackUrl);
+  }
+}
+const { mat4 } = await importWithFallback(
+  "https://cdn.jsdelivr.net/npm/gl-matrix@3.4.4/esm/index.js",
+  "./node_modules/gl-matrix/esm/index.js"
+);
 
 /**
  * 

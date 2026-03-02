@@ -1,4 +1,15 @@
-import opentype from './node_modules/opentype.js/dist/opentype.module.js'
+async function importWithFallback(primaryUrl, fallbackUrl) {
+  try {
+    return await import(primaryUrl);
+  } catch (err) {
+    console.warn(`Primary import failed: ${primaryUrl}`, err);
+    return await import(fallbackUrl);
+  }
+}
+const opentype = await importWithFallback(
+  'https://cdn.jsdelivr.net/npm/opentype.js@1.3.4/dist/opentype.module.js',
+  "./node_modules/opentype.js/dist/opentype.module.js"
+);
 
 let hbInstance = null;
 async function InitHarfBuzz() {
