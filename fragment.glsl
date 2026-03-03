@@ -350,6 +350,9 @@ void main(void) {
     fragColor = BlendColors(fragColor, control_point_color);
   }
 
+  if (fFaceIndex == 1.0f)
+    fragColor = vec4(1.0f - fragColor.r, 1.0f - fragColor.g, 1.0f - fragColor.b, fragColor.a);
+
   // Debug data output.
   // PrintDebugOutput(); // Uses print_arr.
 }

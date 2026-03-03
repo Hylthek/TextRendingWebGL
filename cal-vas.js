@@ -20,57 +20,62 @@ async function CalvasMain() {
   // Load attribute handler object.
   const attrib_handler = new VertexAttributeHandler(gl);
   {
-    attrib_handler.InitBuffers(4 * 10, 2 * 10);
+    // Init WebGL buffers.
+    attrib_handler.InitBuffers(4 * 40, 2 * 40);
     attrib_handler.InitMiscAttrib("texture_coord", 2);
     attrib_handler.InitMiscAttrib("canvas_coord", 2);
     attrib_handler.InitMiscAttrib("face_index", 1);
 
-    attrib_handler.AddPosition({ x: 0, y: 1, z: 0 })
-    attrib_handler.AddMiscAttrib("texture_coord", [0, 1])
-    attrib_handler.AddMiscAttrib("canvas_coord", [0, 0])
-    attrib_handler.AddMiscAttrib("face_index", [0])
-
-    attrib_handler.AddPosition({ x: 0, y: 0, z: 0 })
-    attrib_handler.AddMiscAttrib("texture_coord", [0, 0])
-    attrib_handler.AddMiscAttrib("canvas_coord", [0, -1000])
-    attrib_handler.AddMiscAttrib("face_index", [0])
-
-    attrib_handler.AddPosition({ x: 1, y: 1, z: 0 })
-    attrib_handler.AddMiscAttrib("texture_coord", [1, 1])
-    attrib_handler.AddMiscAttrib("canvas_coord", [1000, 0])
-    attrib_handler.AddMiscAttrib("face_index", [0])
-
-    attrib_handler.AddTriangle()
-
-    attrib_handler.AddPosition({ x: 1, y: 0, z: 0 })
-    attrib_handler.AddMiscAttrib("texture_coord", [1, 0])
-    attrib_handler.AddMiscAttrib("canvas_coord", [1000, -1000])
-    attrib_handler.AddMiscAttrib("face_index", [0])
-
-    attrib_handler.AddTriangle()
-
+    // Build first panel.
     for (let i = 0; i < 6; i++) {
-      attrib_handler.AddPosition({ x: 0, y: 1 - i, z: 0 })
+      attrib_handler.AddPosition({ x: -1, y: 1 - i, z: 0 })
       attrib_handler.AddMiscAttrib("texture_coord", [0, 1])
       attrib_handler.AddMiscAttrib("canvas_coord", [0, 0 - 1000 * i])
       attrib_handler.AddMiscAttrib("face_index", [0])
 
-      attrib_handler.AddPosition({ x: 0, y: 0 - i, z: 0 })
+      attrib_handler.AddPosition({ x: -1, y: 0 - i, z: 0 })
       attrib_handler.AddMiscAttrib("texture_coord", [0, 0])
       attrib_handler.AddMiscAttrib("canvas_coord", [0, -1000 - 1000 * i])
       attrib_handler.AddMiscAttrib("face_index", [0])
 
-      attrib_handler.AddPosition({ x: 1, y: 1 - i, z: 0 })
+      attrib_handler.AddPosition({ x: 0, y: 1 - i, z: 0 })
       attrib_handler.AddMiscAttrib("texture_coord", [1, 1])
       attrib_handler.AddMiscAttrib("canvas_coord", [1000, 0 - 1000 * i])
       attrib_handler.AddMiscAttrib("face_index", [0])
 
       attrib_handler.AddTriangle()
 
-      attrib_handler.AddPosition({ x: 1, y: 0 - i, z: 0 })
+      attrib_handler.AddPosition({ x: 0, y: 0 - i, z: 0 })
       attrib_handler.AddMiscAttrib("texture_coord", [1, 0])
       attrib_handler.AddMiscAttrib("canvas_coord", [1000, -1000 - 1000 * i])
       attrib_handler.AddMiscAttrib("face_index", [0])
+
+      attrib_handler.AddTriangle()
+    }
+    
+    // Build second panel.
+    for (let i = 0; i < 6; i++) {
+      attrib_handler.AddPosition({ x: 0, y: 1 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [0, 1])
+      attrib_handler.AddMiscAttrib("canvas_coord", [0, 0 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [1])
+
+      attrib_handler.AddPosition({ x: 0, y: 0 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [0, 0])
+      attrib_handler.AddMiscAttrib("canvas_coord", [0, -1000 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [1])
+
+      attrib_handler.AddPosition({ x: 1, y: 1 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [1, 1])
+      attrib_handler.AddMiscAttrib("canvas_coord", [1000, 0 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [1])
+
+      attrib_handler.AddTriangle()
+
+      attrib_handler.AddPosition({ x: 1, y: 0 - i, z: 0 })
+      attrib_handler.AddMiscAttrib("texture_coord", [1, 0])
+      attrib_handler.AddMiscAttrib("canvas_coord", [1000, -1000 - 1000 * i])
+      attrib_handler.AddMiscAttrib("face_index", [1])
 
       attrib_handler.AddTriangle()
     }
