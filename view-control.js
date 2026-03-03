@@ -28,7 +28,7 @@ class ViewControl {
 
       // Prevent zoom level from becoming too small or too large
       const min_zoom = 0.1;
-      const max_zoom = 1000;
+      const max_zoom = 1000000;
       const zoom_maxed = this.camera_pos.zoom > max_zoom;
       const zoom_mined = this.camera_pos.zoom < min_zoom;
 
