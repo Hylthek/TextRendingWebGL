@@ -91,7 +91,7 @@ async function CalvasMain() {
   // Load font objects.
   const font_data_jetbrains_mono = await LoadHBFont('jetbrainsmono_ttf/JetBrainsMonoNL-Regular.ttf')
   const font_data_inter = await LoadHBFont('inter_ttf/Inter_18pt-Regular.ttf')
-  const active_font = font_data_jetbrains_mono;
+  const active_font = font_data_inter;
 
   // Load a font's entire set of glyph paths as a data texture.
   const {
